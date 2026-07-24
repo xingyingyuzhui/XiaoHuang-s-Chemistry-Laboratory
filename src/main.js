@@ -8,6 +8,7 @@ import { initPeriodicTable, scheduleFit } from './periodic-table.js';
 import {
   initMoleculeList,
   ensureMolViewer,
+  ensureDefaultMolecule,
   getMolViewer,
 } from './molecule-list.js';
 import { initMoleculeAI } from './molecule-ai.js';
@@ -87,6 +88,8 @@ async function switchTab(name) {
 
   if (name === 'molecule') {
     ensureMolViewer();
+    // 首次进入：默认选中并展示列表第一项
+    await ensureDefaultMolecule();
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const viewer = getMolViewer();

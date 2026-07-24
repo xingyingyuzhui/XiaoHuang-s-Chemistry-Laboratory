@@ -197,6 +197,35 @@ export function setMolEditMode(on) {
 }
 
 /**
+ * 若尚未选中分子，加载列表第一项（首次进入 3D 分子页）
+ * @returns {Promise<string|null>} 当前/新选中的 id
+ */
+export async function ensureDefaultMolecule() {
+  ensureMolViewer();
+  // 已有选中则只保证列表高亮，不再重复请求
+  if (currentMolId) {
+    await renderMolList();
+    return currentMolId;
+  }
+  try {
+    const list = await moleculeApi.getList();
+    const first = list?.[0];
+    if (!first) {
+      if (molTitle) molTitle.textContent = '—';
+      if (molDesc) molDesc.textContent = '列表为空，可点击 ＋ 用 AI 生成分子';
+      molViewer?.load?.(null);
+      await renderMolList();
+      return null;
+    }
+    await loadMolecule(first.id);
+    return first.id;
+  } catch (err) {
+    console.error('默认加载分子失败:', err);
+    return null;
+  }
+}
+
+/**
  * 加载分子到 3D 查看器
  */
 export async function loadMolecule(id) {
@@ -276,6 +305,8 @@ export function initMoleculeList() {
     });
   }
 
-  // 渲染列表
-  renderMolList();
+  // 渲染列表；预选第一项，避免首次进页空白
+  renderMolList()
+    .then(() => ensureDefaultMolecule())
+    .catch((err) => console.error('初始化分子列表失败:', err));
 }
