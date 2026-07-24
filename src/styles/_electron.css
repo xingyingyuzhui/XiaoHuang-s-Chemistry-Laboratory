@@ -1,4 +1,4 @@
-/* 电子排布模块样式 */
+/* 电子排布模块 — 校刊风 */
 
 .electron-toolbar {
   display: grid;
@@ -22,7 +22,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
   margin-bottom: 0.75rem;
-  /* 列表可滚动，避免挤爆侧栏 */
   max-height: calc(100vh - 220px);
   overflow-y: auto;
   padding-right: 2px;
@@ -38,8 +37,9 @@
 }
 
 .electron-card.is-active .electron-card-main {
-  border-color: #93c5fd;
-  background: var(--accent-soft);
+  border-color: var(--border-ink);
+  background: var(--stamp-soft);
+  box-shadow: var(--shadow-print);
 }
 
 .electron-card.is-editing {
@@ -51,7 +51,7 @@
 }
 
 .electron-card.drag-over {
-  outline: 2px dashed var(--accent);
+  outline: 2px dashed var(--stamp);
   outline-offset: 2px;
   border-radius: 10px;
 }
@@ -60,9 +60,9 @@
   position: relative;
   min-height: 0;
   border-radius: var(--radius-card);
-  border: 1px solid var(--border-soft);
-  background: #fff;
-  box-shadow: var(--shadow-float);
+  border: 2.5px solid var(--border-ink);
+  background: var(--paper);
+  box-shadow: var(--shadow-print);
   overflow: hidden;
 }
 
@@ -81,7 +81,6 @@
   height: 100% !important;
 }
 
-/* 左上角元素信息卡片 */
 .electron-info-card {
   position: absolute;
   top: 0.85rem;
@@ -89,30 +88,29 @@
   z-index: 3;
   max-width: min(280px, calc(100% - 2rem));
   padding: 0.75rem 0.95rem;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--border-soft);
-  box-shadow: var(--shadow-md);
+  border-radius: 12px;
+  background: var(--card-elevated);
+  border: 2.5px solid var(--border-ink);
+  box-shadow: var(--shadow-print);
   pointer-events: none;
-  backdrop-filter: blur(8px);
 }
 
 .electron-info-card h3 {
   margin: 0 0 0.5rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
   color: var(--diagram);
   font-weight: 700;
+  font-family: var(--font-serif-cjk);
 }
 
 .electron-info-symbol {
   margin: 0 0 0.2rem;
   font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--ink);
   line-height: 1;
-  font-family: var(--font-latin), sans-serif;
+  font-family: var(--font-display), Georgia, serif;
 }
 
 .electron-info-name {
@@ -126,11 +124,12 @@
   margin: 0;
   padding: 0.4rem 0.6rem;
   background: var(--diagram-soft);
+  border: 1.5px solid var(--border-ink);
   border-radius: 8px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--ink);
   line-height: 1.6;
   word-break: break-all;
 }

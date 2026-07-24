@@ -7,7 +7,7 @@
 
 .mol-info-props {
   margin-top: 0.5rem;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink) 16%, transparent);
   padding-top: 0.5rem;
 }
 
@@ -20,7 +20,6 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--diagram);
-  text-transform: none;
   letter-spacing: 0.02em;
   font-family: var(--font-serif-cjk);
 }
@@ -51,23 +50,25 @@
   box-shadow: var(--shadow-print-sm);
   display: grid;
   gap: 0.06rem;
-  transition: 0.12s ease;
   min-width: 0;
 }
 
 .mol-btn:hover {
-  border-color: #bfdbfe;
+  background: var(--diagram-soft);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
 }
 
 .mol-btn.active {
-  border-color: #93c5fd;
-  background: var(--accent-soft);
+  border-color: var(--border-ink);
+  background: var(--stamp-soft);
+  box-shadow: var(--shadow-print);
 }
 
 .mol-btn strong {
   font-size: 0.82rem;
   font-weight: 800;
-  font-family: var(--font-latin);
+  font-family: var(--font-mono), var(--font-latin);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
@@ -92,26 +93,28 @@
 .mol-btn-add {
   min-height: 44px;
   border-style: dashed;
-  border-color: rgba(100, 116, 139, 0.45);
-  background: rgba(248, 250, 252, 0.9);
+  border-width: 2px;
+  border-color: var(--border-ink);
+  background: var(--paper);
   grid-template-columns: 1fr;
   align-content: center;
   gap: 0;
   margin: 0;
   width: 100%;
+  box-shadow: none;
 }
 
 .mol-btn-add .mol-add-plus {
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1;
-  color: #64748b;
+  color: var(--ink-soft);
   letter-spacing: 0;
 }
 
 .mol-btn-add:hover {
-  border-color: #93c5fd;
-  background: var(--accent-soft);
+  border-style: solid;
+  background: var(--diagram-soft);
 }
 
 .mol-btn-add:hover .mol-add-plus {
@@ -125,20 +128,22 @@
   font-weight: 800;
   font-size: 0.9rem;
   color: var(--text-primary);
-  border: 1.5px solid var(--border);
-  background: var(--card-bg);
+  border: 2px solid var(--border-ink);
+  background: var(--card-elevated);
   display: grid;
   place-items: center;
   align-content: center;
   text-align: center;
   line-height: 1;
   padding: 0;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .mol-btn-edit.is-active {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
+  border-color: var(--border-ink);
+  background: var(--note-soft);
+  color: var(--ink);
+  box-shadow: var(--shadow-print);
 }
 
 .mol-card {
@@ -159,8 +164,8 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1.5px solid #fecaca;
-  background: #ef4444;
+  border: 2px solid var(--border-ink);
+  background: var(--stamp);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -168,7 +173,7 @@
   padding: 0;
   cursor: pointer;
   place-items: center;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+  box-shadow: var(--shadow-print-sm);
 }
 
 .molecule-list.is-edit-mode .mol-card-del {
@@ -184,23 +189,25 @@
 }
 
 .mol-card.drag-over {
-  outline: 2px dashed var(--accent);
+  outline: 2px dashed var(--stamp);
   outline-offset: 2px;
   border-radius: 10px;
 }
 
 .mol-card.is-active .mol-card-main {
-  border-color: #93c5fd;
-  background: var(--accent-soft);
+  border-color: var(--border-ink);
+  background: var(--stamp-soft);
+  box-shadow: var(--shadow-print);
 }
 
+/* 弹窗 */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.4);
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s var(--ease-out);
   z-index: 100;
 }
 
@@ -215,14 +222,14 @@
   top: 50%;
   transform: translate(-50%, -48%) scale(0.96);
   width: min(440px, 92vw);
-  background: var(--card-bg);
-  border-radius: 16px;
-  border: 1px solid var(--border-soft);
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  background: var(--card-elevated);
+  border-radius: 14px;
+  border: 2.5px solid var(--border-ink);
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--ink) 88%, transparent);
   z-index: 110;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.22s var(--ease-out), transform 0.28s var(--ease-spring);
 }
 
 .modal-panel.is-open {
@@ -236,34 +243,38 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--border-soft);
+  border-bottom: 2px solid var(--border-ink);
+  background: var(--note-soft);
 }
 
 .modal-head h2 {
   margin: 0;
   font-size: 1.1rem;
-  font-weight: 800;
+  font-weight: 700;
+  font-family: var(--font-serif-cjk);
 }
 
 .modal-body {
   padding: 0.95rem 1rem 1.15rem;
+  background: var(--paper);
 }
 
 .modal-body textarea {
   width: 100%;
-  border: 2px solid var(--border);
-  border-radius: 12px;
+  border: 2px solid var(--border-ink);
+  border-radius: 10px;
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-weight: 500;
   color: var(--text-primary);
-  background: var(--card-bg);
+  background: var(--card-elevated);
   resize: vertical;
   min-height: 96px;
   outline: none;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .modal-body textarea:focus {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
 }

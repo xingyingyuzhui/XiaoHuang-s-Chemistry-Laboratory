@@ -1,11 +1,11 @@
-/* —— 设置抽屉 —— */
+/* —— 设置抽屉：校刊侧栏手账 —— */
 .settings-backdrop {
   position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--ink) 42%, transparent);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s ease;
+  transition: opacity 0.22s var(--ease-out);
   z-index: 80;
 }
 
@@ -21,7 +21,7 @@
   height: 100%;
   width: min(400px, 92vw);
   background: var(--card-elevated);
-  box-shadow: -6px 0 0 color-mix(in srgb, var(--ink) 85%, transparent);
+  box-shadow: -5px 0 0 color-mix(in srgb, var(--ink) 88%, transparent);
   border-left: 2.5px solid var(--border-ink);
   z-index: 90;
   display: flex;
@@ -39,40 +39,47 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.1rem;
-  border-bottom: 1px solid var(--border-soft);
+  border-bottom: 2.5px solid var(--border-ink);
+  background: var(--note-soft);
   flex-shrink: 0;
 }
 
 .settings-drawer-head h2 {
   margin: 0;
   font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-serif-cjk);
+  letter-spacing: 0.02em;
 }
 
 .settings-close {
   appearance: none;
   width: 36px;
   height: 36px;
-  border: 0;
+  border: 2px solid var(--border-ink);
   border-radius: 10px;
-  background: var(--bg-body);
-  color: var(--text-muted);
-  font-size: 1.4rem;
+  background: var(--card-elevated);
+  color: var(--ink);
+  font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .settings-close:hover {
-  color: var(--text-primary);
-  background: var(--accent-soft);
+  background: var(--stamp-soft);
+  color: var(--stamp);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
 }
 
 .settings-drawer-body {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 0.85rem 1.1rem 1.5rem;
+  padding: 0.9rem 1.1rem 1.6rem;
+  background: var(--paper);
 }
 
 .settings-section {
@@ -81,25 +88,40 @@
 
 .settings-section-title {
   margin: 0 0 0.75rem;
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  color: var(--stamp);
+  font-family: var(--font-serif-cjk);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.settings-section-title::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  background: var(--stamp);
+  border: 1.5px solid var(--border-ink);
+  box-shadow: 1px 1px 0 var(--border-ink);
 }
 
 .settings-block {
-  background: var(--bg-body);
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
+  background: var(--card-elevated);
+  border: 2.5px solid var(--border-ink);
+  border-radius: 12px;
   padding: 0.85rem 0.95rem;
   margin-bottom: 0.75rem;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .settings-block h4 {
   margin: 0 0 0.25rem;
   font-size: 0.95rem;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--ink);
 }
 
 .settings-block-compact {
@@ -147,8 +169,9 @@
   height: 56px;
   object-fit: contain;
   border-radius: 12px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: var(--paper);
+  border: 2.5px solid var(--border-ink);
+  box-shadow: var(--shadow-print-sm);
   flex-shrink: 0;
 }
 
@@ -192,14 +215,13 @@
   gap: 0.5rem;
 }
 
-/* 色块仅作示意，不可点击选色 */
 .color-swatch {
   flex-shrink: 0;
   width: 42px;
   height: 36px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  border: 2px solid var(--border-ink);
+  border-radius: 8px;
+  box-shadow: var(--shadow-print-sm);
   pointer-events: none;
   user-select: none;
 }
@@ -207,25 +229,26 @@
 .hex-input {
   flex: 1;
   min-width: 0;
-  border: 2px solid var(--border);
-  background: var(--card-bg);
+  border: 2px solid var(--border-ink);
+  background: var(--card-elevated);
   color: var(--text-primary);
   border-radius: 10px;
   padding: 0.45rem 0.6rem;
-  font-family: var(--font-latin), ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.88rem;
   font-weight: 600;
   outline: none;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .hex-input:focus {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
 }
 
 .hex-input.is-invalid {
-  border-color: #fca5a5;
-  background: #fef2f2;
+  border-color: var(--stamp);
+  background: var(--stamp-soft);
 }
 
 .settings-actions {
@@ -248,11 +271,11 @@
 }
 
 .settings-status.is-ok {
-  color: #15803d;
+  color: var(--diagram);
 }
 
 .settings-status.is-err {
-  color: #b91c1c;
+  color: var(--stamp);
 }
 
 .secret-row {
@@ -274,41 +297,45 @@
 
 .field select {
   width: 100%;
-  border: 2px solid var(--border);
-  background: var(--card-bg);
+  border: 2px solid var(--border-ink);
+  background: var(--card-elevated);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-weight: 600;
   outline: none;
   cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .field select:focus {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
 }
 
-.field input[type='url'],
-.field input[type='password'],
-.field input[type='text'] {
+/* 抽屉内表单与全局表单统一为校刊描边 */
+.settings-drawer .field input[type='url'],
+.settings-drawer .field input[type='password'],
+.settings-drawer .field input[type='text'] {
   width: 100%;
-  border: 2px solid var(--border);
-  background: var(--card-bg);
+  border: 2px solid var(--border-ink);
+  background: var(--card-elevated);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-weight: 600;
   outline: none;
+  box-shadow: var(--shadow-print-sm);
 }
 
-.field input[type='url']:focus,
-.field input[type='password']:focus,
-.field input[type='text']:focus {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+.settings-drawer .field input[type='url']:focus,
+.settings-drawer .field input[type='password']:focus,
+.settings-drawer .field input[type='text']:focus {
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
+  border-color: var(--border-ink);
 }
 
 body.settings-open {
