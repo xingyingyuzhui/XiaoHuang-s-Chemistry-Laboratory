@@ -102,7 +102,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: var(--diagram);
   font-weight: 700;
 }
 
@@ -125,7 +125,7 @@
 .electron-info-config {
   margin: 0;
   padding: 0.4rem 0.6rem;
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--diagram-soft);
   border-radius: 8px;
   font-family: 'Courier New', monospace;
   font-size: 0.85rem;

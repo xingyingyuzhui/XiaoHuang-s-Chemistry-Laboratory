@@ -1,10 +1,10 @@
-/* —— Detail card / 侧栏：实验记录卡片 —— */
+/* —— 侧栏：手账卡片 —— */
 .detail-card,
 .sidebar {
-  background: linear-gradient(180deg, var(--card-elevated) 0%, var(--card-bg) 100%);
+  background: var(--card-elevated);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-float), var(--shadow-inset-glass);
-  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-print);
+  border: 2.5px solid var(--border-ink);
   padding: 0.75rem;
   overflow: auto;
   min-height: 0;
@@ -30,31 +30,31 @@
   gap: 0.85rem;
   margin-bottom: 0.9rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px dashed color-mix(in srgb, var(--border) 70%, transparent);
+  border-bottom: 2px dashed color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
 .detail-badge {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
   display: grid;
   place-content: center;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-family: var(--font-display), var(--font-latin);
-  letter-spacing: -0.03em;
-  color: var(--ink-lab);
+  letter-spacing: -0.02em;
+  color: var(--ink);
   flex-shrink: 0;
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.65);
-  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  box-shadow: var(--shadow-print-sm);
+  border: 2.5px solid var(--border-ink);
 }
 
 .detail-head h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 700;
-  font-family: var(--font-cjk), var(--font-display);
-  letter-spacing: -0.01em;
+  font-family: var(--font-serif-cjk);
+  letter-spacing: 0.01em;
   color: var(--text-primary);
 }
 
@@ -63,8 +63,7 @@
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
-  font-family: var(--font-mono), var(--font-cjk);
-  letter-spacing: 0.01em;
+  font-family: var(--font-mono);
 }
 
 .kv {
@@ -78,9 +77,9 @@
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.45rem 0.6rem;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent-soft) 40%, #f4f7fa);
-  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: var(--paper);
+  border: 1.5px solid var(--border);
   font-size: 0.84rem;
 }
 
@@ -112,7 +111,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--ink-lab);
+  color: var(--diagram);
   word-break: break-all;
 }
 

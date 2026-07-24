@@ -1,53 +1,66 @@
 :root {
   /*
-   * 设计方向：中学化学实验室台面
-   * - 冷灰蓝台面底 + 细方格（实验记录本网格）
-   * - 陶瓷/硼硅卡片
-   * - 主色：硫酸铜蓝；强调：本生灯焰橙
-   * - 避开 AI 默认：奶油衬线 / 黑底霓虹 / 报纸排版
+   * 「科学兴趣小组」校刊风 — 有性格、少 AI 味
+   * 灵感：校办小报、分子球棍模型色、红泥章、钢笔图示
+   * 签名手法：硬错位阴影（像套色印刷对不齐），不是毛玻璃/霓虹/赛博
    */
 
-  /* —— 色板 —— */
-  --bg-body: #d9e3ec;
-  --bg-body-deep: #c8d5e2;
-  --card-bg: #f7fafc;
-  --card-elevated: #ffffff;
-  --text-primary: #152433;
-  --text-secondary: #6b7c8f;
-  --text-muted: #4a5d70;
-  --border: #b7c5d4;
-  --border-soft: #dce5ee;
-  --accent: #0a7ea4;
-  --accent-hover: #086887;
-  --accent-soft: #e3f3f8;
-  --flame: #e07a2f;
-  --flame-soft: #fff1e6;
-  --ink-lab: #1e3a4c;
+  --paper: #f2e9dc;
+  --paper-deep: #e4d6c4;
+  --card-bg: #fffaf2;
+  --card-elevated: #fffdf8;
+  --ink: #1a2230;
+  --ink-soft: #3d4a5c;
+  --text-primary: var(--ink);
+  --text-secondary: #6a7382;
+  --text-muted: #4e596a;
+  --border: #c9b8a2;
+  --border-soft: #e6d9c8;
+  --border-ink: #1a2230;
 
-  --btn-primary: var(--accent);
+  /* 红泥章 / 氧原子红 — 主强调 */
+  --stamp: #c23b22;
+  --stamp-soft: #fde8e3;
+  /* 图示青绿 — 次强调（课本示意图） */
+  --diagram: #1f6f6a;
+  --diagram-soft: #dff1ef;
+  /* 便签黄 */
+  --note: #f0c75e;
+  --note-soft: #fff6d6;
+
+  --accent: var(--stamp);
+  --accent-hover: #a32f1b;
+  --accent-soft: var(--stamp-soft);
+  --flame: var(--note);
+  --flame-soft: var(--note-soft);
+  --ink-lab: var(--ink);
+
+  --btn-primary: var(--stamp);
   --btn-primary-hover: var(--accent-hover);
-  --btn-primary-border: #065a74;
+  --btn-primary-border: #8f2818;
 
-  --shadow-sm: 0 1px 2px rgba(21, 36, 51, 0.06);
-  --shadow-md: 0 4px 14px rgba(21, 36, 51, 0.08);
-  --shadow-float: 0 12px 28px rgba(21, 36, 51, 0.1), 0 2px 6px rgba(21, 36, 51, 0.04);
-  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  /* 错位印刷阴影（签名），少用大模糊 */
+  --shadow-print: 3px 3px 0 color-mix(in srgb, var(--ink) 88%, transparent);
+  --shadow-print-sm: 2px 2px 0 color-mix(in srgb, var(--ink) 75%, transparent);
+  --shadow-sm: 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
+  --shadow-md: var(--shadow-print-sm);
+  --shadow-float: var(--shadow-print);
+  --shadow-inset-glass: none;
 
-  /* 周期表分区（偏教材色，略降饱和避免糖果感） */
-  --s-block: #ffe4cc;
-  --p-block: #d4ebf7;
-  --d-block: #fdecc8;
-  --ds-block: #c8efd4;
-  --f-block: #f5d6ea;
-  --noble-block: #ddd4f5;
+  /* 周期表分区：更像塑料球棍模型色块，略哑 */
+  --s-block: #f7c9a8;
+  --p-block: #b8d9f0;
+  --d-block: #f3e0a8;
+  --ds-block: #b5dfc4;
+  --f-block: #e8c4dc;
+  --noble-block: #cfc2ea;
 
-  /* 尺寸 token */
   --box-size: 56px;
-  --gap-size: 4px;
-  --f-gap-size: 6px;
-  --radius-box: 10px;
-  --radius-card: 16px;
-  --radius-control: 12px;
+  --gap-size: 5px;
+  --f-gap-size: 8px;
+  --radius-box: 8px;
+  --radius-card: 14px;
+  --radius-control: 10px;
   --label-height: 22px;
   --period-label-width: 18px;
   --side-col-width: calc(var(--box-size) * 0.52);
@@ -55,18 +68,14 @@
   --table-width: calc(18 * var(--box-size) + 17 * var(--gap-size));
   --frame-col-gap: 4px;
 
-  /*
-   * 字体：
-   * - 展示/导航：Sora（几何现代，实验室仪器面板感）
-   * - 中文正文：Noto Sans SC
-   * - 公式/数据：IBM Plex Mono
-   */
-  --font-display: 'Sora', system-ui, sans-serif;
-  --font-latin: 'Sora', system-ui, sans-serif;
+  /* 衬线标题像校刊刊头；正文无衬线；公式等宽 */
+  --font-display: 'Instrument Serif', 'Noto Serif SC', serif;
+  --font-latin: 'Noto Sans SC', system-ui, sans-serif;
   --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
     sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-main: var(--font-display), var(--font-cjk);
+  --font-serif-cjk: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-main: var(--font-cjk);
 
   --font-symbol: 18px;
   --font-hanzi: 11px;
@@ -74,9 +83,11 @@
   --font-mass: 8px;
   --show-side: 1;
 
-  /* 台面网格（实验记录本） */
-  --lab-grid-size: 22px;
-  --lab-grid-line: rgba(30, 58, 76, 0.055);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --dur-fast: 0.15s;
+  --dur: 0.28s;
+  --dur-slow: 0.45s;
 }
 
 @media (max-width: 1100px) {

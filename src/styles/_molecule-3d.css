@@ -4,37 +4,38 @@
 }
 
 .atom-label {
-  font-family: var(--font-display), var(--font-cjk), sans-serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink-lab);
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  border-radius: 7px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  background: var(--card-elevated);
+  border: 2px solid var(--border-ink);
+  border-radius: 6px;
   padding: 2px 7px;
   line-height: 1.25;
-  box-shadow: 0 2px 6px rgba(21, 36, 51, 0.1);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--ink) 70%, transparent);
   user-select: none;
   white-space: nowrap;
   transform: translateY(-2px);
 }
 
 .tip-card {
-  border: 1px solid var(--border-soft);
-  background: linear-gradient(180deg, var(--card-elevated), var(--accent-soft));
-  border-radius: 14px;
+  border: 2.5px solid var(--border-ink);
+  background: var(--note-soft);
+  border-radius: 12px;
   padding: 0.8rem 0.9rem;
+  box-shadow: var(--shadow-print-sm);
 }
 
 .tip-card h3 {
   margin: 0 0 0.35rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--accent);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--stamp);
   font-weight: 700;
-  font-family: var(--font-mono);
+  font-family: var(--font-serif-cjk);
 }
 
 .tip-card p {
@@ -48,16 +49,16 @@
   position: relative;
   min-height: 0;
   border-radius: var(--radius-card);
-  border: 1px solid var(--border-soft);
-  background: linear-gradient(165deg, #fbfdfe 0%, #e8f0f5 100%);
-  box-shadow: var(--shadow-float), var(--shadow-inset-glass);
+  border: 2.5px solid var(--border-ink);
+  background: var(--paper);
+  box-shadow: var(--shadow-print);
   overflow: hidden;
 }
 
 .stage-3d {
   min-height: 0;
   height: 100%;
-  background: transparent;
+  background: radial-gradient(ellipse at 50% 40%, #fffef9 0%, var(--paper) 70%);
 }
 
 #mol-root {
@@ -123,7 +124,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: var(--diagram);
   font-weight: 700;
 }
 
@@ -145,7 +146,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: var(--diagram);
   font-weight: 700;
 }
 

@@ -9,7 +9,7 @@
 
 .field input[type='text'] {
   width: 100%;
-  border: 1.5px solid var(--border);
+  border: 2px solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
   border-radius: var(--radius-control);
@@ -18,18 +18,20 @@
   font-size: 0.95rem;
   font-weight: 600;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--shadow-print-sm);
+  transition: box-shadow var(--dur-fast) ease, transform var(--dur-fast) ease;
 }
 
 .field input[type='text']:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--border-ink);
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
 }
 
 .field input[type='text'].is-invalid {
-  border-color: #f87171;
-  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18);
-  background: #fffafa;
+  border-color: var(--stamp);
+  background: var(--stamp-soft);
+  box-shadow: var(--shadow-print-sm);
 }
 
 .actions {
@@ -41,94 +43,57 @@
 
 .btn {
   appearance: none;
-  border: 2px solid transparent;
+  border: 2px solid var(--border-ink);
   border-radius: 999px;
   padding: 0.55rem 0.95rem;
   font: inherit;
   font-weight: 700;
   font-size: 0.88rem;
   cursor: pointer;
-  transition: 0.12s ease;
+  background: var(--card-elevated);
+  color: var(--ink);
+  box-shadow: var(--shadow-print-sm);
 }
 
 .btn.primary {
   background-color: var(--btn-primary);
-  background-image: none;
-  color: #fff;
-  border: 1.5px solid var(--btn-primary-border);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--btn-primary) 32%, transparent);
+  color: #fffaf5;
+  border-color: var(--border-ink);
+  box-shadow: var(--shadow-print-sm);
 }
 
 .btn.primary:hover {
   background-color: var(--btn-primary-hover);
-  border-color: var(--btn-primary-border);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
 }
 
 .btn.primary:active {
-  filter: brightness(0.95);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--border-ink);
 }
 
-/* 次要强调：焰橙（如「计算」「生成」类动作可叠加 .btn-flame） */
 .btn.flame {
-  background: var(--flame);
-  border-color: color-mix(in srgb, var(--flame) 80%, #000);
-  color: #fff;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--flame) 35%, transparent);
+  background: var(--note);
+  border-color: var(--border-ink);
+  color: var(--ink);
+  box-shadow: var(--shadow-print-sm);
 }
 
 .btn.flame:hover {
-  filter: brightness(1.05);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
 }
 
 .btn.ghost {
   background: var(--card-elevated);
-  border-color: var(--border);
+  border-color: var(--border-ink);
   color: var(--text-muted);
 }
 
 .btn.ghost:hover {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-  color: var(--text-primary);
-  background: var(--accent-soft);
-}
-
-.presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-  margin-bottom: 0.9rem;
-}
-
-.presets > span.presets-label {
-  width: 100%;
-  color: var(--text-secondary);
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.presets > span.presets-empty {
-  width: 100%;
-  color: var(--text-muted, #94a3b8);
-  font-size: 0.74rem;
-  font-weight: 500;
-}
-
-.presets button {
-  appearance: none;
-  border: 2px solid var(--border);
-  background: #fff;
-  color: var(--text-primary);
-  border-radius: 999px;
-  padding: 0.3rem 0.65rem;
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 700;
-  font-family: ui-monospace, monospace;
-  cursor: pointer;
-}
-
-.presets button:hover {
-  border-color: #93c5fd;
-  background: var(--accent-soft);
+  background: var(--diagram-soft);
+  color: var(--ink);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
 }

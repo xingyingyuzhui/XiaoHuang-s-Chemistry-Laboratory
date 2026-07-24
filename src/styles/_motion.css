@@ -1,0 +1,162 @@
+/**
+ * 动效原则：只服务「切换 / 选中 / 反馈」
+ * 不用无限循环霓虹、不整页视差、不赛博扫描线
+ */
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stamp-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  55% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes select-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--stamp) 0%, transparent);
+  }
+  40% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--stamp) 35%, transparent),
+      var(--shadow-print-sm);
+  }
+  100% {
+    box-shadow:
+      3px 3px 0 color-mix(in srgb, var(--ink) 80%, transparent),
+      0 0 0 2px var(--stamp);
+  }
+}
+
+@keyframes soft-float-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes brand-tilt {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-4deg);
+  }
+  70% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Tab 面板切入 */
+.panel.active {
+  animation: panel-enter var(--dur) var(--ease-out) both;
+}
+
+/* 首屏顶栏 */
+.topbar {
+  animation: soft-float-in var(--dur-slow) var(--ease-out) both;
+}
+
+.table-shell,
+.detail-card,
+.sidebar,
+.stage {
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+/* 周期表选中：一次「盖章」感 */
+.element.is-selected {
+  animation: select-ring 0.42s var(--ease-out) both;
+}
+
+.detail-badge {
+  transition: transform var(--dur) var(--ease-spring);
+}
+
+.detail-card:has(.detail-badge) .detail-badge {
+  animation: stamp-pop 0.4s var(--ease-spring) both;
+}
+
+/* 小黄头像：悬停轻晃，像点头 */
+.brand-mark-clickable:hover {
+  animation: brand-tilt 0.55s var(--ease-out);
+}
+
+.tab,
+.chip,
+.btn,
+.mol-btn,
+.btn-settings {
+  transition:
+    color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+.tab:active,
+.chip:active,
+.btn:active,
+.mol-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+/* 图例进入略交错 */
+.legend-item {
+  animation: soft-float-in 0.4s var(--ease-out) both;
+}
+.legend-item:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.legend-item:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.legend-item:nth-child(3) {
+  animation-delay: 0.08s;
+}
+.legend-item:nth-child(4) {
+  animation-delay: 0.11s;
+}
+.legend-item:nth-child(5) {
+  animation-delay: 0.14s;
+}
+.legend-item:nth-child(6) {
+  animation-delay: 0.17s;
+}
+
+.brand-tip-bubble {
+  transition: opacity 0.22s var(--ease-out), transform 0.28s var(--ease-spring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel.active,
+  .topbar,
+  .element.is-selected,
+  .detail-badge,
+  .legend-item,
+  .brand-mark-clickable:hover {
+    animation: none !important;
+  }
+}

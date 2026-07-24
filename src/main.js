@@ -73,8 +73,16 @@ async function switchTab(name) {
   Object.entries(panels).forEach(([key, el]) => {
     if (!el) return;
     const on = key === name;
-    el.classList.toggle('active', on);
-    el.hidden = !on;
+    if (on) {
+      el.hidden = false;
+      // 重新触发切入动画
+      el.classList.remove('active');
+      void el.offsetWidth;
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+      el.hidden = true;
+    }
   });
 
   if (name === 'molecule') {
