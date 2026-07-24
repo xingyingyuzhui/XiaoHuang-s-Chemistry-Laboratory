@@ -1,7 +1,7 @@
 {
   "name": "xiaohuang-chem-lab",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "小黄的化学实验室",
   "author": "小黄的化学实验室",
   "main": "electron/main.cjs",
@@ -16,8 +16,8 @@
     "electron:dev:skip-build": "electron .",
     "stage:electron": "node scripts/stage-electron-server.js",
     "pack:electron": "npm run build:frontend && npm run stage:electron && electron-builder --dir -c.electronDist=node_modules/electron/dist",
-    "dist:win": "npm run build:frontend && npm run stage:electron && electron-builder --win --x64",
-    "dist:mac": "npm run build:frontend && npm run stage:electron && electron-builder --mac -c.electronDist=node_modules/electron/dist",
+    "dist:win": "npm run build:frontend && npm run stage:electron && electron-builder --win nsis --x64",
+    "dist:mac": "npm run build:frontend && npm run stage:electron && electron-builder --mac dmg --arm64 -c.electronDist=node_modules/electron/dist",
     "dist:electron": "npm run build:frontend && npm run stage:electron && electron-builder -c.electronDist=node_modules/electron/dist"
   },
   "dependencies": {},
