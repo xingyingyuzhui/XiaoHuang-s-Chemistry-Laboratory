@@ -1,11 +1,11 @@
-/* —— Table shell —— */
+/* —— Table shell：陶瓷托盘 —— */
 .table-shell {
   min-width: 0;
   min-height: 0;
   max-height: 100%;
-  background: var(--card-bg);
+  background: linear-gradient(180deg, var(--card-elevated) 0%, var(--card-bg) 100%);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-float);
+  box-shadow: var(--shadow-float), var(--shadow-inset-glass);
   border: 1px solid var(--border-soft);
   display: flex;
   flex-direction: column;
@@ -18,8 +18,9 @@
   gap: 0.5rem;
   align-items: center;
   justify-content: flex-start;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.85rem;
   border-bottom: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--accent-soft) 35%, var(--card-elevated));
   flex-shrink: 0;
 }
 
@@ -45,8 +46,9 @@
   color: var(--text-muted);
   padding: 0.18rem 0.45rem;
   border-radius: 999px;
-  background: #f8fafc;
+  background: var(--card-elevated);
   border: 1px solid var(--border-soft);
+  font-family: var(--font-cjk), var(--font-display);
 }
 
 .legend-dot {
@@ -62,27 +64,29 @@
 
 .chip {
   appearance: none;
-  border: 2px solid var(--border);
-  background: #fff;
+  border: 1.5px solid var(--border);
+  background: var(--card-elevated);
   color: var(--text-muted);
   font: inherit;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.28rem 0.65rem;
+  padding: 0.3rem 0.7rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .chip:hover {
-  border-color: #cbd5e1;
-  color: #334155;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--text-primary);
 }
 
 .chip.active {
   background: var(--accent-soft);
   border-color: var(--accent);
-  color: #2563eb;
+  color: var(--accent-hover);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .ptable-scroll {
@@ -180,10 +184,10 @@
 
 .element {
   appearance: none;
-  border: 2px solid transparent;
+  border: 1.5px solid color-mix(in srgb, var(--border) 55%, transparent);
   border-radius: var(--radius-box);
-  background: #fff;
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(165deg, #ffffff 0%, #f3f7fa 100%);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -195,19 +199,23 @@
   padding: 0;
   font: inherit;
   color: var(--text-primary);
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.16s ease,
+    border-color 0.16s ease;
   overflow: hidden;
 }
 
 .element:hover {
   z-index: 10;
-  transform: scale(1.12) translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.28);
+  transform: scale(1.1) translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  box-shadow: 0 10px 18px -4px rgba(21, 36, 51, 0.16);
 }
 
 .element.is-selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.28);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 6px 14px rgba(10, 126, 164, 0.18);
   z-index: 12;
 }
 
@@ -261,19 +269,27 @@
 
 .element .symbol {
   font-size: var(--font-symbol);
-  font-weight: 800;
-  letter-spacing: -0.4px;
+  font-weight: 700;
+  font-family: var(--font-display), var(--font-latin);
+  letter-spacing: -0.03em;
   margin-top: 2px;
   line-height: 1;
+  color: var(--ink-lab);
 }
 
 .element .hanzi {
   font-size: var(--font-hanzi);
   font-weight: 500;
-  color: #475569;
+  color: var(--text-muted);
   margin-top: 1px;
   font-family: var(--font-cjk);
   font-feature-settings: normal;
+}
+
+.element .atomic-number,
+.element .atomic-mass {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .series-label {
@@ -325,7 +341,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8fafc;
+  background: color-mix(in srgb, var(--card-elevated) 80%, var(--accent-soft));
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   color: #64748b;
   font-size: 9px;

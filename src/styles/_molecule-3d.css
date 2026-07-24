@@ -4,16 +4,17 @@
 }
 
 .atom-label {
-  font-family: var(--font-latin), var(--font-cjk), sans-serif;
-  font-size: 16px;
-  font-weight: 800;
-  color: #0f172a;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.45);
+  font-family: var(--font-display), var(--font-cjk), sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink-lab);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
   border-radius: 7px;
   padding: 2px 7px;
   line-height: 1.25;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 2px 6px rgba(21, 36, 51, 0.1);
   user-select: none;
   white-space: nowrap;
   transform: translateY(-2px);
@@ -21,18 +22,19 @@
 
 .tip-card {
   border: 1px solid var(--border-soft);
-  background: #f8fafc;
+  background: linear-gradient(180deg, var(--card-elevated), var(--accent-soft));
   border-radius: 14px;
   padding: 0.8rem 0.9rem;
 }
 
 .tip-card h3 {
   margin: 0 0 0.35rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: var(--accent);
   font-weight: 700;
+  font-family: var(--font-mono);
 }
 
 .tip-card p {
@@ -47,15 +49,15 @@
   min-height: 0;
   border-radius: var(--radius-card);
   border: 1px solid var(--border-soft);
-  background: #fff;
-  box-shadow: var(--shadow-float);
+  background: linear-gradient(165deg, #fbfdfe 0%, #e8f0f5 100%);
+  box-shadow: var(--shadow-float), var(--shadow-inset-glass);
   overflow: hidden;
 }
 
 .stage-3d {
   min-height: 0;
   height: 100%;
-  background: #fff;
+  background: transparent;
 }
 
 #mol-root {

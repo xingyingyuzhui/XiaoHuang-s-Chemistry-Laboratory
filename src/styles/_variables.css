@@ -1,53 +1,82 @@
 :root {
-  /* 马卡龙 / 教材浅色 */
-  --bg-body: #f0f4f8;
-  --card-bg: #ffffff;
-  --text-primary: #1e293b;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --border-soft: #f1f5f9;
-  --accent: #3b82f6;
-  --accent-soft: #eff6ff;
-  --btn-primary: #3b82f6;
-  --btn-primary-hover: #2563eb;
-  --btn-primary-border: #1d4ed8;
-  --shadow-sm: 0 2px 4px rgba(148, 163, 184, 0.15);
-  --shadow-md: 0 4px 6px -1px rgba(148, 163, 184, 0.2), 0 2px 4px -1px rgba(148, 163, 184, 0.1);
-  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+  /*
+   * 设计方向：中学化学实验室台面
+   * - 冷灰蓝台面底 + 细方格（实验记录本网格）
+   * - 陶瓷/硼硅卡片
+   * - 主色：硫酸铜蓝；强调：本生灯焰橙
+   * - 避开 AI 默认：奶油衬线 / 黑底霓虹 / 报纸排版
+   */
 
-  --s-block: #ffedd5;
-  --p-block: #e0f2fe;
-  --d-block: #fef3c7;
-  --ds-block: #bbf7d0;
-  --f-block: #fce7f3;
-  --noble-block: #ddd6fe;
+  /* —— 色板 —— */
+  --bg-body: #d9e3ec;
+  --bg-body-deep: #c8d5e2;
+  --card-bg: #f7fafc;
+  --card-elevated: #ffffff;
+  --text-primary: #152433;
+  --text-secondary: #6b7c8f;
+  --text-muted: #4a5d70;
+  --border: #b7c5d4;
+  --border-soft: #dce5ee;
+  --accent: #0a7ea4;
+  --accent-hover: #086887;
+  --accent-soft: #e3f3f8;
+  --flame: #e07a2f;
+  --flame-soft: #fff1e6;
+  --ink-lab: #1e3a4c;
 
-  /* 默认值；运行时由 fitPeriodicTable() 按容器等比放大 */
+  --btn-primary: var(--accent);
+  --btn-primary-hover: var(--accent-hover);
+  --btn-primary-border: #065a74;
+
+  --shadow-sm: 0 1px 2px rgba(21, 36, 51, 0.06);
+  --shadow-md: 0 4px 14px rgba(21, 36, 51, 0.08);
+  --shadow-float: 0 12px 28px rgba(21, 36, 51, 0.1), 0 2px 6px rgba(21, 36, 51, 0.04);
+  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+  /* 周期表分区（偏教材色，略降饱和避免糖果感） */
+  --s-block: #ffe4cc;
+  --p-block: #d4ebf7;
+  --d-block: #fdecc8;
+  --ds-block: #c8efd4;
+  --f-block: #f5d6ea;
+  --noble-block: #ddd4f5;
+
+  /* 尺寸 token */
   --box-size: 56px;
   --gap-size: 4px;
-  --f-gap-size: 6px; /* 主表与 f 区之间的窄间隔（第 8 行轨道） */
+  --f-gap-size: 6px;
   --radius-box: 10px;
-  --radius-card: 20px;
+  --radius-card: 16px;
+  --radius-control: 12px;
   --label-height: 22px;
   --period-label-width: 18px;
-  /* 侧栏窄于元素格，把横向空间让给 18 列主表 */
   --side-col-width: calc(var(--box-size) * 0.52);
   --side-cols-width: calc(2 * var(--side-col-width) + var(--gap-size));
   --table-width: calc(18 * var(--box-size) + 17 * var(--gap-size));
   --frame-col-gap: 4px;
 
-  /* 中文优先系统字体（更易覆盖 CJK 扩展区生僻元素名）；拉丁用 Quicksand */
-  --font-latin: 'Quicksand', system-ui, sans-serif;
-  --font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Songti SC', 'STSong',
-    'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', 'Source Han Sans SC',
+  /*
+   * 字体：
+   * - 展示/导航：Sora（几何现代，实验室仪器面板感）
+   * - 中文正文：Noto Sans SC
+   * - 公式/数据：IBM Plex Mono
+   */
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-latin: 'Sora', system-ui, sans-serif;
+  --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
     sans-serif;
-  --font-main: var(--font-latin);
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-main: var(--font-display), var(--font-cjk);
+
   --font-symbol: 18px;
   --font-hanzi: 11px;
   --font-atomic: 10px;
   --font-mass: 8px;
   --show-side: 1;
+
+  /* 台面网格（实验记录本） */
+  --lab-grid-size: 22px;
+  --lab-grid-line: rgba(30, 58, 76, 0.055);
 }
 
 @media (max-width: 1100px) {

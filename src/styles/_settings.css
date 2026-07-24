@@ -2,7 +2,7 @@
 .settings-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+  background: color-mix(in srgb, var(--ink-lab) 38%, transparent);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease;
@@ -20,8 +20,8 @@
   right: 0;
   height: 100%;
   width: min(400px, 92vw);
-  background: var(--card-bg);
-  box-shadow: -12px 0 40px rgba(15, 23, 42, 0.14);
+  background: linear-gradient(180deg, var(--card-elevated) 0%, var(--card-bg) 100%);
+  box-shadow: -12px 0 40px rgba(21, 36, 51, 0.16);
   border-left: 1px solid var(--border-soft);
   z-index: 90;
   display: flex;

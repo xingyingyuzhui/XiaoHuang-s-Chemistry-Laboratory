@@ -1,13 +1,18 @@
-/* —— Top bar —— */
+/* —— Top bar：实验台边缘条 —— */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.75rem 1.15rem;
-  background: color-mix(in srgb, var(--card-bg) 88%, transparent);
-  backdrop-filter: blur(12px);
+  padding: 0.7rem 1.15rem 0.65rem;
+  background: color-mix(in srgb, var(--card-elevated) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
   border-bottom: 1px solid var(--border-soft);
+  /* 签名细节：本生灯焰橙细线 = 台面金属嵌条 */
+  box-shadow:
+    var(--shadow-inset-glass),
+    0 1px 0 color-mix(in srgb, var(--flame) 55%, transparent),
+    0 8px 20px rgba(21, 36, 51, 0.06);
   z-index: 20;
 }
 
@@ -46,16 +51,19 @@
 }
 
 .brand-mark {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
   object-position: center bottom;
-  border-radius: 12px;
-  background: transparent;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #fff 0%, var(--accent-soft) 100%);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-soft));
+  box-shadow: var(--shadow-sm);
   display: block;
   flex-shrink: 0;
   user-select: none;
   -webkit-user-drag: none;
+  padding: 2px;
 }
 
 .brand-mark-clickable {
@@ -260,7 +268,7 @@
 }
 
 .brand-tip-btn:hover {
-  border-color: #93c5fd;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: var(--accent-soft);
 }
 
@@ -276,26 +284,49 @@
   color: #fff;
 }
 
-.brand h1 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
 }
 
-.brand p {
-  margin: 0.12rem 0 0;
+.brand-eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 75%, var(--text-muted));
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  font-family: var(--font-cjk), var(--font-display);
+  line-height: 1.25;
+}
+
+.brand-sub {
+  margin: 0;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .tabs {
   display: flex;
-  gap: 0.3rem;
-  padding: 0.22rem;
-  border-radius: 999px;
-  background: #e2e8f0;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-body-deep) 70%, #9aafc0);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: inset 0 1px 2px rgba(21, 36, 51, 0.06);
 }
 
 .tab {
@@ -304,26 +335,34 @@
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-weight: 700;
-  font-size: 0.88rem;
-  padding: 0.48rem 0.95rem;
-  border-radius: 999px;
+  font-family: var(--font-cjk), var(--font-display);
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 0.48rem 0.88rem;
+  border-radius: 11px;
   cursor: pointer;
-  transition: 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.12s ease;
 }
 
 .tab:hover {
   color: var(--text-primary);
+  background: color-mix(in srgb, var(--card-elevated) 45%, transparent);
 }
 
 .tab.active {
-  background: var(--card-bg);
+  background: var(--card-elevated);
   color: var(--accent);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), var(--shadow-inset-glass);
+  font-weight: 700;
+}
+
+.tab:active {
+  transform: scale(0.98);
 }
 
 main {
-  padding: 0.5rem 0.65rem 0.55rem;
+  padding: 0.55rem 0.7rem 0.6rem;
   min-height: 0;
   overflow: hidden;
   display: flex;

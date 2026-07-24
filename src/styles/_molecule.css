@@ -40,7 +40,7 @@
 .mol-btn {
   appearance: none;
   border: 1.5px solid var(--border-soft);
-  background: #f8fafc;
+  background: linear-gradient(180deg, #fff 0%, #f2f6f9 100%);
   color: var(--text-primary);
   border-radius: 10px;
   padding: 0.38rem 0.45rem;

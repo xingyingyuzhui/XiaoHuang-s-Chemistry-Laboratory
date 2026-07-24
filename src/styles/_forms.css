@@ -9,20 +9,21 @@
 
 .field input[type='text'] {
   width: 100%;
-  border: 2px solid var(--border);
-  background: #fff;
+  border: 1.5px solid var(--border);
+  background: var(--card-elevated);
   color: var(--text-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   padding: 0.65rem 0.75rem;
-  font-family: ui-monospace, monospace;
-  font-size: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
   font-weight: 600;
   outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .field input[type='text']:focus {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .field input[type='text'].is-invalid {
@@ -51,31 +52,44 @@
 }
 
 .btn.primary {
-  background-color: var(--btn-primary, #3b82f6);
+  background-color: var(--btn-primary);
   background-image: none;
   color: #fff;
-  border: 2px solid var(--btn-primary-border, #2563eb);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--btn-primary, #3b82f6) 35%, transparent);
+  border: 1.5px solid var(--btn-primary-border);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--btn-primary) 32%, transparent);
 }
 
 .btn.primary:hover {
-  background-color: var(--btn-primary-hover, #2563eb);
-  border-color: var(--btn-primary-border, #1d4ed8);
+  background-color: var(--btn-primary-hover);
+  border-color: var(--btn-primary-border);
 }
 
 .btn.primary:active {
   filter: brightness(0.95);
 }
 
+/* 次要强调：焰橙（如「计算」「生成」类动作可叠加 .btn-flame） */
+.btn.flame {
+  background: var(--flame);
+  border-color: color-mix(in srgb, var(--flame) 80%, #000);
+  color: #fff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--flame) 35%, transparent);
+}
+
+.btn.flame:hover {
+  filter: brightness(1.05);
+}
+
 .btn.ghost {
-  background: #fff;
+  background: var(--card-elevated);
   border-color: var(--border);
   color: var(--text-muted);
 }
 
 .btn.ghost:hover {
-  border-color: #cbd5e1;
-  color: #334155;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  color: var(--text-primary);
+  background: var(--accent-soft);
 }
 
 .presets {
