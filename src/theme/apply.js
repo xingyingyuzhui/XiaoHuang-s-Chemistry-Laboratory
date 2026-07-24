@@ -3,6 +3,14 @@
  */
 import { DEFAULT_THEME_ID, isThemeId, normalizeTheme } from './catalog.js';
 
+/** 顶栏眉题（文具刊头 / 试剂瓶签等） */
+const THEME_EYEBROW = {
+  default: '',
+  stationery: '兴趣小组 · 第 1 期',
+  reagent: 'REAGENT · SHELF',
+  pixel: 'PIXEL · LAB',
+};
+
 /**
  * @param {{ id?: string } | string | null | undefined} theme
  * @returns {string} 实际应用的 theme id
@@ -15,6 +23,10 @@ export function applyTheme(theme) {
     id = normalizeTheme(theme).id;
   }
   document.documentElement.setAttribute('data-theme', id);
+  const eye = document.querySelector('.brand-eyebrow');
+  if (eye) {
+    eye.textContent = THEME_EYEBROW[id] || '';
+  }
   return id;
 }
 
