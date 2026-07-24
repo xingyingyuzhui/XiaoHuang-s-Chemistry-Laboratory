@@ -29,3 +29,31 @@
   align-items: stretch;
   overflow: hidden;
 }
+
+/* 大屏 / 4K 逻辑分辨率：侧栏随窗口略放宽，避免主区过大侧栏仍过窄 */
+@media (min-width: 1600px) {
+  #panel-table.active {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+    gap: 0.85rem;
+  }
+
+  #panel-molecule.active,
+  #panel-molar.active,
+  #panel-electron.active,
+  #panel-ai.active {
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 2200px) {
+  #panel-table.active {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+  }
+
+  #panel-molecule.active,
+  #panel-molar.active,
+  #panel-electron.active,
+  #panel-ai.active {
+    grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  }
+}

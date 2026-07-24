@@ -91,8 +91,9 @@
   overflow: auto;
   padding: 0.3rem 0.35rem 0.4rem 0.2rem;
   display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
+  /* 大窗铺满后居中，避免贴左上角留大片空白 */
+  justify-content: center;
+  align-items: center;
 }
 
 .ptable-frame {

@@ -19,7 +19,13 @@ async function request(url, options = {}) {
       ...options
     });
   } catch (e) {
-    throw new Error(e?.message || '网络请求失败（请确认后端已启动）');
+    const msg = String(e?.message || e || '');
+    if (/Failed to fetch|NetworkError|Load failed|network/i.test(msg)) {
+      throw new Error(
+        '无法连接本地服务。若用桌面版请重启应用；若用便携 exe 请勿关闭黑色控制台，并用控制台里的 http://127.0.0.1:端口 打开；不要用本地文件方式打开网页',
+      );
+    }
+    throw new Error(msg || '网络请求失败（请确认后端已启动）');
   }
 
   const raw = await response.text();

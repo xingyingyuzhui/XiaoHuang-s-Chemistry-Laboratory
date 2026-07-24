@@ -1,3 +1,16 @@
+/* 顶栏/正文在宽屏略放大字号，接近浏览器放大一档的观感 */
+@media (min-width: 1600px) {
+  html {
+    font-size: 106.25%; /* 17px 基准 */
+  }
+}
+
+@media (min-width: 2200px) {
+  html {
+    font-size: 112.5%; /* 18px 基准 */
+  }
+}
+
 @media (max-width: 1100px) {
   #panel-table.active {
     grid-template-columns: 1fr;

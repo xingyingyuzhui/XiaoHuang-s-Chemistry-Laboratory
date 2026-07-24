@@ -164,6 +164,7 @@ export function selectElement(z) {
 
 /**
  * 响应式缩放周期表
+ * 按容器可用宽高尽量「铺满」；上限随窗口增大（4K 大窗不再卡在 100px）
  */
 export function fitPeriodicTable() {
   if (!ptableScroll) return;
@@ -176,10 +177,11 @@ export function fitPeriodicTable() {
   const frameGap = 4;
 
   const measure = (box) => {
-    const gap = Math.min(6, Math.max(2, box * 0.065));
-    const fGap = Math.min(8, Math.max(3, box * 0.1));
-    const labelH = Math.min(34, Math.max(20, box * 0.46));
-    const periodW = Math.min(28, Math.max(16, box * 0.34));
+    // 间隙与字号随格子等比，大窗时允许更大（原先硬顶 6/8/34 导致大屏「放大了却不长大」）
+    const gap = Math.min(12, Math.max(2, box * 0.065));
+    const fGap = Math.min(16, Math.max(3, box * 0.1));
+    const labelH = Math.min(52, Math.max(20, box * 0.46));
+    const periodW = Math.min(44, Math.max(16, box * 0.34));
     const sideCol = box * 0.48;
     const sideW = showSide ? 2 * sideCol + gap : 0;
     const tableW = 18 * box + 17 * gap;
@@ -188,10 +190,12 @@ export function fitPeriodicTable() {
     return { gap, fGap, labelH, periodW, sideCol, sideW, totalW, totalH, box };
   };
 
-  let lo = 34;
-  let hi = 100;
-  let best = measure(40);
-  for (let i = 0; i < 28; i++) {
+  // 由可用空间估上限：约 18 列 × 10 行（含 f 区与轴标签），再软顶防止极端超大
+  const estMax = Math.min(availW / 19.2, availH / 10.2);
+  let lo = 28;
+  let hi = Math.min(220, Math.max(72, estMax * 1.08));
+  let best = measure(Math.min(hi, 48));
+  for (let i = 0; i < 32; i++) {
     const mid = (lo + hi) / 2;
     const m = measure(mid);
     if (m.totalW <= availW && m.totalH <= availH) {

@@ -16,3 +16,5 @@ SESSION-SUMMARY.md
 *.log
 frontend.log
 dist-exe/
+dist-electron/
+.electron-stage/

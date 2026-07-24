@@ -1,0 +1,79 @@
+# 路线 A：Electron 安装包（尽量压体积）
+# - app.asar 只放 main + package.json
+# - 运行时 server 来自 .electron-stage（scripts/stage-electron-server.js 预精简）
+# - maximum 压缩 + 仅中/英 Chromium 语言包
+
+appId: com.xiaohuang.chemlab
+productName: 小黄的化学实验室
+copyright: Copyright © 小黄的化学实验室
+artifactName: XiaoHuang-ChemLab-${version}-${os}-${arch}.${ext}
+
+directories:
+  output: dist-electron
+  buildResources: electron/build
+
+files:
+  - electron/main.cjs
+  - electron/build/icon.png
+  - package.json
+
+extraResources:
+  - from: .electron-stage/server
+    to: server
+
+asar: true
+compression: maximum
+
+electronLanguages:
+  - zh-CN
+  - en-US
+
+npmRebuild: false
+
+# 安装包 / exe / 快捷方式图标（electron/build 下 icon.ico / icon.icns / icon.png）
+icon: icon.png
+
+win:
+  icon: icon.ico
+  target:
+    # NSIS 安装包（在 mac 上打包通常需要 Wine）
+    - target: nsis
+      arch:
+        - x64
+    # 免安装便携包（mac 上更稳，可直接拷给 Windows 试用）
+    - target: portable
+      arch:
+        - x64
+
+nsis:
+  oneClick: true
+  perMachine: false
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 小黄的化学实验室
+  deleteAppDataOnUninstall: false
+  installerLanguages:
+    - zh_CN
+    - en_US
+  language: "2052"
+  artifactName: XiaoHuang-ChemLab-Setup-${version}.${ext}
+
+portable:
+  artifactName: XiaoHuang-ChemLab-Portable-${version}.${ext}
+
+mac:
+  icon: icon.icns
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  category: public.app-category.education
+
+dmg:
+  title: 小黄的化学实验室
+
+linux:
+  target:
+    - AppImage
+  category: Education
