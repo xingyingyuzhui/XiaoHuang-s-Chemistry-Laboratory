@@ -993,4 +993,150 @@ function validateMoleculePayload(data) {
   return { name, formula, desc, atoms, bonds, physics, chemistry };
 }
 
+/**
+ * POST /api/ai/reaction
+ * 根据描述生成高中化学反应（结构化 JSON，不落库；前端确认后再 POST /api/reactions）
+ */
+router.post('/reaction', async (req, res) => {
+  try {
+    const { prompt, moleculeId, moleculeName, moleculeFormula, stepCount } =
+      req.body || {};
+    if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+      return badRequest(res, '请描述要添加的化学反应');
+    }
+
+    let nSteps = Number(stepCount);
+    if (![4, 5, 6].includes(nSteps)) nSteps = 5;
+
+    const knownIds =
+      'h2,o2,n2,cl2,o3,h2o,h2o2,hcl,h2s,nh3,co,co2,so2,so3,no,no2,nacl,ch4,c2h6,c2h4,c2h2,ch3oh,ethanol,hcho,ch3cooh,benzene';
+
+    const ctx = [
+      moleculeName && `当前分子名称：${moleculeName}`,
+      moleculeFormula && `当前分子式：${moleculeFormula}`,
+      moleculeId && `当前分子 id：${moleculeId}`,
+      `要求 steps 数组长度必须正好为 ${nSteps} 步`,
+      `库中已有分子 id（优先用于 moleculeId）：${knownIds}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const system = `你是高中化学教学助手。用户要为「3D 分子实验室」添加一条示意级化学反应。
+只输出一个 JSON 对象，不要 Markdown，不要其它文字。
+
+格式：
+{
+  "title": "短标题（≤20字）",
+  "type": "加成|取代|氧化|酯化|加聚|化合|分解|置换|复分解|氧化还原|其他",
+  "equation": "已配平的化学方程式（可用 Unicode 下标）",
+  "reactants": [{ "formula": "C2H4", "name": "乙烯", "moleculeId": "c2h4或null" }],
+  "products": [{ "formula": "…", "name": "…", "moleculeId": "h2o或null" }],
+  "conditions": "反应条件一句",
+  "phenomena": "实验现象一句",
+  "notes": "教学要点一句，并注明示意图",
+  "steps": [
+    {
+      "t": 0,
+      "label": "步骤名",
+      "equationHighlight": "高亮片段",
+      "focus": "reactant|break|join|product|done",
+      "moleculeId": "该步3D展示的分子id或null",
+      "tip": "一句讲解"
+    }
+  ],
+  "moleculeIds": ["可关联的已有分子id"]
+}
+
+规则：
+1. 面向高中，科学正确，配平正确。
+2. steps 必须正好 ${nSteps} 步（不少于 4、不多于 6），t 为秒且递增（约 0～11）。
+3. focus 只能是 reactant|break|join|product|done；建议含认识反应物、键变、结合、产物、小结。
+4. 每步尽量填 moleculeId（仅限库中已有 id）。多反应物时分步切换；产物步优先用产物 id，若无则用库中有的副产物。
+5. 动画为示意级，notes 不要声称量子真实过程。
+6. 只输出 JSON。`;
+
+    const user = `${ctx ? `${ctx}\n\n` : ''}请生成反应（必须 ${nSteps} 步）：\n${prompt.trim()}`;
+
+    const { content } = await callDeepSeekChat({
+      system,
+      user,
+      temperature: 0.35,
+      max_tokens: 2048,
+    });
+
+    const parsed = parseModelJson(content);
+    if (!parsed || typeof parsed !== 'object') {
+      return error(res, '模型返回无法解析', 502);
+    }
+
+    const title = String(parsed.title || '').trim().slice(0, 80);
+    const equation = String(parsed.equation || '').trim().slice(0, 200);
+    if (!title || !equation) {
+      return error(res, '模型未返回完整标题或方程式', 502);
+    }
+
+    const steps = Array.isArray(parsed.steps)
+      ? parsed.steps.slice(0, 8).map((s, i) => ({
+          t: Number(s.t) || i * 1.8,
+          label: String(s.label || `步骤${i + 1}`).slice(0, 40),
+          equationHighlight: String(s.equationHighlight || '').slice(0, 80),
+          focus: ['reactant', 'break', 'join', 'product', 'done'].includes(s.focus)
+            ? s.focus
+            : 'reactant',
+          moleculeId: s.moleculeId ? String(s.moleculeId).slice(0, 40) : null,
+          tip: String(s.tip || '').slice(0, 120),
+        }))
+      : [];
+
+    const mapSide = (arr) =>
+      (Array.isArray(arr) ? arr : []).slice(0, 6).map((x) => ({
+        formula: String(x.formula || '').slice(0, 40),
+        name: String(x.name || '').slice(0, 40),
+        moleculeId: x.moleculeId ? String(x.moleculeId).slice(0, 40) : null,
+      }));
+
+    const data = {
+      title,
+      type: String(parsed.type || '其他').slice(0, 20),
+      equation,
+      reactants: mapSide(parsed.reactants),
+      products: mapSide(parsed.products),
+      conditions: String(parsed.conditions || '').slice(0, 200),
+      phenomena: String(parsed.phenomena || '').slice(0, 200),
+      notes: String(parsed.notes || '示意图，非真实微观过程。').slice(0, 400),
+      steps:
+        steps.length > 0
+          ? steps
+          : [
+              {
+                t: 0,
+                label: '反应物',
+                equationHighlight: equation,
+                focus: 'reactant',
+                tip: '观察反应物',
+              },
+              {
+                t: 3,
+                label: '生成物',
+                equationHighlight: equation,
+                focus: 'product',
+                tip: '观察生成物',
+              },
+            ],
+      moleculeIds: Array.isArray(parsed.moleculeIds)
+        ? parsed.moleculeIds.map((x) => String(x)).slice(0, 12)
+        : moleculeId
+          ? [String(moleculeId)]
+          : [],
+    };
+
+    success(res, data);
+  } catch (err) {
+    console.error('AI 生成反应失败:', err);
+    const status = err.status || 500;
+    if (status === 400) return badRequest(res, err.message);
+    error(res, err.message || '生成反应失败', status >= 400 ? status : 502);
+  }
+});
+
 module.exports = router;

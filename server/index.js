@@ -18,11 +18,13 @@ const {
   getPublicDir,
 } = require('./paths');
 const { importBuiltinMolecules } = require('./seed/import-builtin');
+const { importBuiltinReactionsIfEmpty } = require('./seed/import-reactions');
 
 const moleculesRouter = require('./routes/molecules');
 const settingsRouter = require('./routes/settings');
 const aiRouter = require('./routes/ai');
 const quizRouter = require('./routes/quiz');
+const reactionsRouter = require('./routes/reactions');
 
 const app = express();
 const PREFERRED_PORT = Number(process.env.PORT) || 3000;
@@ -61,6 +63,7 @@ app.use('/api/molecules', moleculesRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/quiz', quizRouter);
+app.use('/api/reactions', reactionsRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -167,6 +170,12 @@ async function startServer(options = {}) {
     if (!count || Number(count.count) === 0) {
       console.log('正在导入内置分子…');
       importBuiltinMolecules();
+    }
+
+    try {
+      importBuiltinReactionsIfEmpty();
+    } catch (e) {
+      console.warn('导入内置反应失败:', e?.message || e);
     }
 
     const port = await findFreePort(PREFERRED_PORT);

@@ -103,6 +103,33 @@ export const moleculeApi = {
 };
 
 /**
+ * 化学反应 API
+ */
+export const reactionApi = {
+  async getList(moleculeId) {
+    const q = moleculeId
+      ? `?moleculeId=${encodeURIComponent(moleculeId)}`
+      : '';
+    return request(`/reactions${q}`);
+  },
+
+  async getById(id) {
+    return request(`/reactions/${id}`);
+  },
+
+  async add(payload) {
+    return request('/reactions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async remove(id) {
+    return request(`/reactions/${id}`, { method: 'DELETE' });
+  },
+};
+
+/**
  * 设置相关 API
  */
 export const settingsApi = {
@@ -135,6 +162,14 @@ export const aiApi = {
     return request('/ai/generate', {
       method: 'POST',
       body: JSON.stringify({ prompt })
+    });
+  },
+
+  /** 生成化学反应（预览，不落库） */
+  async reaction(payload) {
+    return request('/ai/reaction', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   },
 

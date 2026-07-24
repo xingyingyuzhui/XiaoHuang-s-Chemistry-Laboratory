@@ -10,8 +10,13 @@ import {
   ensureMolViewer,
   ensureDefaultMolecule,
   getMolViewer,
+  setOnMoleculeChange,
 } from './molecule-list.js';
 import { initMoleculeAI } from './molecule-ai.js';
+import {
+  initMoleculeReactions,
+  onMoleculeChanged,
+} from './molecule-reactions.js';
 import { initMolarUI, runMolar, refreshMolarPresets } from './molar-ui.js';
 import {
   initElectronList,
@@ -121,8 +126,10 @@ async function switchTab(name) {
  */
 async function init() {
   initPeriodicTable();
+  setOnMoleculeChange(onMoleculeChanged);
   initMoleculeList();
   initMoleculeAI();
+  initMoleculeReactions();
   initMolarUI();
   await initElectronList();
   initBrandTip();

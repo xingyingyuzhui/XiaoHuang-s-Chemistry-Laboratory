@@ -42,6 +42,21 @@ let currentMolId = null;
 let dragSrcId = null;
 let molViewer = null;
 let molStarted = false;
+/** @type {null | ((mol: object | null) => void)} */
+let onMoleculeChange = null;
+
+/**
+ * 注册分子切换回调（反应面板等）
+ * @param {(mol: object | null) => void} fn
+ */
+export function setOnMoleculeChange(fn) {
+  onMoleculeChange = typeof fn === 'function' ? fn : null;
+}
+
+/** 当前选中的分子 id */
+export function getCurrentMolId() {
+  return currentMolId;
+}
 
 /**
  * 确保 3D 查看器已初始化
@@ -272,8 +287,13 @@ export async function loadMolecule(id) {
 
       molProps.innerHTML = propsHtml;
     }
-    
+
     await renderMolList();
+    try {
+      onMoleculeChange?.(m);
+    } catch (e) {
+      console.warn('onMoleculeChange 回调失败:', e);
+    }
   } catch (err) {
     console.error('加载分子失败:', err);
   }

@@ -295,6 +295,95 @@
             <div class="mol-props-card" id="moleculePropsCard">
               <div id="moleculeProps"></div>
             </div>
+
+            <!-- 常见反应：右上角入口 -->
+            <button
+              type="button"
+              class="mol-rxn-toggle"
+              id="btnMolReactions"
+              aria-expanded="false"
+              aria-controls="molReactionPanel"
+              title="查看与当前分子相关的反应"
+            >
+              反应
+              <span id="molReactionBadge" class="mol-rxn-badge" hidden>0</span>
+            </button>
+
+            <aside
+              id="molReactionPanel"
+              class="mol-rxn-panel"
+              aria-label="常见反应列表"
+            >
+              <header class="mol-rxn-panel-head">
+                <h3>常见反应</h3>
+                <button type="button" class="mol-rxn-icon-btn" id="molReactionClose" aria-label="关闭">×</button>
+              </header>
+              <div id="molReactionList" class="mol-rxn-list">
+                <p class="rxn-muted">选择分子后显示关联反应</p>
+              </div>
+              <footer class="mol-rxn-panel-foot">
+                <button type="button" class="btn primary btn-sm" id="btnAiAddReaction">AI 添加反应</button>
+              </footer>
+
+              <div id="rxnAiBox" class="rxn-ai-box" aria-label="AI 添加反应">
+                <h4>AI 添加反应</h4>
+                <p class="rxn-muted" style="margin:0 0 0.45rem">
+                  描述一条高中常见反应，生成后请核对再保存到本地。
+                </p>
+                <textarea
+                  id="rxnAiPrompt"
+                  rows="3"
+                  placeholder="例如：乙烯与溴的加成反应"
+                  autocomplete="off"
+                ></textarea>
+                <label class="rxn-ai-stepcount">
+                  <span>示意步数</span>
+                  <select id="rxnAiStepCount" aria-label="示意动画步数">
+                    <option value="4">4 步</option>
+                    <option value="5" selected>5 步</option>
+                    <option value="6">6 步</option>
+                  </select>
+                </label>
+                <div class="rxn-ai-actions">
+                  <button type="button" class="btn primary btn-sm" id="rxnAiGenerate">生成预览</button>
+                  <button type="button" class="btn ghost btn-sm" id="rxnAiCancel">取消</button>
+                </div>
+                <p class="rxn-ai-status" id="rxnAiStatus"></p>
+                <div id="rxnAiPreview" class="rxn-ai-preview is-hidden"></div>
+                <div class="rxn-ai-preview-actions" id="rxnAiSaveRow" hidden>
+                  <button type="button" class="btn primary btn-sm" id="rxnAiSave">确认保存</button>
+                  <button type="button" class="btn ghost btn-sm" id="rxnAiDiscard">丢弃</button>
+                </div>
+              </div>
+            </aside>
+
+            <!-- 反应示意播放：底部 dock（剧院模式） -->
+            <div id="molReactionPlayer" class="mol-rxn-player" data-focus="reactant">
+              <div class="rxn-player-main">
+                <div class="rxn-player-copy">
+                  <p class="rxn-player-step" id="rxnPlayerStepLabel">—</p>
+                  <p class="rxn-player-eq" id="rxnPlayerEquation">—</p>
+                  <p class="rxn-player-tip" id="rxnPlayerTip"></p>
+                </div>
+                <div class="rxn-player-actions">
+                  <button type="button" class="btn ghost btn-sm" id="molReactionPause">暂停</button>
+                  <button type="button" class="btn primary btn-sm" id="molReactionReplay">重播</button>
+                  <button type="button" class="mol-rxn-icon-btn" id="molReactionPlayerClose" aria-label="关闭播放" title="关闭">×</button>
+                </div>
+              </div>
+              <div class="rxn-player-bar-track" aria-hidden="true">
+                <div class="rxn-player-bar" id="rxnPlayerBar"></div>
+              </div>
+              <div class="rxn-player-meta" id="rxnPlayerMeta"></div>
+              <div class="rxn-player-history-wrap">
+                <div class="rxn-player-history-label">
+                  变化历程
+                  <span class="rxn-player-history-hint">点击回顾</span>
+                </div>
+                <ol id="rxnPlayerHistory" class="rxn-player-history" aria-label="反应变化历程"></ol>
+              </div>
+            </div>
+
             <button
               type="button"
               class="mol-label-toggle"

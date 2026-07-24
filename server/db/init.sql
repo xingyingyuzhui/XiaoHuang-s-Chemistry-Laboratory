@@ -94,6 +94,25 @@ CREATE TABLE IF NOT EXISTS ai_quiz_assist_calls (
   called_at INTEGER NOT NULL
 );
 
+-- 常见化学反应（本地种子 + AI 添加）
+CREATE TABLE IF NOT EXISTS chem_reactions (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  type TEXT DEFAULT '',
+  equation TEXT NOT NULL,
+  reactants_json TEXT DEFAULT '[]',
+  products_json TEXT DEFAULT '[]',
+  conditions TEXT DEFAULT '',
+  phenomena TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  steps_json TEXT DEFAULT '[]',
+  molecule_ids_json TEXT DEFAULT '[]',
+  source TEXT DEFAULT 'builtin',
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_chem_reactions_source ON chem_reactions(source);
+
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_molecules_custom ON molecules(custom);
 CREATE INDEX IF NOT EXISTS idx_ai_quiz_assist_kind_at ON ai_quiz_assist_calls(kind, called_at);
