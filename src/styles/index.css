@@ -1,11 +1,12 @@
 /* —— 分层 ——
- * 1. tokens（shared + themes/*/tokens）
+ * 1. tokens（shared + themes 下各主题 tokens）
  * 2. 组件（消费变量，少写死色）
- * 3. themes/*/skin（主题专属氛围/结构，覆盖组件）
+ * 3. themes 下各主题 skin（氛围/结构，覆盖组件）
  */
 @import './tokens/_shared.css';
 @import './themes/default/tokens.css';
 @import './themes/stationery/tokens.css';
+@import './themes/reagent/tokens.css';
 
 @import './_base.css';
 @import './_motion.css';
@@ -25,3 +26,4 @@
 /* 主题 skin 最后加载，保证 Tab/顶栏等结构差异生效 */
 @import './themes/default/skin.css';
 @import './themes/stationery/skin.css';
+@import './themes/reagent/skin.css';

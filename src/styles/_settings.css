@@ -202,6 +202,11 @@
   margin-bottom: 0.35rem;
 }
 
+/* 主题 ≥3 时卡片略紧凑，仍两列排布 */
+.theme-picker .theme-card {
+  min-width: 0;
+}
+
 .theme-card {
   appearance: none;
   text-align: left;

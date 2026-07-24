@@ -1,0 +1,95 @@
+/**
+ * 主题：试剂架
+ * 药柜标签纸 + 琥珀色试剂瓶 + 墨绿瓶签，偏冷静货架感（非校刊、非教材蓝）
+ * 注意：注释勿写星号斜杠路径，以免 PostCSS 截断
+ */
+html[data-theme='reagent'] {
+  /* 柜体冷灰绿 */
+  --paper: #e6ece8;
+  --paper-deep: #d3ddd7;
+  --bg-body: #e6ece8;
+  --bg-body-deep: #cfd9d3;
+  --card-bg: #f8f6f1;
+  --card-elevated: #fffcf7;
+
+  /* 瓶签墨色 */
+  --ink: #1c2b28;
+  --ink-soft: #3d524c;
+  --ink-lab: #14201d;
+  --text-primary: #1c2b28;
+  --text-secondary: #6a7d76;
+  --text-muted: #4f635c;
+
+  --border: #b8c5be;
+  --border-soft: #d8e2dc;
+  /* 标签细框：偏深墨绿而非纯黑粗线 */
+  --border-ink: #2a4039;
+
+  /* 琥珀试剂瓶 — 主强调 */
+  --stamp: #b86b2a;
+  --stamp-soft: #f8ebe0;
+  /* 墨绿瓶盖 / 标签 — 次强调 */
+  --diagram: #1a5c4a;
+  --diagram-soft: #e2f0eb;
+  /* 标签黄 / 警示条 */
+  --note: #d4a017;
+  --note-soft: #fbf3d8;
+
+  --accent: var(--stamp);
+  --accent-hover: #9a5822;
+  --accent-soft: var(--stamp-soft);
+  --flame: var(--note);
+  --flame-soft: var(--note-soft);
+
+  --btn-primary: var(--stamp);
+  --btn-primary-hover: var(--accent-hover);
+  --btn-primary-border: #7a4519;
+
+  /* 货架感：轻抬升 + 细边，不是错位印刷 */
+  --shadow-sm: 0 1px 2px rgba(28, 43, 40, 0.06);
+  --shadow-md: 0 3px 10px rgba(28, 43, 40, 0.08);
+  --shadow-float: 0 8px 22px rgba(28, 43, 40, 0.1), 0 1px 0 rgba(255, 255, 255, 0.65);
+  --shadow-print: var(--shadow-float);
+  --shadow-print-sm: var(--shadow-sm);
+  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+  /* 分区色：略偏试剂指示剂 */
+  --s-block: #f0d4bc;
+  --p-block: #c5ddd8;
+  --d-block: #ebe0b8;
+  --ds-block: #c3dfcb;
+  --f-block: #e5cfd8;
+  --noble-block: #c9d0e0;
+
+  --radius-box: 6px;
+  --radius-card: 10px;
+  --radius-control: 8px;
+  --gap-size: 4px;
+  --f-gap-size: 6px;
+
+  --ui-stroke: 1px;
+  --ui-stroke-strong: 1.5px;
+
+  /* 瓶签：等宽拉丁 + 无衬线中文 */
+  --font-display: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-latin: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-serif-cjk: var(--font-cjk);
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-main: var(--font-cjk);
+
+  --topbar-bg: color-mix(in srgb, var(--card-elevated) 90%, transparent);
+  --topbar-border: 1px solid var(--border);
+  --topbar-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  /* 横隔板货架感 */
+  --bg-image:
+    linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(100% - 1px),
+      color-mix(in srgb, var(--border-ink) 12%, transparent) calc(100% - 1px)
+    ),
+    linear-gradient(180deg, #eef3f0 0%, var(--paper) 42%, var(--paper-deep) 100%);
+  --body-noise-opacity: 0;
+  --brand-eyebrow-display: block;
+}

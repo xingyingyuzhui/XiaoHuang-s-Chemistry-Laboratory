@@ -18,6 +18,11 @@ export const THEME_CATALOG = [
     name: '文具',
     description: '校刊纸张 · 红泥章',
   },
+  {
+    id: 'reagent',
+    name: '试剂架',
+    description: '瓶签 · 琥珀瓶',
+  },
 ];
 
 export const THEME_IDS = new Set(THEME_CATALOG.map((t) => t.id));
