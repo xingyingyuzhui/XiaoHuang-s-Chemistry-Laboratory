@@ -1,0 +1,41 @@
+/**
+ * 跨主题共享：布局尺度、动效曲线、周期表尺寸
+ * 视觉色板不在此文件，见 themes/*/tokens.css
+ */
+:root {
+  --box-size: 56px;
+  --gap-size: 4px;
+  --f-gap-size: 6px;
+  --label-height: 22px;
+  --period-label-width: 18px;
+  --side-col-width: calc(var(--box-size) * 0.52);
+  --side-cols-width: calc(2 * var(--side-col-width) + var(--gap-size));
+  --table-width: calc(18 * var(--box-size) + 17 * var(--gap-size));
+  --frame-col-gap: 4px;
+
+  --font-symbol: 18px;
+  --font-hanzi: 11px;
+  --font-atomic: 10px;
+  --font-mass: 8px;
+  --show-side: 1;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --dur-fast: 0.15s;
+  --dur: 0.28s;
+  --dur-slow: 0.45s;
+
+  /* 描边厚度：主题可覆盖 */
+  --ui-stroke: 1.5px;
+  --ui-stroke-strong: 1.5px;
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --side-cols-width: 0px;
+    --show-side: 0;
+  }
+  .side-column {
+    display: none !important;
+  }
+}

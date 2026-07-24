@@ -1,0 +1,79 @@
+/**
+ * 主题：文具（科学兴趣小组校刊风）
+ */
+html[data-theme='stationery'] {
+  --paper: #f2e9dc;
+  --paper-deep: #e4d6c4;
+  --bg-body: #f2e9dc;
+  --bg-body-deep: #e4d6c4;
+  --card-bg: #fffaf2;
+  --card-elevated: #fffdf8;
+
+  --ink: #1a2230;
+  --ink-soft: #3d4a5c;
+  --ink-lab: #1a2230;
+  --text-primary: #1a2230;
+  --text-secondary: #6a7382;
+  --text-muted: #4e596a;
+
+  --border: #c9b8a2;
+  --border-soft: #e6d9c8;
+  --border-ink: #1a2230;
+
+  --stamp: #c23b22;
+  --stamp-soft: #fde8e3;
+  --diagram: #1f6f6a;
+  --diagram-soft: #dff1ef;
+  --note: #f0c75e;
+  --note-soft: #fff6d6;
+
+  --accent: var(--stamp);
+  --accent-hover: #a32f1b;
+  --accent-soft: var(--stamp-soft);
+  --flame: var(--note);
+  --flame-soft: var(--note-soft);
+
+  --btn-primary: var(--stamp);
+  --btn-primary-hover: var(--accent-hover);
+  --btn-primary-border: #8f2818;
+
+  --shadow-print: 3px 3px 0 color-mix(in srgb, var(--ink) 88%, transparent);
+  --shadow-print-sm: 2px 2px 0 color-mix(in srgb, var(--ink) 75%, transparent);
+  --shadow-sm: 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
+  --shadow-md: var(--shadow-print-sm);
+  --shadow-float: var(--shadow-print);
+  --shadow-inset-glass: none;
+
+  --s-block: #f7c9a8;
+  --p-block: #b8d9f0;
+  --d-block: #f3e0a8;
+  --ds-block: #b5dfc4;
+  --f-block: #e8c4dc;
+  --noble-block: #cfc2ea;
+
+  --radius-box: 8px;
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --gap-size: 5px;
+  --f-gap-size: 8px;
+
+  --ui-stroke: 2px;
+  --ui-stroke-strong: 2.5px;
+
+  --font-display: 'Instrument Serif', 'Noto Serif SC', serif;
+  --font-latin: 'Noto Sans SC', system-ui, sans-serif;
+  --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-serif-cjk: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-main: var(--font-cjk);
+
+  --topbar-bg: color-mix(in srgb, var(--card-elevated) 92%, transparent);
+  --topbar-border: 2.5px solid var(--border-ink);
+  --topbar-shadow: none;
+  --bg-image:
+    radial-gradient(ellipse 90% 60% at 10% 0%, color-mix(in srgb, var(--note) 18%, transparent), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, color-mix(in srgb, var(--diagram) 10%, transparent), transparent 45%),
+    linear-gradient(168deg, var(--paper) 0%, var(--paper-deep) 100%);
+  --body-noise-opacity: 0.35;
+  --brand-eyebrow-display: block;
+}

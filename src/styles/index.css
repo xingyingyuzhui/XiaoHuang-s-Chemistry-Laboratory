@@ -1,4 +1,12 @@
-@import './_variables.css';
+/* —— 分层 ——
+ * 1. tokens（shared + themes/*/tokens）
+ * 2. 组件（消费变量，少写死色）
+ * 3. themes/*/skin（主题专属氛围/结构，覆盖组件）
+ */
+@import './tokens/_shared.css';
+@import './themes/default/tokens.css';
+@import './themes/stationery/tokens.css';
+
 @import './_base.css';
 @import './_motion.css';
 @import './_topbar.css';
@@ -13,3 +21,7 @@
 @import './_molar.css';
 @import './_ai-classroom.css';
 @import './_responsive.css';
+
+/* 主题 skin 最后加载，保证 Tab/顶栏等结构差异生效 */
+@import './themes/default/skin.css';
+@import './themes/stationery/skin.css';

@@ -9,11 +9,9 @@ const DEFAULT_SETTINGS = {
     title: '小黄的化学实验室',
     iconDataUrl: null
   },
+  /** 界面主题：{ id: 'default' | 'stationery' | ... }；兼容旧版色值对象 */
   theme: {
-    accent: '#3b82f6',
-    bg: '#f0f4f8',
-    card: '#ffffff',
-    text: '#1e293b'
+    id: 'default'
   },
   defaultPage: 'table',
   /** 电子排布列表顺序（元素序数 z 数组）；空则前端用默认顺序 */

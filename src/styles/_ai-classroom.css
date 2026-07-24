@@ -10,7 +10,7 @@
   appearance: none;
   width: 100%;
   text-align: left;
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   background: var(--card-elevated);
   border-radius: 12px;
   padding: 0.85rem 0.95rem;
@@ -48,7 +48,7 @@
   place-items: center;
   background: var(--stamp);
   color: #fff;
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   box-shadow: 1px 1px 0 var(--border-ink);
 }
 
@@ -75,7 +75,7 @@
   min-height: 0;
   overflow: auto;
   border-radius: var(--radius-card);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   background: var(--card-elevated);
   box-shadow: var(--shadow-print);
   padding: 1rem 1.15rem 1.25rem;
@@ -184,7 +184,7 @@
   gap: 0.85rem;
   margin-top: 1.15rem;
   padding-top: 1rem;
-  border-top: 2px solid var(--border-ink);
+  border-top: var(--ui-stroke) solid var(--border-ink);
 }
 
 .quiz-history-panel-single {
@@ -198,7 +198,7 @@
 }
 
 .quiz-history-card {
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   border-radius: 12px;
   background: var(--paper);
   padding: 0.85rem 1rem 1rem;
@@ -230,7 +230,7 @@
   font-weight: 800;
   color: var(--stamp);
   background: var(--stamp-soft);
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 6px;
   padding: 0.12rem 0.5rem;
 }
@@ -261,7 +261,7 @@
   background: var(--card-elevated);
   border-radius: 8px;
   padding: 0.4rem 0.5rem;
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
 }
 
 .quiz-stats-grid em {
@@ -359,7 +359,7 @@
 
 .quiz-chip {
   appearance: none;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   border-radius: 8px;
   padding: 0.35rem 0.75rem;
@@ -394,7 +394,7 @@
 
 .quiz-topic {
   appearance: none;
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--paper);
   border-radius: 8px;
   padding: 0.32rem 0.6rem;
@@ -467,7 +467,7 @@
   gap: 0.75rem;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2.5px solid var(--border-ink);
+  border-bottom: var(--ui-stroke-strong) solid var(--border-ink);
 }
 
 .quiz-paper-head h3 {
@@ -495,7 +495,7 @@
 }
 
 .quiz-card {
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   border-radius: 12px;
   padding: 0.9rem 1rem;
   background: var(--paper);
@@ -540,7 +540,7 @@
   appearance: none;
   text-align: left;
   width: 100%;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   border-radius: 10px;
   padding: 0.55rem 0.75rem;
@@ -613,7 +613,7 @@
 
 .quiz-result-item {
   border-radius: 12px;
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   background: var(--paper);
   font-size: 0.88rem;
   overflow: hidden;
@@ -709,7 +709,7 @@
   padding: 0.55rem 0.65rem;
   border-radius: 8px;
   background: var(--diagram-soft);
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   font-size: 0.84rem;
   line-height: 1.6;
   color: var(--text-primary);
@@ -719,7 +719,7 @@
 /* 报告区若有 */
 .quiz-report,
 .quiz-summary-card {
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   border-radius: 12px;
   background: var(--note-soft);
   padding: 0.9rem 1rem;

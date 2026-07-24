@@ -22,7 +22,7 @@
   width: min(400px, 92vw);
   background: var(--card-elevated);
   box-shadow: -5px 0 0 color-mix(in srgb, var(--ink) 88%, transparent);
-  border-left: 2.5px solid var(--border-ink);
+  border-left: var(--ui-stroke-strong) solid var(--border-ink);
   z-index: 90;
   display: flex;
   flex-direction: column;
@@ -39,7 +39,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.1rem;
-  border-bottom: 2.5px solid var(--border-ink);
+  border-bottom: var(--ui-stroke-strong) solid var(--border-ink);
   background: var(--note-soft);
   flex-shrink: 0;
 }
@@ -57,7 +57,7 @@
   appearance: none;
   width: 36px;
   height: 36px;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 10px;
   background: var(--card-elevated);
   color: var(--ink);
@@ -104,13 +104,13 @@
   height: 0.55rem;
   border-radius: 2px;
   background: var(--stamp);
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   box-shadow: 1px 1px 0 var(--border-ink);
 }
 
 .settings-block {
   background: var(--card-elevated);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   border-radius: 12px;
   padding: 0.85rem 0.95rem;
   margin-bottom: 0.75rem;
@@ -170,7 +170,7 @@
   object-fit: contain;
   border-radius: 12px;
   background: var(--paper);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
   flex-shrink: 0;
 }
@@ -195,60 +195,68 @@
   font-weight: 500;
 }
 
-.color-grid {
+.theme-picker {
   display: grid;
-  gap: 0.65rem;
-  margin-bottom: 0.85rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-bottom: 0.35rem;
 }
 
-.color-field {
-  display: grid;
-  gap: 0.3rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.color-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.color-swatch {
-  flex-shrink: 0;
-  width: 42px;
-  height: 36px;
-  border: 2px solid var(--border-ink);
-  border-radius: 8px;
-  box-shadow: var(--shadow-print-sm);
-  pointer-events: none;
-  user-select: none;
-}
-
-.hex-input {
-  flex: 1;
-  min-width: 0;
-  border: 2px solid var(--border-ink);
+.theme-card {
+  appearance: none;
+  text-align: left;
+  cursor: pointer;
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  border-radius: 12px;
   background: var(--card-elevated);
-  color: var(--text-primary);
-  border-radius: 10px;
-  padding: 0.45rem 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  font-weight: 600;
-  outline: none;
+  padding: 0.7rem 0.75rem 0.75rem;
   box-shadow: var(--shadow-print-sm);
+  font: inherit;
+  color: var(--text-primary);
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) ease,
+    background var(--dur-fast) ease;
 }
 
-.hex-input:focus {
-  box-shadow: var(--shadow-print);
+.theme-card:hover {
   transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
 }
 
-.hex-input.is-invalid {
-  border-color: var(--stamp);
-  background: var(--stamp-soft);
+.theme-card.is-active {
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-print);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.theme-card-swatch {
+  display: flex;
+  gap: 0.28rem;
+  margin-bottom: 0.5rem;
+}
+
+.theme-card-swatch i {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 4px;
+  border: 1.5px solid var(--border-ink);
+  display: block;
+}
+
+.theme-card-name {
+  display: block;
+  font-weight: 800;
+  font-size: 0.92rem;
+  margin-bottom: 0.15rem;
+  font-family: var(--font-serif-cjk), var(--font-cjk);
+}
+
+.theme-card-desc {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .settings-actions {
@@ -297,7 +305,7 @@
 
 .field select {
   width: 100%;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
   border-radius: 10px;
@@ -319,7 +327,7 @@
 .settings-drawer .field input[type='password'],
 .settings-drawer .field input[type='text'] {
   width: 100%;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
   border-radius: 10px;

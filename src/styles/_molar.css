@@ -18,7 +18,7 @@
   padding: 1.05rem 1.15rem;
   border-radius: 12px;
   background: var(--note-soft);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
 }
 
@@ -68,7 +68,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 1.02rem;
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   border-radius: 10px;
   overflow: hidden;
   background: var(--card-elevated);
@@ -92,7 +92,7 @@
   font-size: 0.84rem;
   letter-spacing: 0.02em;
   background: var(--diagram-soft);
-  border-bottom: 2px solid var(--border-ink);
+  border-bottom: var(--ui-stroke) solid var(--border-ink);
   font-family: var(--font-serif-cjk);
 }
 
@@ -114,7 +114,7 @@
   padding: 1rem 1.1rem;
   border-radius: 12px;
   background: var(--stamp-soft);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
 }
 

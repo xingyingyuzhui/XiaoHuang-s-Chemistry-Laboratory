@@ -9,7 +9,7 @@
 
 .field input[type='text'] {
   width: 100%;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
   border-radius: var(--radius-control);
@@ -43,7 +43,7 @@
 
 .btn {
   appearance: none;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 999px;
   padding: 0.55rem 0.95rem;
   font: inherit;

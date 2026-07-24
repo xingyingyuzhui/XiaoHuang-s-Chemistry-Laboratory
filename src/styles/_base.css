@@ -9,26 +9,18 @@ body {
   overflow: hidden;
   color: var(--text-primary);
   font-family: var(--font-main);
-  background-color: var(--paper);
-  /* 暖纸张：柔和斜光 + 极轻噪点感（纯 CSS，不用图） */
-  background-image:
-    radial-gradient(ellipse 90% 60% at 10% 0%, color-mix(in srgb, var(--note) 18%, transparent), transparent 50%),
-    radial-gradient(ellipse 70% 50% at 100% 100%, color-mix(in srgb, var(--diagram) 10%, transparent), transparent 45%),
-    linear-gradient(168deg, var(--paper) 0%, var(--paper-deep) 100%);
+  background-color: var(--bg-body, var(--paper));
   -webkit-font-smoothing: antialiased;
 }
 
-/* 纸面微粒：伪元素，不挡交互 */
+/* 氛围层由 themes/*/skin.css 控制 */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.35;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  mix-blend-mode: multiply;
+  opacity: 0;
 }
 
 #app {
@@ -42,7 +34,7 @@ body::before {
 }
 
 :focus-visible {
-  outline: 2px solid var(--stamp);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -52,8 +44,12 @@ a:focus:not(:focus-visible) {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--note) 55%, transparent);
-  color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--text-primary);
+}
+
+.brand-eyebrow {
+  display: var(--brand-eyebrow-display, none);
 }
 
 @media (prefers-reduced-motion: reduce) {

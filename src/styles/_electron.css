@@ -60,7 +60,7 @@
   position: relative;
   min-height: 0;
   border-radius: var(--radius-card);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   background: var(--paper);
   box-shadow: var(--shadow-print);
   overflow: hidden;
@@ -90,7 +90,7 @@
   padding: 0.75rem 0.95rem;
   border-radius: 12px;
   background: var(--card-elevated);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
   pointer-events: none;
 }
@@ -124,7 +124,7 @@
   margin: 0;
   padding: 0.4rem 0.6rem;
   background: var(--diagram-soft);
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 8px;
   font-family: var(--font-mono);
   font-size: 0.82rem;

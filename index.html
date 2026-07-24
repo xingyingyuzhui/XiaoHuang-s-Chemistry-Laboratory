@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="default">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&family=Quicksand:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -27,7 +27,7 @@
           <div class="brand-text">
             <p class="brand-eyebrow">兴趣小组 · 第 1 期</p>
             <h1 id="appBrandTitle">小黄的化学实验室</h1>
-            <p class="brand-sub">周期表 · 分子 · 摩尔 · 电子 · 课堂</p>
+            <p class="brand-sub">元素周期表 · 3D 分子 · 摩尔质量</p>
           </div>
         </div>
         <div class="topbar-right">
@@ -132,41 +132,10 @@
             </div>
 
             <div class="settings-block">
-              <h4>主题色</h4>
-              <p class="settings-hint">左侧色块仅对应右侧色值示意（不可点选）；请直接编辑 <code>#xxxxxx</code> 后点「确认配色」。</p>
-              <div class="color-grid" aria-label="主题色">
-                <div class="color-field">
-                  <span>主色 / 强调</span>
-                  <div class="color-row">
-                    <span class="color-swatch" id="swatchAccent" style="background:#3b82f6" title="主色示意" aria-hidden="true"></span>
-                    <input type="text" id="hexAccent" class="hex-input" value="#3b82f6" spellcheck="false" maxlength="7" aria-label="主色色值" />
-                  </div>
-                </div>
-                <div class="color-field">
-                  <span>页面背景</span>
-                  <div class="color-row">
-                    <span class="color-swatch" id="swatchBg" style="background:#f0f4f8" title="背景示意" aria-hidden="true"></span>
-                    <input type="text" id="hexBg" class="hex-input" value="#f0f4f8" spellcheck="false" maxlength="7" aria-label="背景色值" />
-                  </div>
-                </div>
-                <div class="color-field">
-                  <span>卡片底色</span>
-                  <div class="color-row">
-                    <span class="color-swatch" id="swatchCard" style="background:#ffffff" title="卡片示意" aria-hidden="true"></span>
-                    <input type="text" id="hexCard" class="hex-input" value="#ffffff" spellcheck="false" maxlength="7" aria-label="卡片色值" />
-                  </div>
-                </div>
-                <div class="color-field">
-                  <span>正文文字</span>
-                  <div class="color-row">
-                    <span class="color-swatch" id="swatchText" style="background:#1e293b" title="文字示意" aria-hidden="true"></span>
-                    <input type="text" id="hexText" class="hex-input" value="#1e293b" spellcheck="false" maxlength="7" aria-label="文字色值" />
-                  </div>
-                </div>
-              </div>
-              <div class="settings-actions">
-                <button type="button" class="btn primary" id="btnSaveTheme">确认配色</button>
-                <button type="button" class="btn ghost" id="btnResetTheme">恢复默认</button>
+              <h4>主题</h4>
+              <p class="settings-hint">整套界面风格切换。后续可继续增加主题，无需改业务代码。</p>
+              <div class="theme-picker" id="themePicker" role="radiogroup" aria-label="界面主题">
+                <!-- 由 settings.js 根据 theme/catalog 填充 -->
               </div>
               <p class="settings-status" id="themeStatus" aria-live="polite"></p>
             </div>

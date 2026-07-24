@@ -1,0 +1,78 @@
+/**
+ * 主题：默认（教材浅色 / 切换「文具」前的版本）
+ * 选择器：html 未设 data-theme 时也以此为准（:root 回落）
+ */
+:root,
+html[data-theme='default'] {
+  --paper: #f0f4f8;
+  --paper-deep: #e2e8f0;
+  --bg-body: #f0f4f8;
+  --bg-body-deep: #e2e8f0;
+  --card-bg: #ffffff;
+  --card-elevated: #ffffff;
+
+  --ink: #1e293b;
+  --ink-soft: #475569;
+  --ink-lab: #0f172a;
+  --text-primary: #1e293b;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border: #e2e8f0;
+  --border-soft: #f1f5f9;
+  --border-ink: #cbd5e1;
+
+  --stamp: #3b82f6;
+  --stamp-soft: #eff6ff;
+  --diagram: #2563eb;
+  --diagram-soft: #eff6ff;
+  --note: #fbbf24;
+  --note-soft: #fffbeb;
+
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-soft: #eff6ff;
+  --flame: #f59e0b;
+  --flame-soft: #fffbeb;
+
+  --btn-primary: #3b82f6;
+  --btn-primary-hover: #2563eb;
+  --btn-primary-border: #1d4ed8;
+
+  --shadow-sm: 0 2px 4px rgba(148, 163, 184, 0.15);
+  --shadow-md: 0 4px 6px -1px rgba(148, 163, 184, 0.2), 0 2px 4px -1px rgba(148, 163, 184, 0.1);
+  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+  --shadow-print: var(--shadow-float);
+  --shadow-print-sm: var(--shadow-sm);
+  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+  --s-block: #ffedd5;
+  --p-block: #e0f2fe;
+  --d-block: #fef3c7;
+  --ds-block: #bbf7d0;
+  --f-block: #fce7f3;
+  --noble-block: #ddd6fe;
+
+  --radius-box: 10px;
+  --radius-card: 20px;
+  --radius-control: 12px;
+  --gap-size: 4px;
+  --f-gap-size: 6px;
+
+  --ui-stroke: 1.5px;
+  --ui-stroke-strong: 1px;
+
+  --font-display: 'Quicksand', system-ui, sans-serif;
+  --font-latin: 'Quicksand', system-ui, sans-serif;
+  --font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-serif-cjk: var(--font-cjk);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-main: var(--font-latin), var(--font-cjk);
+
+  --topbar-bg: color-mix(in srgb, var(--card-bg) 88%, transparent);
+  --topbar-border: 1px solid var(--border-soft);
+  --topbar-shadow: none;
+  --bg-image: none;
+  --body-noise-opacity: 0;
+  --brand-eyebrow-display: none;
+}

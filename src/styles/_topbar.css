@@ -1,12 +1,13 @@
-/* —— 顶栏：校刊刊头条 —— */
+/* —— 顶栏（边框/底由 themes/*/skin 细化） —— */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1.1rem 0.7rem;
-  background: color-mix(in srgb, var(--card-elevated) 92%, transparent);
-  border-bottom: 2.5px solid var(--border-ink);
+  background: var(--topbar-bg, var(--card-elevated));
+  border-bottom: var(--topbar-border, 1px solid var(--border-soft));
+  box-shadow: var(--topbar-shadow, none);
   z-index: 20;
 }
 
@@ -22,7 +23,7 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--ink);
   display: grid;
@@ -51,7 +52,7 @@
   object-position: center bottom;
   border-radius: 12px;
   background: var(--card-elevated);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
   display: block;
   flex-shrink: 0;
@@ -103,7 +104,7 @@
   border-radius: 14px;
   overflow: hidden;
   background: var(--card-elevated);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
 }
 
@@ -143,7 +144,7 @@
   font-weight: 700;
   padding: 0.18rem 0.5rem;
   border-radius: 6px;
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   color: var(--ink-soft);
   background: var(--card-elevated);
 }
@@ -214,8 +215,8 @@
   height: 14px;
   margin-left: -7px;
   background: var(--note-soft);
-  border-left: 2.5px solid var(--border-ink);
-  border-top: 2.5px solid var(--border-ink);
+  border-left: var(--ui-stroke-strong) solid var(--border-ink);
+  border-top: var(--ui-stroke-strong) solid var(--border-ink);
   transform: rotate(45deg);
   border-radius: 2px 0 0 0;
   pointer-events: none;
@@ -227,8 +228,8 @@
   background: var(--card-elevated);
   border-left: none;
   border-top: none;
-  border-right: 2.5px solid var(--border-ink);
-  border-bottom: 2.5px solid var(--border-ink);
+  border-right: var(--ui-stroke-strong) solid var(--border-ink);
+  border-bottom: var(--ui-stroke-strong) solid var(--border-ink);
   border-radius: 0 0 2px 0;
 }
 
@@ -255,7 +256,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
   box-shadow: var(--shadow-print-sm);
@@ -326,7 +327,7 @@
 
 .tab {
   appearance: none;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: color-mix(in srgb, var(--paper-deep) 80%, #fff);
   color: var(--ink-soft);
   font: inherit;

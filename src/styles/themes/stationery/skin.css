@@ -1,0 +1,57 @@
+/* 文具主题氛围：纸纹 + 刊头细节（仅 data-theme=stationery） */
+html[data-theme='stationery'] body {
+  background-color: var(--paper);
+  background-image: var(--bg-image);
+}
+
+html[data-theme='stationery'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--body-noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: multiply;
+}
+
+html[data-theme='stationery'] .topbar {
+  background: var(--topbar-bg);
+  border-bottom: var(--topbar-border);
+  box-shadow: var(--topbar-shadow);
+  backdrop-filter: none;
+}
+
+html[data-theme='stationery'] .tabs {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+html[data-theme='stationery'] .tab {
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px 8px 4px 4px;
+  background: color-mix(in srgb, var(--paper-deep) 80%, #fff);
+}
+
+html[data-theme='stationery'] .tab.active {
+  background: var(--stamp);
+  color: #fffaf5;
+  box-shadow: var(--shadow-print-sm);
+}
+
+html[data-theme='stationery'] .brand-mark {
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  box-shadow: var(--shadow-print-sm);
+  background: var(--card-elevated);
+  padding: 1px;
+}
+
+html[data-theme='stationery'] .brand h1 {
+  font-family: var(--font-serif-cjk);
+  letter-spacing: 0.02em;
+  font-size: 1.2rem;
+}

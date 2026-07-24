@@ -1,9 +1,11 @@
 /**
- * 设置抽屉：系统（品牌 / 主题色 / 默认页）+ AI（模型 API）
- * 使用后端 API 存储设置
+ * 设置抽屉：系统（品牌 / 主题切换 / 默认页）+ AI（模型 API）
+ * 主题：{ id } → html[data-theme]，样式在 styles/themes/<id>/
  */
 
 import { settingsApi } from './api/client.js';
+import { THEME_CATALOG, normalizeTheme, DEFAULT_THEME_ID } from './theme/catalog.js';
+import { applyTheme } from './theme/apply.js';
 
 /** 图标文件大小上限：500KB */
 export const BRAND_ICON_MAX_BYTES = 500 * 1024;
@@ -15,16 +17,12 @@ export const DEFAULT_BRAND = {
 
 export const DEFAULT_ICON_SRC = '/brand-avatar.png';
 
-export const DEFAULT_THEME = {
-  accent: '#3b82f6',
-  bg: '#f0f4f8',
-  card: '#ffffff',
-  text: '#1e293b',
-};
+/** @deprecated 旧版色值主题；新代码请用 theme.id */
+export const DEFAULT_THEME = { id: DEFAULT_THEME_ID };
 
 export const DEFAULT_SETTINGS = {
   brand: { ...DEFAULT_BRAND },
-  theme: { ...DEFAULT_THEME },
+  theme: { id: DEFAULT_THEME_ID },
   defaultPage: 'table',
   /** 电子排布列表顺序（元素 z）；[] 表示使用默认 */
   electronOrder: [],
@@ -40,37 +38,11 @@ const ALLOWED_MODELS = new Set(['deepseek-v4-flash', 'deepseek-v4-pro']);
 // 缓存的设置
 let cachedSettings = null;
 
-function hexToRgb(hex) {
-  const h = String(hex || '').replace('#', '').trim();
-  if (h.length === 3) {
-    const r = parseInt(h[0] + h[0], 16);
-    const g = parseInt(h[1] + h[1], 16);
-    const b = parseInt(h[2] + h[2], 16);
-    return { r, g, b };
-  }
-  if (h.length === 6) {
-    return {
-      r: parseInt(h.slice(0, 2), 16),
-      g: parseInt(h.slice(2, 4), 16),
-      b: parseInt(h.slice(4, 6), 16),
-    };
-  }
-  return { r: 59, g: 130, b: 246 };
-}
-
-function mixHex(hex, whiteAmount) {
-  const { r, g, b } = hexToRgb(hex);
-  const m = (c) => Math.round(c + (255 - c) * whiteAmount);
-  const to = (c) => c.toString(16).padStart(2, '0');
-  return `#${to(m(r))}${to(m(g))}${to(m(b))}`;
-}
-
-function darkenHex(hex, amount) {
-  const { r, g, b } = hexToRgb(hex);
-  const m = (c) => Math.round(c * (1 - amount));
-  const to = (c) => c.toString(16).padStart(2, '0');
-  return `#${to(m(r))}${to(m(g))}${to(m(b))}`;
-}
+/** 预览色（设置卡片小色块，与主题 token 大致对应） */
+const THEME_PREVIEW = {
+  default: ['#3b82f6', '#f0f4f8', '#ffffff'],
+  stationery: ['#c23b22', '#f2e9dc', '#1f6f6a'],
+};
 
 /**
  * 加载设置（从 API 或缓存）
@@ -85,7 +57,7 @@ export async function loadSettings() {
         title: settings.brand?.title || DEFAULT_BRAND.title,
         iconDataUrl: settings.brand?.iconDataUrl || null,
       },
-      theme: { ...DEFAULT_THEME, ...(settings.theme || {}) },
+      theme: normalizeTheme(settings.theme),
       defaultPage: ['table', 'molecule', 'molar', 'electron', 'ai'].includes(settings.defaultPage)
         ? settings.defaultPage
         : 'table',
@@ -114,59 +86,39 @@ export async function loadSettings() {
 export async function saveSettings(patch) {
   try {
     await settingsApi.update(patch);
-    // 合并进缓存，不全量替换
     if (cachedSettings) {
       cachedSettings = {
         ...cachedSettings,
-        ...patch,
         brand: patch.brand
           ? { ...cachedSettings.brand, ...patch.brand }
           : cachedSettings.brand,
         theme: patch.theme
-          ? { ...cachedSettings.theme, ...patch.theme }
+          ? normalizeTheme({ ...cachedSettings.theme, ...patch.theme })
           : cachedSettings.theme,
+        defaultPage:
+          patch.defaultPage !== undefined ? patch.defaultPage : cachedSettings.defaultPage,
+        electronOrder:
+          patch.electronOrder !== undefined
+            ? patch.electronOrder
+            : cachedSettings.electronOrder,
         ai: patch.ai ? { ...cachedSettings.ai, ...patch.ai } : cachedSettings.ai,
-        electronOrder: Array.isArray(patch.electronOrder)
-          ? patch.electronOrder
-          : cachedSettings.electronOrder,
       };
     }
+    return true;
   } catch (err) {
     console.error('保存设置失败:', err);
     throw err;
   }
 }
 
-/** 外部模块（如电子列表）更新缓存中的 electronOrder */
+/** 仅更新缓存中的 electronOrder（列表拖拽后） */
 export function patchCachedElectronOrder(order) {
-  if (!cachedSettings) return;
-  cachedSettings.electronOrder = Array.isArray(order) ? [...order] : [];
+  if (cachedSettings) {
+    cachedSettings.electronOrder = Array.isArray(order) ? order : [];
+  }
 }
 
-/** 强制下次 loadSettings 重新拉后端 */
-export function invalidateSettingsCache() {
-  cachedSettings = null;
-}
-
-/**
- * 应用主题色
- */
-export function applyTheme(theme) {
-  const t = { ...DEFAULT_THEME, ...theme };
-  const root = document.documentElement.style;
-  root.setProperty('--accent', t.accent);
-  root.setProperty('--accent-soft', mixHex(t.accent, 0.88));
-  root.setProperty('--bg-body', t.bg);
-  root.setProperty('--card-bg', t.card);
-  root.setProperty('--text-primary', t.text);
-  root.setProperty('--text-muted', mixHex(t.text, 0.35));
-  root.setProperty('--text-secondary', mixHex(t.text, 0.5));
-  root.setProperty('--border', mixHex(t.text, 0.82));
-  root.setProperty('--border-soft', mixHex(t.text, 0.9));
-  root.setProperty('--btn-primary', t.accent);
-  root.setProperty('--btn-primary-hover', darkenHex(t.accent, 0.12));
-  root.setProperty('--btn-primary-border', darkenHex(t.accent, 0.18));
-}
+export { applyTheme };
 
 /**
  * 应用品牌
@@ -193,18 +145,56 @@ function readFileAsDataUrl(file) {
 }
 
 /**
+ * 渲染主题选择卡片
+ * @param {HTMLElement | null} root
+ * @param {string} activeId
+ * @param {(id: string) => void} onPick
+ */
+function renderThemePicker(root, activeId, onPick) {
+  if (!root) return;
+  root.innerHTML = '';
+  THEME_CATALOG.forEach((meta) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'theme-card' + (meta.id === activeId ? ' is-active' : '');
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', meta.id === activeId ? 'true' : 'false');
+    btn.dataset.themeId = meta.id;
+
+    const swatch = document.createElement('span');
+    swatch.className = 'theme-card-swatch';
+    swatch.setAttribute('aria-hidden', 'true');
+    (THEME_PREVIEW[meta.id] || THEME_PREVIEW.default).forEach((hex) => {
+      const i = document.createElement('i');
+      i.style.background = hex;
+      swatch.appendChild(i);
+    });
+
+    const name = document.createElement('span');
+    name.className = 'theme-card-name';
+    name.textContent = meta.name;
+
+    const desc = document.createElement('span');
+    desc.className = 'theme-card-desc';
+    desc.textContent = meta.description;
+
+    btn.append(swatch, name, desc);
+    btn.addEventListener('click', () => onPick(meta.id));
+    root.appendChild(btn);
+  });
+}
+
+/**
  * 初始化设置 UI
  */
 export async function initSettingsUI({ onDefaultPageChange } = {}) {
   const $ = (sel) => document.querySelector(sel);
 
-  // DOM 元素
   const btnOpen = $('#btnSettings');
   const backdrop = $('#settingsBackdrop');
   const drawer = $('#settingsDrawer');
   const btnClose = $('#btnSettingsClose');
 
-  // 品牌
   const brandIconPreview = $('#brandIconPreview');
   const brandIconInput = $('#brandIconInput');
   const brandTitleInput = $('#brandTitleInput');
@@ -212,24 +202,11 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
   const btnResetBrand = $('#btnResetBrand');
   const brandStatus = $('#brandStatus');
 
-  // 主题：色块仅示意，右侧 #hex 可编辑并确认保存
-  const swatchAccent = $('#swatchAccent');
-  const swatchBg = $('#swatchBg');
-  const swatchCard = $('#swatchCard');
-  const swatchText = $('#swatchText');
-  const hexAccent = $('#hexAccent');
-  const hexBg = $('#hexBg');
-  const hexCard = $('#hexCard');
-  const hexText = $('#hexText');
-  const defaultPage = $('#settingDefaultPage');
-  const btnSaveTheme = $('#btnSaveTheme');
-  const btnResetTheme = $('#btnResetTheme');
+  const themePicker = $('#themePicker');
   const themeStatus = $('#themeStatus');
+  const defaultPage = $('#settingDefaultPage');
   const defaultPageStatus = $('#defaultPageStatus');
 
-  const HEX_RE = /^#([0-9a-fA-F]{6})$/;
-
-  // AI
   const apiBase = $('#aiApiBase');
   const apiKey = $('#aiApiKey');
   const apiModel = $('#aiModel');
@@ -238,7 +215,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
 
   let pendingIconDataUrl = null;
 
-  // 工具函数
   function setStatus(el, text, ok) {
     if (!el) return;
     el.textContent = text;
@@ -254,61 +230,28 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     if (brandIconPreview) brandIconPreview.src = brand.iconDataUrl || DEFAULT_ICON_SRC;
   }
 
-  function setSwatch(el, hex) {
-    if (!el) return;
-    if (HEX_RE.test(hex)) el.style.background = hex;
-  }
-
-  function syncThemeInputs(theme) {
-    const t = { ...DEFAULT_THEME, ...theme };
-    if (hexAccent) hexAccent.value = t.accent;
-    if (hexBg) hexBg.value = t.bg;
-    if (hexCard) hexCard.value = t.card;
-    if (hexText) hexText.value = t.text;
-    setSwatch(swatchAccent, t.accent);
-    setSwatch(swatchBg, t.bg);
-    setSwatch(swatchCard, t.card);
-    setSwatch(swatchText, t.text);
-  }
-
-  function normalizeHex(raw, fallback) {
-    let s = String(raw || '').trim();
-    if (!s.startsWith('#')) s = `#${s}`;
-    if (HEX_RE.test(s)) return s.toLowerCase();
-    return fallback;
-  }
-
-  function readThemeFromInputs() {
-    return {
-      accent: normalizeHex(hexAccent?.value, DEFAULT_THEME.accent),
-      bg: normalizeHex(hexBg?.value, DEFAULT_THEME.bg),
-      card: normalizeHex(hexCard?.value, DEFAULT_THEME.card),
-      text: normalizeHex(hexText?.value, DEFAULT_THEME.text),
-    };
-  }
-
-  /** 输入时同步左侧色块；合法色值时即时预览主题 */
-  function onHexInput(hexInput, swatch) {
-    let v = hexInput.value.trim();
-    if (v && !v.startsWith('#')) {
-      v = `#${v}`;
-      hexInput.value = v;
-    }
-    if (HEX_RE.test(v)) {
-      setSwatch(swatch, v);
-      applyTheme(readThemeFromInputs());
-      hexInput.classList.remove('is-invalid');
-    } else {
-      hexInput.classList.add('is-invalid');
+  async function onThemePick(nextId) {
+    try {
+      applyTheme({ id: nextId });
+      await saveSettings({ theme: { id: nextId } });
+      syncThemePicker({ id: nextId });
+      const label = THEME_CATALOG.find((t) => t.id === nextId)?.name || nextId;
+      setStatus(themeStatus, `已切换为「${label}」`, true);
+    } catch (err) {
+      setStatus(themeStatus, '保存失败: ' + err.message, false);
     }
   }
 
-  // 打开/关闭抽屉
+  function syncThemePicker(theme) {
+    const { id } = normalizeTheme(theme);
+    renderThemePicker(themePicker, id, onThemePick);
+  }
+
   async function openDrawer() {
-    cachedSettings = null; // 清除缓存，强制从后端重新获取
+    cachedSettings = null;
     const settings = await loadSettings();
     syncBrandInputs(settings.brand);
-    syncThemeInputs(settings.theme);
+    syncThemePicker(settings.theme);
     if (defaultPage) defaultPage.value = settings.defaultPage;
     if (apiBase) apiBase.value = settings.ai.apiBase;
     if (apiKey) apiKey.value = settings.ai.apiKey;
@@ -330,7 +273,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     document.body.classList.remove('settings-open');
   }
 
-  // 绑定事件
   btnOpen?.addEventListener('click', openDrawer);
   btnClose?.addEventListener('click', closeDrawer);
   backdrop?.addEventListener('click', closeDrawer);
@@ -338,7 +280,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     if (e.key === 'Escape' && drawer?.classList.contains('is-open')) closeDrawer();
   });
 
-  // 品牌图标选择
   brandIconInput?.addEventListener('change', async () => {
     const file = brandIconInput.files?.[0];
     if (!file) return;
@@ -363,7 +304,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     }
   });
 
-  // 保存品牌（仅 PATCH brand）
   btnSaveBrand?.addEventListener('click', async () => {
     const title = brandTitleInput?.value?.trim();
     if (!title) {
@@ -385,7 +325,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     }
   });
 
-  // 重置品牌
   btnResetBrand?.addEventListener('click', async () => {
     try {
       const brand = { ...DEFAULT_BRAND };
@@ -399,53 +338,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     }
   });
 
-  // 编辑 #hex → 更新左侧色块 + 实时预览
-  const hexSwatchPairs = [
-    [hexAccent, swatchAccent],
-    [hexBg, swatchBg],
-    [hexCard, swatchCard],
-    [hexText, swatchText],
-  ];
-  hexSwatchPairs.forEach(([hexInput, swatch]) => {
-    hexInput?.addEventListener('input', () => onHexInput(hexInput, swatch));
-  });
-
-  // 确认保存主题（仅 PATCH theme）
-  btnSaveTheme?.addEventListener('click', async () => {
-    const theme = readThemeFromInputs();
-    const raws = [hexAccent, hexBg, hexCard, hexText].map((el) => el?.value?.trim() || '');
-    const invalid = raws.some((v) => {
-      let s = v.startsWith('#') ? v : `#${v}`;
-      return !HEX_RE.test(s);
-    });
-    if (invalid) {
-      setStatus(themeStatus, '请输入合法色值，如 #3b82f6', false);
-      return;
-    }
-    try {
-      await saveSettings({ theme });
-      applyTheme(theme);
-      syncThemeInputs(theme);
-      setStatus(themeStatus, '已确认配色', true);
-    } catch (err) {
-      setStatus(themeStatus, '保存失败: ' + err.message, false);
-    }
-  });
-
-  // 重置主题
-  btnResetTheme?.addEventListener('click', async () => {
-    try {
-      const theme = { ...DEFAULT_THEME };
-      await saveSettings({ theme });
-      applyTheme(theme);
-      syncThemeInputs(theme);
-      setStatus(themeStatus, '已恢复默认', true);
-    } catch (err) {
-      setStatus(themeStatus, '重置失败: ' + err.message, false);
-    }
-  });
-
-  // 默认页
   defaultPage?.addEventListener('change', async () => {
     try {
       await saveSettings({ defaultPage: defaultPage.value });
@@ -456,7 +348,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     }
   });
 
-  // 保存 AI 设置（仅 PATCH ai）
   btnSaveAi?.addEventListener('click', async () => {
     const model = apiModel?.value;
     if (!ALLOWED_MODELS.has(model)) {
@@ -476,7 +367,6 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     }
   });
 
-  // 初始化：加载并应用设置
   const settings = await loadSettings();
   applyTheme(settings.theme);
   applyBrand(settings.brand);

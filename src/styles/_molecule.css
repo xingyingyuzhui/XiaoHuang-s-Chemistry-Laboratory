@@ -39,7 +39,7 @@
 
 .mol-btn {
   appearance: none;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
   border-radius: 10px;
@@ -128,7 +128,7 @@
   font-weight: 800;
   font-size: 0.9rem;
   color: var(--text-primary);
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   display: grid;
   place-items: center;
@@ -164,7 +164,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--stamp);
   color: #fff;
   font-size: 14px;
@@ -224,7 +224,7 @@
   width: min(440px, 92vw);
   background: var(--card-elevated);
   border-radius: 14px;
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: 6px 6px 0 color-mix(in srgb, var(--ink) 88%, transparent);
   z-index: 110;
   opacity: 0;
@@ -243,7 +243,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.9rem 1rem;
-  border-bottom: 2px solid var(--border-ink);
+  border-bottom: var(--ui-stroke) solid var(--border-ink);
   background: var(--note-soft);
 }
 
@@ -261,7 +261,7 @@
 
 .modal-body textarea {
   width: 100%;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 10px;
   padding: 0.65rem 0.75rem;
   font: inherit;

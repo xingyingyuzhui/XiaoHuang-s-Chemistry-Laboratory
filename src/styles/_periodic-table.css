@@ -6,7 +6,7 @@
   background: var(--card-elevated);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-print);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: flex-start;
   padding: 0.55rem 0.85rem;
-  border-bottom: 2px solid var(--border-ink);
+  border-bottom: var(--ui-stroke) solid var(--border-ink);
   background: var(--note-soft);
   flex-shrink: 0;
 }
@@ -47,7 +47,7 @@
   padding: 0.18rem 0.5rem;
   border-radius: 6px;
   background: var(--card-elevated);
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   font-family: var(--font-cjk);
 }
 
@@ -65,7 +65,7 @@
 
 .chip {
   appearance: none;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--ink-soft);
   font: inherit;
@@ -185,7 +185,7 @@
 
 .element {
   appearance: none;
-  border: 2px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: var(--radius-box);
   background: var(--card-elevated);
   box-shadow: 2px 2px 0 color-mix(in srgb, var(--ink) 55%, transparent);
@@ -344,7 +344,7 @@
   align-items: center;
   justify-content: center;
   background: var(--paper);
-  border: 1.5px solid var(--border-ink);
+  border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 6px;
   color: #64748b;
   font-size: 9px;

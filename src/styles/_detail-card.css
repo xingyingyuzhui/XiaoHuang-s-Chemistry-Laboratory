@@ -4,7 +4,7 @@
   background: var(--card-elevated);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-print);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
   padding: 0.75rem;
   overflow: auto;
   min-height: 0;
@@ -46,7 +46,7 @@
   color: var(--ink);
   flex-shrink: 0;
   box-shadow: var(--shadow-print-sm);
-  border: 2.5px solid var(--border-ink);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
 }
 
 .detail-head h2 {

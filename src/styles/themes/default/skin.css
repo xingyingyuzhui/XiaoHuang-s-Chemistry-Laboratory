@@ -1,0 +1,70 @@
+/* 默认主题氛围：干净浅灰底，无纸纹 */
+html[data-theme='default'] body,
+:root:not([data-theme]) body {
+  background-color: var(--bg-body);
+  background-image: none;
+}
+
+html[data-theme='default'] body::before,
+:root:not([data-theme]) body::before {
+  opacity: 0;
+  content: none;
+}
+
+html[data-theme='default'] .topbar,
+:root:not([data-theme]) .topbar {
+  background: var(--topbar-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: var(--topbar-border);
+  box-shadow: none;
+}
+
+html[data-theme='default'] .tabs,
+:root:not([data-theme]) .tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.22rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  border: none;
+  box-shadow: none;
+  flex-wrap: nowrap;
+}
+
+html[data-theme='default'] .tab,
+:root:not([data-theme]) .tab {
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text-muted);
+}
+
+html[data-theme='default'] .tab:hover,
+:root:not([data-theme]) .tab:hover {
+  transform: none;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+html[data-theme='default'] .tab.active,
+:root:not([data-theme]) .tab.active {
+  background: var(--card-bg);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+html[data-theme='default'] .brand-mark,
+:root:not([data-theme]) .brand-mark {
+  border-width: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+
+html[data-theme='default'] .brand h1,
+:root:not([data-theme]) .brand h1 {
+  font-family: var(--font-main);
+  letter-spacing: normal;
+  font-size: 1.05rem;
+}
