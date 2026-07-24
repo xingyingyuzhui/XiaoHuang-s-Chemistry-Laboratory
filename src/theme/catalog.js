@@ -21,7 +21,7 @@ export const THEME_CATALOG = [
   {
     id: 'reagent',
     name: '试剂架',
-    description: '瓶签 · 琥珀瓶',
+    description: '冷钢柜 · 钴蓝签',
   },
 ];
 

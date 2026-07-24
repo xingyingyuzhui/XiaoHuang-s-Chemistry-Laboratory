@@ -42,7 +42,7 @@ let cachedSettings = null;
 const THEME_PREVIEW = {
   default: ['#3b82f6', '#f0f4f8', '#ffffff'],
   stationery: ['#c23b22', '#f2e9dc', '#1f6f6a'],
-  reagent: ['#b86b2a', '#e6ece8', '#1a5c4a'],
+  reagent: ['#1e5a9e', '#e4e9f0', '#d4891a'],
 };
 
 /**
