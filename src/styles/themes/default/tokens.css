@@ -75,4 +75,5 @@ html[data-theme='default'] {
   --bg-image: none;
   --body-noise-opacity: 0;
   --brand-eyebrow-display: none;
+  --stage-3d-bg: #ffffff;
 }

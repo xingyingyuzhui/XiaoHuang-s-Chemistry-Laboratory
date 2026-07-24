@@ -1,6 +1,6 @@
 /**
  * 跨主题共享：布局尺度、动效曲线、周期表尺寸
- * 视觉色板不在此文件，见 themes/*/tokens.css
+ * 视觉色板不在此文件，见 themes 下各主题 tokens.css
  */
 :root {
   --box-size: 56px;
@@ -28,6 +28,9 @@
   /* 描边厚度：主题可覆盖 */
   --ui-stroke: 1.5px;
   --ui-stroke-strong: 1.5px;
+
+  /* 3D 画布清屏色（与 Three.scene.background 同步） */
+  --stage-3d-bg: #ffffff;
 }
 
 @media (max-width: 1100px) {

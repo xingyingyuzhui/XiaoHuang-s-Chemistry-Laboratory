@@ -13,7 +13,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 氛围层由 themes/*/skin.css 控制 */
+/* 氛围层由 themes 下各主题 skin 控制 */
 body::before {
   content: '';
   position: fixed;

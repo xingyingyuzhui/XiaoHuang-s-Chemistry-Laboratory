@@ -61,7 +61,7 @@
   min-height: 0;
   border-radius: var(--radius-card);
   border: var(--ui-stroke-strong) solid var(--border-ink);
-  background: var(--paper);
+  background: var(--stage-3d-bg, var(--paper));
   box-shadow: var(--shadow-print);
   overflow: hidden;
 }

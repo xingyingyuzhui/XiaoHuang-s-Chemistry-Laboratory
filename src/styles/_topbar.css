@@ -1,4 +1,4 @@
-/* —— 顶栏（边框/底由 themes/*/skin 细化） —— */
+/* —— 顶栏（边框/底由 themes 下 skin 细化） —— */
 .topbar {
   display: flex;
   align-items: center;

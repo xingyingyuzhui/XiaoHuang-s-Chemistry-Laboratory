@@ -28,6 +28,12 @@ export function applyTheme(theme) {
   if (eye) {
     eye.textContent = THEME_EYEBROW[id] || '';
   }
+  // 通知 3D 场景同步 --stage-3d-bg（分子 / 电子排布画布）
+  try {
+    window.dispatchEvent(new CustomEvent('chem-theme-change', { detail: { id } }));
+  } catch {
+    /* ignore */
+  }
   return id;
 }
 

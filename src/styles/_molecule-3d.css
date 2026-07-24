@@ -58,7 +58,7 @@
 .stage-3d {
   min-height: 0;
   height: 100%;
-  background: radial-gradient(ellipse at 50% 40%, #fffef9 0%, var(--paper) 70%);
+  background: var(--stage-3d-bg, var(--paper));
 }
 
 #mol-root {

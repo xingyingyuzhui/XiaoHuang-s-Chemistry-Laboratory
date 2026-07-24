@@ -9,9 +9,22 @@ const ZOOM_IN = 0.88;
 const ZOOM_OUT = 1.14;
 const AUTO_SPEED = 1.15; // OrbitControls autoRotateSpeed
 
+/** 读取主题 CSS 变量 --stage-3d-bg（与黑板黑青等同步） */
+function readStageBgColor() {
+  try {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--stage-3d-bg')
+      .trim();
+    if (raw) return new THREE.Color(raw);
+  } catch {
+    /* ignore */
+  }
+  return new THREE.Color(0xffffff);
+}
+
 export function createMoleculeViewer(container) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xffffff);
+  scene.background = readStageBgColor();
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
   camera.position.set(5.5, 3.4, 6.5);
@@ -329,8 +342,21 @@ export function createMoleculeViewer(container) {
     labelRenderer.render(scene, camera);
   }
 
+  function syncBackground() {
+    scene.background = readStageBgColor();
+  }
+
+  function onThemeChange() {
+    syncBackground();
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('chem-theme-change', onThemeChange);
+  }
+
   function start() {
     bindControls();
+    syncBackground();
     resize();
     if (!ro && typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => resize());
@@ -351,6 +377,9 @@ export function createMoleculeViewer(container) {
 
   function dispose() {
     stop();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('chem-theme-change', onThemeChange);
+    }
     if (ro) {
       ro.disconnect();
       ro = null;
@@ -362,5 +391,5 @@ export function createMoleculeViewer(container) {
     labelRenderer.domElement.remove();
   }
 
-  return { load, resize, start, stop, dispose, setAutoRotate, toggleLabels };
+  return { load, resize, start, stop, dispose, setAutoRotate, toggleLabels, syncBackground };
 }

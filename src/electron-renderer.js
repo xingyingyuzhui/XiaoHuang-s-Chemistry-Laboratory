@@ -36,9 +36,21 @@ const SHELL_COLORS = [
 
 const SHELL_RADIUS = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5];
 
+function readStageBgColor() {
+  try {
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--stage-3d-bg')
+      .trim();
+    if (raw) return new THREE.Color(raw);
+  } catch {
+    /* ignore */
+  }
+  return new THREE.Color(0xffffff);
+}
+
 export function createElectronViewer(container) {
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xffffff);
+  scene.background = readStageBgColor();
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
   camera.position.set(8, 5, 10);
@@ -441,8 +453,21 @@ export function createElectronViewer(container) {
     renderer.render(scene, camera);
   }
 
+  function syncBackground() {
+    scene.background = readStageBgColor();
+  }
+
+  function onThemeChange() {
+    syncBackground();
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('chem-theme-change', onThemeChange);
+  }
+
   function start() {
     bindControls();
+    syncBackground();
     resize();
     if (!ro && typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => resize());
@@ -462,6 +487,9 @@ export function createElectronViewer(container) {
 
   function dispose() {
     stop();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('chem-theme-change', onThemeChange);
+    }
     if (ro) {
       ro.disconnect();
       ro = null;
@@ -476,5 +504,14 @@ export function createElectronViewer(container) {
     return currentElement;
   }
 
-  return { load, resize, start, stop, dispose, setAutoRotate, getCurrentElement };
+  return {
+    load,
+    resize,
+    start,
+    stop,
+    dispose,
+    setAutoRotate,
+    getCurrentElement,
+    syncBackground,
+  };
 }

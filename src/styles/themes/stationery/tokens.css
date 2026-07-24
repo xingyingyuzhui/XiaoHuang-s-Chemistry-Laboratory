@@ -76,4 +76,5 @@ html[data-theme='stationery'] {
     linear-gradient(168deg, var(--paper) 0%, var(--paper-deep) 100%);
   --body-noise-opacity: 0.35;
   --brand-eyebrow-display: block;
+  --stage-3d-bg: #f7f0e6;
 }

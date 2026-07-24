@@ -83,4 +83,5 @@ html[data-theme='reagent'] {
   --bg-image: none;
   --body-noise-opacity: 0;
   --brand-eyebrow-display: block;
+  --stage-3d-bg: #ebe8e2;
 }

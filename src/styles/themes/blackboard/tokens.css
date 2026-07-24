@@ -81,4 +81,6 @@ html[data-theme='blackboard'] {
   --bg-image: none;
   --body-noise-opacity: 0.22;
   --brand-eyebrow-display: block;
+  /* 3D 区：黑青板心（非白） */
+  --stage-3d-bg: #0a1613;
 }
