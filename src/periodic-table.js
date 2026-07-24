@@ -50,7 +50,7 @@ export function renderLegend() {
   legendEl.innerHTML = items
     .map(
       (c) =>
-        `<span class="legend-item"><span class="legend-dot" data-zone="${c.id}" style="background:${c.colorCss}"></span>${c.label}</span>`,
+        `<span class="legend-item"><span class="legend-dot" data-zone="${c.id}" style="--zone-bg:${c.colorCss}"></span>${c.label}</span>`,
     )
     .join('');
 }
@@ -108,8 +108,11 @@ export function renderTable() {
     btn.style.gridRow = String(el.gridRow);
     btn.dataset.z = String(el.z);
     btn.dataset.block = el.block;
-    btn.dataset.zone = blockZoneId(el); /* 与图例 data-zone、主题 --*-block 对齐 */
+    const zone = blockZoneId(el);
+    btn.dataset.zone = zone; /* 与图例 data-zone 对齐 */
     btn.dataset.group = String(el.group);
+    /* 与图例共用同一 CSS 变量，避免 f 区等被其它规则冲掉后色差 */
+    btn.style.setProperty('--zone-bg', blockColor(el));
     if (el.stair) btn.dataset.stair = 'true';
     btn.title = `${el.name} (${el.symbol})`;
     btn.setAttribute('aria-label', `${el.name} ${el.symbol}`);
@@ -148,7 +151,7 @@ export function selectElement(z) {
   const configHtml = getElectronConfigHtml(el.z);
   detailEl.innerHTML = `
     <div class="detail-head">
-      <div class="detail-badge" data-zone="${zone}" style="background:${color}">${el.symbol}</div>
+      <div class="detail-badge" data-zone="${zone}" style="--zone-bg:${color}">${el.symbol}</div>
       <div>
         <h2>${el.name} · ${el.symbol}</h2>
         <p>${el.nameEn} · Z = ${el.z}</p>

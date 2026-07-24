@@ -43,31 +43,30 @@
   font-size: 1.25rem;
   font-family: var(--font-display), var(--font-latin);
   letter-spacing: -0.02em;
-  /* 字色跟主题；底色用分区 token（--s-block 等），与左侧周期表一致 */
   color: var(--text-primary);
-  background: var(--card-elevated);
+  background-color: var(--zone-bg, var(--card-elevated));
   flex-shrink: 0;
   box-shadow: var(--shadow-print-sm);
   border: var(--ui-stroke-strong) solid var(--border-ink);
 }
 
 .detail-badge[data-zone='s'] {
-  background: var(--s-block);
+  --zone-bg: var(--zone-s);
 }
 .detail-badge[data-zone='p'] {
-  background: var(--p-block);
+  --zone-bg: var(--zone-p);
 }
 .detail-badge[data-zone='d'] {
-  background: var(--d-block);
+  --zone-bg: var(--zone-d);
 }
 .detail-badge[data-zone='ds'] {
-  background: var(--ds-block);
+  --zone-bg: var(--zone-ds);
 }
 .detail-badge[data-zone='f'] {
-  background: var(--f-block);
+  --zone-bg: var(--zone-f);
 }
 .detail-badge[data-zone='noble'] {
-  background: var(--noble-block);
+  --zone-bg: var(--zone-noble);
 }
 
 .detail-head h2 {

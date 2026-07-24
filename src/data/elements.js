@@ -6,16 +6,16 @@
 
 /**
  * 分区元数据
- * colorCss：对应 styles 主题 token（--s-block 等），随 data-theme 变化
- * color：仅作无 CSS 环境时的回落（与 default 主题一致）
+ * colorCss：主题 token（--zone-*），图例圆点与格子共用，随 data-theme 变化
+ * color：无 CSS 时的回落
  */
 export const BLOCKS = {
-  s: { id: 's', label: 's 区', colorCss: 'var(--s-block)', color: '#ffedd5' },
-  p: { id: 'p', label: 'p 区', colorCss: 'var(--p-block)', color: '#e0f2fe' },
-  d: { id: 'd', label: 'd 区', colorCss: 'var(--d-block)', color: '#fef3c7' },
-  ds: { id: 'ds', label: 'ds 区', colorCss: 'var(--ds-block)', color: '#bbf7d0' },
-  f: { id: 'f', label: 'f 区', colorCss: 'var(--f-block)', color: '#fce7f3' },
-  noble: { id: 'noble', label: '稀有气体', colorCss: 'var(--noble-block)', color: '#ddd6fe' },
+  s: { id: 's', label: 's 区', colorCss: 'var(--zone-s)', color: '#ffedd5' },
+  p: { id: 'p', label: 'p 区', colorCss: 'var(--zone-p)', color: '#e0f2fe' },
+  d: { id: 'd', label: 'd 区', colorCss: 'var(--zone-d)', color: '#fef3c7' },
+  ds: { id: 'ds', label: 'ds 区', colorCss: 'var(--zone-ds)', color: '#bbf7d0' },
+  f: { id: 'f', label: 'f 区', colorCss: 'var(--zone-f)', color: '#fce7f3' },
+  noble: { id: 'noble', label: '稀有气体', colorCss: 'var(--zone-noble)', color: '#ddd6fe' },
 };
 
 export const GROUP_OLD = {

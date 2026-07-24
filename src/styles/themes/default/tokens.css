@@ -46,12 +46,12 @@ html[data-theme='default'] {
   --shadow-print-sm: var(--shadow-sm);
   --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 
-  --s-block: #ffedd5;
-  --p-block: #e0f2fe;
-  --d-block: #fef3c7;
-  --ds-block: #bbf7d0;
-  --f-block: #fce7f3;
-  --noble-block: #ddd6fe;
+  --zone-s: #ffedd5;
+  --zone-p: #e0f2fe;
+  --zone-d: #fef3c7;
+  --zone-ds: #bbf7d0;
+  --zone-f: #fce7f3;
+  --zone-noble: #ddd6fe;
 
   --radius-box: 10px;
   --radius-card: 20px;

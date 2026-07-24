@@ -54,12 +54,12 @@ html[data-theme='reagent'] {
   --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 
   /* 分区：哑光塑料模型色，整体偏暖中性 */
-  --s-block: #efd5c0;
-  --p-block: #d5dce6;
-  --d-block: #ebe2b8;
-  --ds-block: #d0e2d4;
-  --f-block: #e6d2dc;
-  --noble-block: #d4d0e0;
+  --zone-s: #efd5c0;
+  --zone-p: #d5dce6;
+  --zone-d: #ebe2b8;
+  --zone-ds: #d0e2d4;
+  --zone-f: #e6d2dc;
+  --zone-noble: #d4d0e0;
 
   --radius-box: 6px;
   --radius-card: 10px;

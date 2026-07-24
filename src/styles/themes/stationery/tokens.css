@@ -44,12 +44,12 @@ html[data-theme='stationery'] {
   --shadow-float: var(--shadow-print);
   --shadow-inset-glass: none;
 
-  --s-block: #f7c9a8;
-  --p-block: #b8d9f0;
-  --d-block: #f3e0a8;
-  --ds-block: #b5dfc4;
-  --f-block: #e8c4dc;
-  --noble-block: #cfc2ea;
+  --zone-s: #f7c9a8;
+  --zone-p: #b8d9f0;
+  --zone-d: #f3e0a8;
+  --zone-ds: #b5dfc4;
+  --zone-f: #e8c4dc;
+  --zone-noble: #cfc2ea;
 
   --radius-box: 8px;
   --radius-card: 14px;

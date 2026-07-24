@@ -56,22 +56,3 @@ html[data-theme='stationery'] .brand h1 {
   font-size: 1.2rem;
 }
 
-/* 分区色显式对齐图例 token */
-html[data-theme='stationery'] .periodic-table.show-zones .element[data-zone='s'] {
-  background: var(--s-block);
-}
-html[data-theme='stationery'] .periodic-table.show-zones .element[data-zone='p'] {
-  background: var(--p-block);
-}
-html[data-theme='stationery'] .periodic-table.show-zones .element[data-zone='d'] {
-  background: var(--d-block);
-}
-html[data-theme='stationery'] .periodic-table.show-zones .element[data-zone='ds'] {
-  background: var(--ds-block);
-}
-html[data-theme='stationery'] .periodic-table.show-zones .element[data-zone='f'] {
-  background: var(--f-block);
-}
-html[data-theme='stationery'] .periodic-table.show-zones .element[data-zone='noble'] {
-  background: var(--noble-block);
-}

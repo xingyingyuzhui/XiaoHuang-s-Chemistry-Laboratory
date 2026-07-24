@@ -52,12 +52,12 @@ html[data-theme='blackboard'] {
   --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
   /* 分区：粉笔粉尘色，彼此区分明显，与图例同 token */
-  --s-block: #6b4e32;
-  --p-block: #2a5570;
-  --d-block: #6a5f28;
-  --ds-block: #2a5c42;
-  --f-block: #5c3a58;
-  --noble-block: #3d3a6b;
+  --zone-s: #6b4e32;
+  --zone-p: #2a5570;
+  --zone-d: #6a5f28;
+  --zone-ds: #2a5c42;
+  --zone-f: #5c3a58;
+  --zone-noble: #3d3a6b;
 
   --radius-box: 4px;
   --radius-card: 8px;
