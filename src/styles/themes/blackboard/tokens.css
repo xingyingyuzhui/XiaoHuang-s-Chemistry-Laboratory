@@ -51,13 +51,13 @@ html[data-theme='blackboard'] {
   --shadow-print-sm: var(--shadow-sm);
   --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
-  /* 分区：彩色粉笔粉尘感，低饱和 */
-  --s-block: #5c4a38;
-  --p-block: #2f4a58;
-  --d-block: #5a5432;
-  --ds-block: #2f4f3e;
-  --f-block: #4a3548;
-  --noble-block: #3a3858;
+  /* 分区：粉笔粉尘色，彼此区分明显，与图例同 token */
+  --s-block: #6b4e32;
+  --p-block: #2a5570;
+  --d-block: #6a5f28;
+  --ds-block: #2a5c42;
+  --f-block: #5c3a58;
+  --noble-block: #3d3a6b;
 
   --radius-box: 4px;
   --radius-card: 8px;

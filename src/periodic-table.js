@@ -108,6 +108,7 @@ export function renderTable() {
     btn.style.gridRow = String(el.gridRow);
     btn.dataset.z = String(el.z);
     btn.dataset.block = el.block;
+    btn.dataset.zone = blockZoneId(el); /* 与图例 data-zone、主题 --*-block 对齐 */
     btn.dataset.group = String(el.group);
     if (el.stair) btn.dataset.stair = 'true';
     btn.title = `${el.name} (${el.symbol})`;
