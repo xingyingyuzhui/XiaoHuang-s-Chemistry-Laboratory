@@ -139,11 +139,16 @@ export async function refreshMolarPresets(list = null) {
 
     const b = document.createElement('button');
     b.type = 'button';
+    b.className = 'preset-chip';
     b.textContent = formula;
     b.title = formula;
     b.addEventListener('click', () => {
       if (!formulaInput) return;
       formulaInput.value = formula;
+      // 高亮当前示例
+      molarPresets.querySelectorAll('.preset-chip').forEach((el) => {
+        el.classList.toggle('is-active', el === b);
+      });
       runMolar();
     });
     molarPresets.appendChild(b);

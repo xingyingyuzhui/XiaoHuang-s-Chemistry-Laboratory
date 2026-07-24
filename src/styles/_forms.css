@@ -97,3 +97,76 @@
   transform: translate(-1px, -1px);
   box-shadow: var(--shadow-print);
 }
+
+/* 摩尔质量等：示例化学式标签（主题 token，勿写死 #fff / 蓝） */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+  margin-bottom: 0.9rem;
+}
+
+.presets > span.presets-label {
+  width: 100%;
+  margin-bottom: 0.15rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: var(--font-serif-cjk), var(--font-cjk);
+  letter-spacing: 0.04em;
+}
+
+.presets > span.presets-empty {
+  width: 100%;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.presets button,
+.presets .preset-chip {
+  appearance: none;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.42rem 0.78rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+  line-height: 1.25;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+.presets button:hover,
+.presets .preset-chip:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-ink));
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
+}
+
+.presets button:active,
+.presets .preset-chip:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--ink) 50%, transparent);
+}
+
+.presets button.is-active,
+.presets .preset-chip.is-active {
+  background: var(--accent);
+  color: #fffaf5;
+  border-color: var(--btn-primary-border, var(--border-ink));
+}

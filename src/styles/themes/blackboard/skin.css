@@ -382,6 +382,28 @@ html[data-theme='blackboard'] .atom-label {
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
 }
 
+/* 摩尔示例标签：黑板下可读 */
+html[data-theme='blackboard'] .presets button,
+html[data-theme='blackboard'] .presets .preset-chip {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .presets button:hover,
+html[data-theme='blackboard'] .presets .preset-chip:hover {
+  background: var(--stamp-soft);
+  color: var(--stamp);
+  border-color: color-mix(in srgb, var(--stamp) 50%, var(--border));
+}
+
+html[data-theme='blackboard'] .presets button.is-active,
+html[data-theme='blackboard'] .presets .preset-chip.is-active {
+  background: var(--stamp);
+  color: #1a2e14;
+  border-color: var(--btn-primary-border);
+}
+
 html[data-theme='blackboard'] .theme-card {
   background: var(--card-bg);
   color: var(--text-primary);
