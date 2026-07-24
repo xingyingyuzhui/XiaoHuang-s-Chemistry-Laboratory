@@ -1,0 +1,83 @@
+/**
+ * 主题：像素
+ * 厚描边、硬像素阴影、有限高对比色（贴小黄像素头像，非赛博霓虹）
+ */
+html[data-theme='pixel'] {
+  --paper: #dfe6e9;
+  --paper-deep: #c8d1d6;
+  --bg-body: #dfe6e9;
+  --bg-body-deep: #b2bec3;
+  --card-bg: #f5f6fa;
+  --card-elevated: #ffffff;
+
+  --ink: #2d3436;
+  --ink-soft: #636e72;
+  --ink-lab: #1e272e;
+  --text-primary: #2d3436;
+  --text-secondary: #747d8c;
+  --text-muted: #57606f;
+
+  --border: #a4b0be;
+  --border-soft: #dfe4ea;
+  --border-ink: #2f3542;
+
+  /* 像素主色：珊瑚红（区别文具章红、试剂紫铜） */
+  --stamp: #ff6b81;
+  --stamp-soft: #ffe4e9;
+  /* 辅色：青绿块 */
+  --diagram: #1dd1a1;
+  --diagram-soft: #d4faf0;
+  /* 点缀：天蓝块 */
+  --note: #54a0ff;
+  --note-soft: #e8f3ff;
+
+  --accent: var(--stamp);
+  --accent-hover: #ff4757;
+  --accent-soft: var(--stamp-soft);
+  --flame: var(--note);
+  --flame-soft: var(--note-soft);
+
+  --btn-primary: #ff6b81;
+  --btn-primary-hover: #ff4757;
+  --btn-primary-border: #2f3542;
+
+  /* 硬像素阴影：纯色偏移，无模糊 */
+  --shadow-sm: 2px 2px 0 #2f3542;
+  --shadow-md: 3px 3px 0 #2f3542;
+  --shadow-float: 4px 4px 0 #2f3542;
+  --shadow-print: 4px 4px 0 #2f3542;
+  --shadow-print-sm: 2px 2px 0 #2f3542;
+  --shadow-inset-glass: none;
+
+  /* 分区：扁平底色，像色板格子 */
+  --zone-s: #ffeaa7;
+  --zone-p: #74b9ff;
+  --zone-d: #fdcb6e;
+  --zone-ds: #55efc4;
+  --zone-f: #fd79a8;
+  --zone-noble: #a29bfe;
+
+  --radius-box: 0;
+  --radius-card: 0;
+  --radius-control: 0;
+  --gap-size: 4px;
+  --f-gap-size: 6px;
+
+  --ui-stroke: 2px;
+  --ui-stroke-strong: 3px;
+
+  --font-display: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-latin: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-serif-cjk: var(--font-cjk);
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-main: var(--font-cjk);
+
+  --topbar-bg: #ffffff;
+  --topbar-border: 3px solid #2f3542;
+  --topbar-shadow: 0 4px 0 #2f3542;
+  --bg-image: none;
+  --body-noise-opacity: 0;
+  --brand-eyebrow-display: block;
+  --stage-3d-bg: #dfe6e9;
+}

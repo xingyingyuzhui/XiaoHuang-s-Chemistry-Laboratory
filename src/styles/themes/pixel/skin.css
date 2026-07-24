@@ -1,0 +1,222 @@
+/* 像素：棋盘淡底、厚框、方 Tab */
+html[data-theme='pixel'] body {
+  background-color: var(--bg-body);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--border-ink) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--border-ink) 6%, transparent) 1px, transparent 1px);
+  background-size: 16px 16px;
+  image-rendering: pixelated;
+}
+
+html[data-theme='pixel'] body::before {
+  content: none;
+  opacity: 0;
+}
+
+html[data-theme='pixel'] .topbar {
+  background: var(--topbar-bg);
+  border-bottom: var(--topbar-border);
+  box-shadow: var(--topbar-shadow);
+  backdrop-filter: none;
+}
+
+html[data-theme='pixel'] .tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+html[data-theme='pixel'] .tab {
+  border: 2px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--card-elevated);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.7rem;
+  box-shadow: 2px 2px 0 var(--border-ink);
+  letter-spacing: 0.02em;
+}
+
+html[data-theme='pixel'] .tab:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--border-ink);
+  background: var(--note-soft);
+  color: var(--note);
+}
+
+html[data-theme='pixel'] .tab.active {
+  background: var(--stamp);
+  color: #fff;
+  border-color: var(--border-ink);
+  box-shadow: 2px 2px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .brand-mark {
+  border: 3px solid var(--border-ink);
+  border-radius: 0;
+  background: var(--card-elevated);
+  box-shadow: 3px 3px 0 var(--border-ink);
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+html[data-theme='pixel'] .brand-eyebrow {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--diagram);
+}
+
+html[data-theme='pixel'] .brand h1 {
+  font-family: var(--font-cjk);
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+html[data-theme='pixel'] .btn-settings {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  box-shadow: 2px 2px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .btn,
+html[data-theme='pixel'] .chip,
+html[data-theme='pixel'] .preset-chip,
+html[data-theme='pixel'] .presets button,
+html[data-theme='pixel'] .mol-btn,
+html[data-theme='pixel'] .quiz-chip,
+html[data-theme='pixel'] .quiz-topic,
+html[data-theme='pixel'] .quiz-opt {
+  border-radius: 0 !important;
+  box-shadow: 2px 2px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .btn.primary {
+  background: var(--stamp);
+  color: #fff;
+  border-color: var(--border-ink);
+}
+
+html[data-theme='pixel'] .table-shell,
+html[data-theme='pixel'] .detail-card,
+html[data-theme='pixel'] .sidebar,
+html[data-theme='pixel'] .stage,
+html[data-theme='pixel'] .stage-ai,
+html[data-theme='pixel'] .stage-electron,
+html[data-theme='pixel'] .settings-drawer,
+html[data-theme='pixel'] .modal-panel,
+html[data-theme='pixel'] .settings-block,
+html[data-theme='pixel'] .ai-nav-card,
+html[data-theme='pixel'] .quiz-card {
+  border-radius: 0 !important;
+  border: 3px solid var(--border-ink) !important;
+  box-shadow: 4px 4px 0 var(--border-ink) !important;
+}
+
+html[data-theme='pixel'] .table-toolbar {
+  background: var(--note-soft);
+  border-bottom: 3px solid var(--border-ink);
+}
+
+html[data-theme='pixel'] .element {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  box-shadow: 2px 2px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .periodic-table.show-zones .element[data-zone] {
+  box-shadow: 2px 2px 0 var(--border-ink) !important;
+}
+
+html[data-theme='pixel'] .periodic-table.show-zones .element[data-zone]:hover {
+  filter: none;
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--border-ink) !important;
+}
+
+html[data-theme='pixel'] .legend-dot {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  width: 12px;
+  height: 12px;
+}
+
+html[data-theme='pixel'] .chip.active {
+  background: var(--diagram);
+  color: #fff;
+  border-color: var(--border-ink);
+}
+
+html[data-theme='pixel'] .settings-drawer-head {
+  background: var(--stamp-soft);
+  border-bottom: 3px solid var(--border-ink);
+}
+
+html[data-theme='pixel'] .settings-section-title {
+  color: var(--stamp);
+  font-family: var(--font-mono);
+}
+
+html[data-theme='pixel'] .settings-section-title::before {
+  border-radius: 0;
+  background: var(--diagram);
+  box-shadow: 1px 1px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .settings-drawer {
+  box-shadow: -4px 0 0 var(--border-ink) !important;
+}
+
+html[data-theme='pixel'] .modal-head {
+  background: var(--diagram-soft);
+  border-bottom: 3px solid var(--border-ink);
+}
+
+html[data-theme='pixel'] .mol-info-card,
+html[data-theme='pixel'] .mol-props-card,
+html[data-theme='pixel'] .electron-info-card {
+  border-radius: 0;
+  border: 3px solid var(--border-ink);
+  box-shadow: 3px 3px 0 var(--border-ink);
+  background: var(--card-elevated);
+}
+
+html[data-theme='pixel'] .mol-controls,
+html[data-theme='pixel'] .mol-label-toggle,
+html[data-theme='pixel'] .mol-ctrl {
+  border-radius: 0;
+  border: 2px solid var(--border-ink);
+  box-shadow: 2px 2px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .mol-ctrl.is-on {
+  background: var(--diagram);
+  color: #fff;
+}
+
+html[data-theme='pixel'] .theme-card {
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .theme-card.is-active {
+  outline: 3px solid var(--stamp);
+  outline-offset: 0;
+  background: var(--stamp-soft);
+}
+
+html[data-theme='pixel'] .brand-tip-card {
+  border-radius: 0;
+  border: 3px solid var(--border-ink);
+  box-shadow: 4px 4px 0 var(--border-ink);
+}

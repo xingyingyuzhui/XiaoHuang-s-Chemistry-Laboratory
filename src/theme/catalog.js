@@ -28,6 +28,11 @@ export const THEME_CATALOG = [
     name: '黑板',
     description: '墨绿板 · 粉笔黄',
   },
+  {
+    id: 'pixel',
+    name: '像素',
+    description: '厚描边 · 色块阴影',
+  },
 ];
 
 export const THEME_IDS = new Set(THEME_CATALOG.map((t) => t.id));

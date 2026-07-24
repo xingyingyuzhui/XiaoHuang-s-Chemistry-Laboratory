@@ -8,6 +8,7 @@
 @import './themes/stationery/tokens.css';
 @import './themes/reagent/tokens.css';
 @import './themes/blackboard/tokens.css';
+@import './themes/pixel/tokens.css';
 
 @import './_base.css';
 @import './_motion.css';
@@ -29,3 +30,4 @@
 @import './themes/stationery/skin.css';
 @import './themes/reagent/skin.css';
 @import './themes/blackboard/skin.css';
+@import './themes/pixel/skin.css';
