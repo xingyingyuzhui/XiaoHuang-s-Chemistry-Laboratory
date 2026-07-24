@@ -43,10 +43,31 @@
   font-size: 1.25rem;
   font-family: var(--font-display), var(--font-latin);
   letter-spacing: -0.02em;
-  color: var(--ink);
+  /* 字色跟主题；底色用分区 token（--s-block 等），与左侧周期表一致 */
+  color: var(--text-primary);
+  background: var(--card-elevated);
   flex-shrink: 0;
   box-shadow: var(--shadow-print-sm);
   border: var(--ui-stroke-strong) solid var(--border-ink);
+}
+
+.detail-badge[data-zone='s'] {
+  background: var(--s-block);
+}
+.detail-badge[data-zone='p'] {
+  background: var(--p-block);
+}
+.detail-badge[data-zone='d'] {
+  background: var(--d-block);
+}
+.detail-badge[data-zone='ds'] {
+  background: var(--ds-block);
+}
+.detail-badge[data-zone='f'] {
+  background: var(--f-block);
+}
+.detail-badge[data-zone='noble'] {
+  background: var(--noble-block);
 }
 
 .detail-head h2 {

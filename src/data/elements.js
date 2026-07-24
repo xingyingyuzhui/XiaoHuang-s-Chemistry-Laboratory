@@ -4,13 +4,18 @@
  * f 区：period 6→grid row 9，period 7→grid row 10；col 为镧/锕行内列 4–18
  */
 
+/**
+ * 分区元数据
+ * colorCss：对应 styles 主题 token（--s-block 等），随 data-theme 变化
+ * color：仅作无 CSS 环境时的回落（与 default 主题一致）
+ */
 export const BLOCKS = {
-  s: { id: 's', label: 's 区', color: '#ffedd5' },
-  p: { id: 'p', label: 'p 区', color: '#e0f2fe' },
-  d: { id: 'd', label: 'd 区', color: '#fef3c7' },
-  ds: { id: 'ds', label: 'ds 区', color: '#bbf7d0' },
-  f: { id: 'f', label: 'f 区', color: '#fce7f3' },
-  noble: { id: 'noble', label: '稀有气体', color: '#ddd6fe' },
+  s: { id: 's', label: 's 区', colorCss: 'var(--s-block)', color: '#ffedd5' },
+  p: { id: 'p', label: 'p 区', colorCss: 'var(--p-block)', color: '#e0f2fe' },
+  d: { id: 'd', label: 'd 区', colorCss: 'var(--d-block)', color: '#fef3c7' },
+  ds: { id: 'ds', label: 'ds 区', colorCss: 'var(--ds-block)', color: '#bbf7d0' },
+  f: { id: 'f', label: 'f 区', colorCss: 'var(--f-block)', color: '#fce7f3' },
+  noble: { id: 'noble', label: '稀有气体', colorCss: 'var(--noble-block)', color: '#ddd6fe' },
 };
 
 export const GROUP_OLD = {
@@ -234,9 +239,23 @@ export const ELEMENTS = RAW.map(toElement);
 export const ELEMENTS_BY_SYMBOL = Object.fromEntries(ELEMENTS.map((e) => [e.symbol, e]));
 export const ELEMENTS_BY_Z = Object.fromEntries(ELEMENTS.map((e) => [e.z, e]));
 
+/** 分区 id：s / p / d / ds / f / noble（用于 data-zone 与图例） */
+export function blockZoneId(el) {
+  if (el?.isNoble) return 'noble';
+  const id = el?.block;
+  return BLOCKS[id] ? id : 'p';
+}
+
+/** 分区背景：主题 CSS 变量（详情徽章、需与周期表分区色一致） */
 export function blockColor(el) {
-  if (el.isNoble) return BLOCKS.noble.color;
-  return (BLOCKS[el.block] || BLOCKS.p).color;
+  const zone = blockZoneId(el);
+  return BLOCKS[zone]?.colorCss || BLOCKS.p.colorCss;
+}
+
+/** 硬编码回落色（非 DOM 场景） */
+export function blockColorFallback(el) {
+  const zone = blockZoneId(el);
+  return BLOCKS[zone]?.color || BLOCKS.p.color;
 }
 
 export function blockLabel(el) {

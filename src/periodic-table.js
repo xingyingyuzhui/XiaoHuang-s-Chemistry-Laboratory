@@ -10,7 +10,8 @@ import {
   GROUP_OLD,
   blockColor,
   blockLabel,
-  groupLabelRow
+  blockZoneId,
+  groupLabelRow,
 } from './data/elements.js';
 import { getElectronConfigHtml } from './data/electronConfigs.js';
 
@@ -49,7 +50,7 @@ export function renderLegend() {
   legendEl.innerHTML = items
     .map(
       (c) =>
-        `<span class="legend-item"><span class="legend-dot" style="background:${c.color}"></span>${c.label}</span>`
+        `<span class="legend-item"><span class="legend-dot" data-zone="${c.id}" style="background:${c.colorCss}"></span>${c.label}</span>`,
     )
     .join('');
 }
@@ -134,6 +135,7 @@ export function selectElement(z) {
     node.classList.toggle('is-selected', Number(node.dataset.z) === z);
   });
 
+  const zone = blockZoneId(el);
   const color = blockColor(el);
   const groupText =
     el.block === 'f'
@@ -145,7 +147,7 @@ export function selectElement(z) {
   const configHtml = getElectronConfigHtml(el.z);
   detailEl.innerHTML = `
     <div class="detail-head">
-      <div class="detail-badge" style="background:${color}">${el.symbol}</div>
+      <div class="detail-badge" data-zone="${zone}" style="background:${color}">${el.symbol}</div>
       <div>
         <h2>${el.name} · ${el.symbol}</h2>
         <p>${el.nameEn} · Z = ${el.z}</p>

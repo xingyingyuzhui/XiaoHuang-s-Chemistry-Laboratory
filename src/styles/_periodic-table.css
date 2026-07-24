@@ -56,6 +56,26 @@
   height: 9px;
   border-radius: 2px;
   border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--border-soft);
+}
+
+.legend-dot[data-zone='s'] {
+  background: var(--s-block);
+}
+.legend-dot[data-zone='p'] {
+  background: var(--p-block);
+}
+.legend-dot[data-zone='d'] {
+  background: var(--d-block);
+}
+.legend-dot[data-zone='ds'] {
+  background: var(--ds-block);
+}
+.legend-dot[data-zone='f'] {
+  background: var(--f-block);
+}
+.legend-dot[data-zone='noble'] {
+  background: var(--noble-block);
 }
 
 .view-toggles {
