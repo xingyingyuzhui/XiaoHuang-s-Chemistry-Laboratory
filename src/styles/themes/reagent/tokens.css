@@ -1,64 +1,65 @@
 /**
  * 主题：试剂架
- * 与「文具」刻意拉开：
- * - 文具 = 暖纸 + 红泥章 + 图示青绿
- * - 试剂架 = 冷钢灰柜体 + 钴蓝瓶签 + 琥珀点缀（无墨绿、无章红）
+ * 与另两套刻意错开：
+ * - 默认 = 浅灰蓝 + 科技蓝
+ * - 文具 = 暖纸 + 章红 + 青绿
+ * - 试剂架 = 中性石灰柜 + 紫铜瓶盖 + 奶油标签（不靠蓝、不靠章红墨绿）
  */
 html[data-theme='reagent'] {
-  /* 冷钢货架（偏蓝灰，不是文具的暖褐、也不是柜绿） */
-  --paper: #e4e9f0;
-  --paper-deep: #d0d8e4;
-  --bg-body: #e4e9f0;
-  --bg-body-deep: #c5cfdc;
-  --card-bg: #f7f8fb;
-  --card-elevated: #fcfcfe;
+  /* 石灰货架：中性偏暖一点，去掉蓝调 */
+  --paper: #e9e6e0;
+  --paper-deep: #d9d4cb;
+  --bg-body: #e9e6e0;
+  --bg-body-deep: #cdc7bc;
+  --card-bg: #faf7f2;
+  --card-elevated: #fffcf7;
 
-  /* 标签深蓝墨 */
-  --ink: #152238;
-  --ink-soft: #3a4a63;
-  --ink-lab: #0f1a2e;
-  --text-primary: #152238;
-  --text-secondary: #6b7a90;
-  --text-muted: #4e5d73;
+  /* 瓶签炭黑 */
+  --ink: #2a2420;
+  --ink-soft: #5c534c;
+  --ink-lab: #1f1b18;
+  --text-primary: #2a2420;
+  --text-secondary: #7a7168;
+  --text-muted: #5e564e;
 
-  --border: #b4c0d0;
-  --border-soft: #dce3ec;
-  --border-ink: #2a3d5c;
+  --border: #c4bdb2;
+  --border-soft: #e5dfd6;
+  --border-ink: #3d3630;
 
-  /* 钴蓝 — 主强调（瓶签 / 选中），远离文具章红 */
-  --stamp: #1e5a9e;
-  --stamp-soft: #e4eef9;
-  /* 冰蓝辅色 — 玻璃感，远离文具青绿 */
-  --diagram: #2a7d9b;
-  --diagram-soft: #e3f2f6;
-  /* 琥珀仅作点缀（警告条 / 小标签），不当主按钮绿褐 */
-  --note: #d4891a;
-  --note-soft: #fdf3e0;
+  /* 紫铜 / 瓶盖铜 — 主色（非蓝、非章红） */
+  --stamp: #b45309;
+  --stamp-soft: #f8ead8;
+  /* 深炭作结构辅色，避免再引入绿/蓝 */
+  --diagram: #4a4038;
+  --diagram-soft: #f0ebe4;
+  /* 标签米黄 */
+  --note: #c9a227;
+  --note-soft: #faf3d6;
 
   --accent: var(--stamp);
-  --accent-hover: #174a84;
+  --accent-hover: #93370a;
   --accent-soft: var(--stamp-soft);
   --flame: var(--note);
   --flame-soft: var(--note-soft);
 
   --btn-primary: var(--stamp);
   --btn-primary-hover: var(--accent-hover);
-  --btn-primary-border: #123a6a;
+  --btn-primary-border: #7c2d12;
 
-  --shadow-sm: 0 1px 2px rgba(21, 34, 56, 0.07);
-  --shadow-md: 0 3px 12px rgba(21, 34, 56, 0.09);
-  --shadow-float: 0 8px 24px rgba(21, 34, 56, 0.1), 0 1px 0 rgba(255, 255, 255, 0.75);
+  --shadow-sm: 0 1px 2px rgba(42, 36, 32, 0.07);
+  --shadow-md: 0 3px 12px rgba(42, 36, 32, 0.09);
+  --shadow-float: 0 8px 22px rgba(42, 36, 32, 0.1), 0 1px 0 rgba(255, 255, 255, 0.7);
   --shadow-print: var(--shadow-float);
   --shadow-print-sm: var(--shadow-sm);
-  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 
-  /* 指示剂色：偏冷，少暖橙粉 */
-  --s-block: #f0d8c8;
-  --p-block: #c8dcf0;
-  --d-block: #e8e0b8;
-  --ds-block: #c5e0d4;
-  --f-block: #e0d0e4;
-  --noble-block: #c8d0e8;
+  /* 分区：哑光塑料模型色，整体偏暖中性 */
+  --s-block: #efd5c0;
+  --p-block: #d5dce6;
+  --d-block: #ebe2b8;
+  --ds-block: #d0e2d4;
+  --f-block: #e6d2dc;
+  --noble-block: #d4d0e0;
 
   --radius-box: 6px;
   --radius-card: 10px;
@@ -76,9 +77,9 @@ html[data-theme='reagent'] {
   --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
   --font-main: var(--font-cjk);
 
-  --topbar-bg: color-mix(in srgb, var(--card-elevated) 92%, transparent);
+  --topbar-bg: color-mix(in srgb, var(--card-elevated) 94%, transparent);
   --topbar-border: 1px solid var(--border);
-  --topbar-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  --topbar-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
   --bg-image: none;
   --body-noise-opacity: 0;
   --brand-eyebrow-display: block;
