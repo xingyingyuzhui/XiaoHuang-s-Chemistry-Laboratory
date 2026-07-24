@@ -290,28 +290,96 @@ html[data-theme='blackboard'] .molar-total .value {
   color: var(--stamp);
 }
 
+/* 3D 舞台：更深的板心 */
 html[data-theme='blackboard'] .stage-3d,
-html[data-theme='blackboard'] .stage {
-  background: #1a332c;
+html[data-theme='blackboard'] .stage,
+html[data-theme='blackboard'] .stage-electron {
+  background: #0c1a16;
+  background-image: radial-gradient(ellipse 70% 55% at 50% 40%, #152e27 0%, #0a1613 70%);
+  border-color: #3d6b5c;
+}
+
+/* 3D 浮层信息卡：黑青「板书便签」，与浅色卡区分 */
+html[data-theme='blackboard'] .mol-info-card,
+html[data-theme='blackboard'] .mol-props-card,
+html[data-theme='blackboard'] .electron-info-card {
+  background: linear-gradient(165deg, #14352d 0%, #0b1c18 100%);
+  border: 1.5px solid #4a8a78;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(126, 200, 192, 0.12);
+  color: #e8f4f0;
+  backdrop-filter: none;
+}
+
+html[data-theme='blackboard'] .mol-info-card h3,
+html[data-theme='blackboard'] .mol-props-section h4,
+html[data-theme='blackboard'] .electron-info-card h3 {
+  color: var(--diagram);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+html[data-theme='blackboard'] .mol-info-card .mol-info-title,
+html[data-theme='blackboard'] .electron-info-symbol {
+  color: #f2faf6;
+}
+
+html[data-theme='blackboard'] .mol-info-card .mol-info-desc,
+html[data-theme='blackboard'] .electron-info-name,
+html[data-theme='blackboard'] .mol-props-section ul,
+html[data-theme='blackboard'] .mol-props-section ul li {
+  color: #a8c4b8;
+}
+
+html[data-theme='blackboard'] .electron-info-config {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid #3d6b5c;
+  color: var(--stamp);
+}
+
+html[data-theme='blackboard'] .hud {
+  background: rgba(10, 22, 19, 0.88);
+  border-color: #4a8a78;
+  color: #a8c4b8;
 }
 
 html[data-theme='blackboard'] .mol-controls,
 html[data-theme='blackboard'] .mol-label-toggle {
-  background: var(--card-elevated);
-  border-color: var(--border-ink);
-  color: var(--text-primary);
+  background: linear-gradient(165deg, #14352d 0%, #0b1c18 100%);
+  border-color: #4a8a78;
+  color: #e8f4f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 html[data-theme='blackboard'] .mol-ctrl {
-  background: var(--card-bg);
-  border-color: var(--border);
-  color: var(--text-primary);
+  background: #0f2420;
+  border-color: #3d6b5c;
+  color: #e8f4f0;
+  box-shadow: none;
+}
+
+html[data-theme='blackboard'] .mol-ctrl:hover {
+  background: #1a3d34;
+  color: var(--diagram);
 }
 
 html[data-theme='blackboard'] .mol-ctrl.is-on {
   background: var(--stamp);
   color: #1a2e14;
   border-color: var(--btn-primary-border);
+}
+
+html[data-theme='blackboard'] .mol-label-toggle:hover {
+  background: #1a3d34;
+  color: var(--diagram);
+}
+
+html[data-theme='blackboard'] .atom-label {
+  background: #0f2420;
+  border-color: #4a8a78;
+  color: #e8f4f0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
 }
 
 html[data-theme='blackboard'] .theme-card {
