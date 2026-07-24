@@ -1,0 +1,84 @@
+/**
+ * 主题：黑板
+ * 教室墨绿板 + 粉笔白字 + 彩粉笔强调（非赛博黑底霓虹）
+ */
+html[data-theme='blackboard'] {
+  /* 板面 */
+  --paper: #1a3d32;
+  --paper-deep: #132e26;
+  --bg-body: #16352c;
+  --bg-body-deep: #0f241d;
+  /* 粉笔字迹 / 贴在黑板上的浅色卡 */
+  --card-bg: #243f37;
+  --card-elevated: #2a4a40;
+
+  --ink: #eef4ef;
+  --ink-soft: #c5d4cb;
+  --ink-lab: #f7faf8;
+  --text-primary: #eef4ef;
+  --text-secondary: #9db5a8;
+  --text-muted: #8aa396;
+
+  --border: #3d5c50;
+  --border-soft: #2f4a41;
+  /* 粉笔描边偏浅 */
+  --border-ink: #c8d9ce;
+
+  /* 粉笔黄 — 主强调（像老师圈重点） */
+  --stamp: #f0d060;
+  --stamp-soft: #3d4a28;
+  /* 粉笔青 — 辅色 */
+  --diagram: #7ec8c0;
+  --diagram-soft: #1e3f3c;
+  /* 粉笔粉 — 点缀 */
+  --note: #e8a0b0;
+  --note-soft: #3d2a32;
+
+  --accent: var(--stamp);
+  --accent-hover: #f5dc7a;
+  --accent-soft: var(--stamp-soft);
+  --flame: var(--note);
+  --flame-soft: var(--note-soft);
+
+  --btn-primary: #c9a227;
+  --btn-primary-hover: #ddb52e;
+  --btn-primary-border: #8a7018;
+
+  --shadow-sm: 0 1px 0 rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 10px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-print: var(--shadow-float);
+  --shadow-print-sm: var(--shadow-sm);
+  --shadow-inset-glass: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* 分区：彩色粉笔粉尘感，低饱和 */
+  --s-block: #5c4a38;
+  --p-block: #2f4a58;
+  --d-block: #5a5432;
+  --ds-block: #2f4f3e;
+  --f-block: #4a3548;
+  --noble-block: #3a3858;
+
+  --radius-box: 4px;
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --gap-size: 4px;
+  --f-gap-size: 6px;
+
+  --ui-stroke: 1.5px;
+  --ui-stroke-strong: 2px;
+
+  --font-display: 'Noto Sans SC', system-ui, sans-serif;
+  --font-latin: 'Noto Sans SC', system-ui, sans-serif;
+  --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-serif-cjk: var(--font-cjk);
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --font-main: var(--font-cjk);
+
+  --topbar-bg: color-mix(in srgb, #1a3d32 92%, #000);
+  --topbar-border: 1px solid #4a6b5c;
+  --topbar-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --bg-image: none;
+  --body-noise-opacity: 0.22;
+  --brand-eyebrow-display: block;
+}

@@ -1,0 +1,331 @@
+/* 黑板：板面纹理、粉笔边、黄粉笔选中 */
+html[data-theme='blackboard'] body {
+  background-color: var(--bg-body);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 255, 255, 0.04), transparent 55%),
+    linear-gradient(165deg, #1c4236 0%, var(--paper) 45%, var(--paper-deep) 100%);
+  color: var(--text-primary);
+}
+
+/* 粉笔灰微粒 */
+html[data-theme='blackboard'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--body-noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  mix-blend-mode: soft-light;
+}
+
+html[data-theme='blackboard'] .topbar {
+  background: var(--topbar-bg);
+  border-bottom: var(--topbar-border);
+  box-shadow: var(--topbar-shadow);
+  backdrop-filter: none;
+}
+
+html[data-theme='blackboard'] .tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.2rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  flex-wrap: wrap;
+}
+
+html[data-theme='blackboard'] .tab {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.42rem 0.8rem;
+  box-shadow: none;
+}
+
+html[data-theme='blackboard'] .tab:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  transform: none;
+}
+
+html[data-theme='blackboard'] .tab.active {
+  background: color-mix(in srgb, var(--stamp) 22%, transparent);
+  color: var(--stamp);
+  border-color: color-mix(in srgb, var(--stamp) 45%, transparent);
+  box-shadow: none;
+}
+
+html[data-theme='blackboard'] .brand-mark {
+  border: 1.5px solid var(--border-ink);
+  border-radius: 10px;
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-sm);
+  padding: 2px;
+}
+
+html[data-theme='blackboard'] .brand-eyebrow {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--diagram);
+}
+
+html[data-theme='blackboard'] .brand h1 {
+  font-family: var(--font-cjk);
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme='blackboard'] .brand-sub {
+  color: var(--text-secondary);
+}
+
+html[data-theme='blackboard'] .btn-settings {
+  background: var(--card-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-ink);
+}
+
+html[data-theme='blackboard'] .btn-settings:hover {
+  background: var(--stamp-soft);
+  color: var(--stamp);
+}
+
+/* 板书区块 */
+html[data-theme='blackboard'] .table-shell,
+html[data-theme='blackboard'] .detail-card,
+html[data-theme='blackboard'] .sidebar,
+html[data-theme='blackboard'] .stage,
+html[data-theme='blackboard'] .stage-ai,
+html[data-theme='blackboard'] .stage-electron {
+  background: var(--card-elevated);
+  border-color: var(--border-ink);
+  box-shadow: var(--shadow-float);
+}
+
+html[data-theme='blackboard'] .table-toolbar {
+  background: rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid var(--border);
+}
+
+html[data-theme='blackboard'] .legend-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+html[data-theme='blackboard'] .chip {
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-secondary);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+html[data-theme='blackboard'] .chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  transform: none;
+  box-shadow: none;
+}
+
+html[data-theme='blackboard'] .chip.active {
+  background: var(--stamp-soft);
+  color: var(--stamp);
+  border-color: color-mix(in srgb, var(--stamp) 50%, var(--border));
+}
+
+html[data-theme='blackboard'] .element {
+  background: color-mix(in srgb, var(--card-bg) 80%, #000);
+  border-color: var(--border);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme='blackboard'] .element:hover {
+  border-color: var(--diagram);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--diagram) 40%, transparent);
+}
+
+html[data-theme='blackboard'] .element.is-selected {
+  background: var(--stamp-soft);
+  border-color: var(--stamp);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--stamp) 35%, transparent);
+}
+
+html[data-theme='blackboard'] .element .symbol {
+  color: var(--ink);
+}
+
+html[data-theme='blackboard'] .element .hanzi {
+  color: var(--text-secondary);
+}
+
+html[data-theme='blackboard'] .kv div {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .mol-btn {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .mol-btn:hover,
+html[data-theme='blackboard'] .mol-btn.active,
+html[data-theme='blackboard'] .mol-card.is-active .mol-card-main {
+  background: var(--stamp-soft);
+  border-color: var(--stamp);
+  color: var(--text-primary);
+}
+
+html[data-theme='blackboard'] .btn.primary {
+  background: var(--btn-primary);
+  color: #1a2e14;
+  border-color: var(--btn-primary-border);
+}
+
+html[data-theme='blackboard'] .btn.ghost {
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+html[data-theme='blackboard'] .field input[type='text'],
+html[data-theme='blackboard'] .field input[type='url'],
+html[data-theme='blackboard'] .field input[type='password'],
+html[data-theme='blackboard'] .field select,
+html[data-theme='blackboard'] .modal-body textarea {
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .settings-drawer {
+  background: var(--card-elevated);
+  border-left-color: var(--border-ink);
+  box-shadow: -6px 0 0 rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme='blackboard'] .settings-drawer-head {
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom-color: var(--border);
+  color: var(--text-primary);
+}
+
+html[data-theme='blackboard'] .settings-drawer-body {
+  background: var(--paper);
+}
+
+html[data-theme='blackboard'] .settings-block {
+  background: var(--card-bg);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .settings-section-title {
+  color: var(--stamp);
+}
+
+html[data-theme='blackboard'] .settings-section-title::before {
+  background: var(--stamp);
+  border-color: var(--border-ink);
+  box-shadow: none;
+}
+
+html[data-theme='blackboard'] .settings-backdrop {
+  background: rgba(8, 16, 12, 0.55);
+}
+
+html[data-theme='blackboard'] .modal-panel {
+  background: var(--card-elevated);
+  border-color: var(--border-ink);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme='blackboard'] .modal-head {
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom-color: var(--border);
+}
+
+html[data-theme='blackboard'] .modal-body {
+  background: var(--paper);
+}
+
+html[data-theme='blackboard'] .quiz-opt,
+html[data-theme='blackboard'] .quiz-card,
+html[data-theme='blackboard'] .ai-nav-card {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .ai-nav-card.is-active,
+html[data-theme='blackboard'] .quiz-opt.is-selected {
+  background: var(--stamp-soft);
+  border-color: var(--stamp);
+}
+
+html[data-theme='blackboard'] .molar-total {
+  background: var(--stamp-soft);
+  border-color: var(--border-ink);
+}
+
+html[data-theme='blackboard'] .molar-total .value {
+  color: var(--stamp);
+}
+
+html[data-theme='blackboard'] .stage-3d,
+html[data-theme='blackboard'] .stage {
+  background: #1a332c;
+}
+
+html[data-theme='blackboard'] .mol-controls,
+html[data-theme='blackboard'] .mol-label-toggle {
+  background: var(--card-elevated);
+  border-color: var(--border-ink);
+  color: var(--text-primary);
+}
+
+html[data-theme='blackboard'] .mol-ctrl {
+  background: var(--card-bg);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+html[data-theme='blackboard'] .mol-ctrl.is-on {
+  background: var(--stamp);
+  color: #1a2e14;
+  border-color: var(--btn-primary-border);
+}
+
+html[data-theme='blackboard'] .theme-card {
+  background: var(--card-bg);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .theme-card.is-active {
+  background: var(--stamp-soft);
+  outline-color: var(--stamp);
+}
+
+html[data-theme='blackboard'] ::selection {
+  background: color-mix(in srgb, var(--stamp) 45%, transparent);
+  color: #fff;
+}

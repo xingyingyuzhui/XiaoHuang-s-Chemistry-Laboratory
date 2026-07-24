@@ -43,6 +43,7 @@ const THEME_PREVIEW = {
   default: ['#3b82f6', '#f0f4f8', '#ffffff'],
   stationery: ['#c23b22', '#f2e9dc', '#1f6f6a'],
   reagent: ['#b45309', '#e9e6e0', '#c9a227'],
+  blackboard: ['#f0d060', '#1a3d32', '#7ec8c0'],
 };
 
 /**

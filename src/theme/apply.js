@@ -8,6 +8,7 @@ const THEME_EYEBROW = {
   default: '',
   stationery: '兴趣小组 · 第 1 期',
   reagent: 'REAGENT · SHELF',
+  blackboard: 'CHALK · BOARD',
   pixel: 'PIXEL · LAB',
 };
 
