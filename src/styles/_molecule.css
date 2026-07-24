@@ -1,0 +1,267 @@
+.molecule-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.mol-info-props {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 0.5rem;
+}
+
+.mol-info-section {
+  margin-bottom: 0.5rem;
+}
+
+.mol-info-section h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mol-info-section ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.mol-info-section ul li {
+  padding: 0.1rem 0;
+}
+
+.mol-btn {
+  appearance: none;
+  border: 1.5px solid var(--border-soft);
+  background: #f8fafc;
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 0.38rem 0.45rem;
+  text-align: center;
+  cursor: pointer;
+  font: inherit;
+  display: grid;
+  gap: 0.06rem;
+  transition: 0.12s ease;
+  min-width: 0;
+}
+
+.mol-btn:hover {
+  border-color: #bfdbfe;
+}
+
+.mol-btn.active {
+  border-color: #93c5fd;
+  background: var(--accent-soft);
+}
+
+.mol-btn strong {
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-family: var(--font-latin);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.mol-btn span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mol-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+}
+
+.mol-btn-add {
+  min-height: 44px;
+  border-style: dashed;
+  border-color: rgba(100, 116, 139, 0.45);
+  background: rgba(248, 250, 252, 0.9);
+  grid-template-columns: 1fr;
+  align-content: center;
+  gap: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.mol-btn-add .mol-add-plus {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #64748b;
+  letter-spacing: 0;
+}
+
+.mol-btn-add:hover {
+  border-color: #93c5fd;
+  background: var(--accent-soft);
+}
+
+.mol-btn-add:hover .mol-add-plus {
+  color: #2563eb;
+}
+
+.mol-btn-edit {
+  min-height: 44px;
+  margin: 0;
+  width: 100%;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.mol-btn-edit.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.mol-card {
+  position: relative;
+  min-width: 0;
+}
+
+.mol-card-main {
+  width: 100%;
+}
+
+.mol-card-del {
+  display: none;
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #fecaca;
+  background: #ef4444;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+}
+
+.molecule-list.is-edit-mode .mol-card-del {
+  display: grid;
+}
+
+.mol-card.is-editing {
+  cursor: grab;
+}
+
+.mol-card.is-dragging {
+  opacity: 0.45;
+}
+
+.mol-card.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.mol-card.is-active .mol-card-main {
+  border-color: #93c5fd;
+  background: var(--accent-soft);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+}
+
+.modal-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-panel {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -48%) scale(0.96);
+  width: min(440px, 92vw);
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  z-index: 110;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.modal-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.modal-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.modal-body {
+  padding: 0.95rem 1rem 1.15rem;
+}
+
+.modal-body textarea {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  resize: vertical;
+  min-height: 96px;
+  outline: none;
+}
+
+.modal-body textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}

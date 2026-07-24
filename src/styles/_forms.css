@@ -1,0 +1,120 @@
+.field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.8rem;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.field input[type='text'] {
+  width: 100%;
+  border: 2px solid var(--border);
+  background: #fff;
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  font-family: ui-monospace, monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.field input[type='text']:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.field input[type='text'].is-invalid {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18);
+  background: #fffafa;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.btn {
+  appearance: none;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: 0.12s ease;
+}
+
+.btn.primary {
+  background-color: var(--btn-primary, #3b82f6);
+  background-image: none;
+  color: #fff;
+  border: 2px solid var(--btn-primary-border, #2563eb);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--btn-primary, #3b82f6) 35%, transparent);
+}
+
+.btn.primary:hover {
+  background-color: var(--btn-primary-hover, #2563eb);
+  border-color: var(--btn-primary-border, #1d4ed8);
+}
+
+.btn.primary:active {
+  filter: brightness(0.95);
+}
+
+.btn.ghost {
+  background: #fff;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.btn.ghost:hover {
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.presets > span.presets-label {
+  width: 100%;
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.presets > span.presets-empty {
+  width: 100%;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+
+.presets button {
+  appearance: none;
+  border: 2px solid var(--border);
+  background: #fff;
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  cursor: pointer;
+}
+
+.presets button:hover {
+  border-color: #93c5fd;
+  background: var(--accent-soft);
+}

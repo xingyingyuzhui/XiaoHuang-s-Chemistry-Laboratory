@@ -1,0 +1,61 @@
+:root {
+  /* 马卡龙 / 教材浅色 */
+  --bg-body: #f0f4f8;
+  --card-bg: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --border-soft: #f1f5f9;
+  --accent: #3b82f6;
+  --accent-soft: #eff6ff;
+  --btn-primary: #3b82f6;
+  --btn-primary-hover: #2563eb;
+  --btn-primary-border: #1d4ed8;
+  --shadow-sm: 0 2px 4px rgba(148, 163, 184, 0.15);
+  --shadow-md: 0 4px 6px -1px rgba(148, 163, 184, 0.2), 0 2px 4px -1px rgba(148, 163, 184, 0.1);
+  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+
+  --s-block: #ffedd5;
+  --p-block: #e0f2fe;
+  --d-block: #fef3c7;
+  --ds-block: #bbf7d0;
+  --f-block: #fce7f3;
+  --noble-block: #ddd6fe;
+
+  /* 默认值；运行时由 fitPeriodicTable() 按容器等比放大 */
+  --box-size: 56px;
+  --gap-size: 4px;
+  --f-gap-size: 6px; /* 主表与 f 区之间的窄间隔（第 8 行轨道） */
+  --radius-box: 10px;
+  --radius-card: 20px;
+  --label-height: 22px;
+  --period-label-width: 18px;
+  /* 侧栏窄于元素格，把横向空间让给 18 列主表 */
+  --side-col-width: calc(var(--box-size) * 0.52);
+  --side-cols-width: calc(2 * var(--side-col-width) + var(--gap-size));
+  --table-width: calc(18 * var(--box-size) + 17 * var(--gap-size));
+  --frame-col-gap: 4px;
+
+  /* 中文优先系统字体（更易覆盖 CJK 扩展区生僻元素名）；拉丁用 Quicksand */
+  --font-latin: 'Quicksand', system-ui, sans-serif;
+  --font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Songti SC', 'STSong',
+    'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', 'Source Han Sans SC',
+    sans-serif;
+  --font-main: var(--font-latin);
+  --font-symbol: 18px;
+  --font-hanzi: 11px;
+  --font-atomic: 10px;
+  --font-mass: 8px;
+  --show-side: 1;
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --side-cols-width: 0px;
+    --show-side: 0;
+  }
+  .side-column {
+    display: none !important;
+  }
+}

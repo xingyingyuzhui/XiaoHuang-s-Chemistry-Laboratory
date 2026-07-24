@@ -1,0 +1,18 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vite
+
+# Server runtime files
+server/data/
+server/server.log
+server/public/
+
+# Windows portable build output
+
+# Local session notes (do not publish)
+SESSION-SUMMARY.md
+*.log
+frontend.log
+dist-exe/

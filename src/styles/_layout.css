@@ -1,0 +1,31 @@
+.panel {
+  display: none;
+  gap: 0.85rem;
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.panel.active {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+}
+
+#panel-table.active {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 268px);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  overflow: hidden;
+  gap: 0.65rem;
+}
+
+#panel-molecule.active,
+#panel-molar.active,
+#panel-electron.active,
+#panel-ai.active {
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  overflow: hidden;
+}

@@ -1,0 +1,142 @@
+.molar-stage {
+  display: grid;
+  padding: 1rem;
+  background: #fff;
+}
+
+.molar-result {
+  min-height: 100%;
+}
+
+.molar-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-bottom: 0.9rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff6ff, #ecfdf5);
+  border: 1px solid #bfdbfe;
+}
+
+.molar-total-left {
+  min-width: 0;
+  flex: 1;
+}
+
+.molar-total-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.molar-total-formula {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.3;
+  word-break: break-all;
+  font-family: var(--font-latin), ui-monospace, monospace;
+}
+
+.molar-total-right {
+  flex-shrink: 0;
+}
+
+.molar-total .value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #1e40af;
+  font-family: var(--font-latin), ui-monospace, monospace;
+}
+
+.molar-total .unit {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-left: 0.25rem;
+  font-weight: 600;
+}
+
+.molar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.05rem;
+}
+
+.molar-table th,
+.molar-table td {
+  padding: 0.7rem 0.6rem;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+}
+
+.molar-table th {
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.molar-table td {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+}
+
+.molar-table td.name {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.molar-error {
+  color: #991b1b;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.molar-error-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  color: #b91c1c;
+}
+
+.molar-error-msg {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #7f1d1d;
+}
+
+.molar-error-tips {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #9f1239;
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.molar-error-tips code {
+  font-family: var(--font-latin), ui-monospace, monospace;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.84em;
+}
+
+.molar-empty {
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0.5rem;
+}

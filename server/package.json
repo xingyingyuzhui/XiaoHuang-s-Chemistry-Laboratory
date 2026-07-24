@@ -1,0 +1,39 @@
+{
+  "name": "chem-lab-server",
+  "version": "1.0.0",
+  "description": "小黄的化学实验室后端（v1.0）",
+  "main": "index.js",
+  "bin": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "build:frontend": "npm --prefix .. run build && node scripts/copy-frontend.js",
+    "build:exe": "npm run build:frontend && node scripts/pkg-win.js",
+    "pkg:win": "pkg . --targets node18-win-x64 --output ../dist-exe/XiaoHuang-ChemLab.exe"
+  },
+  "dependencies": {
+    "sql.js": "^1.10.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "scripts": [
+      "routes/**/*.js",
+      "utils/**/*.js",
+      "db/**/*.js",
+      "seed/**/*.js",
+      "paths.js"
+    ],
+    "assets": [
+      "db/init.sql",
+      "public/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "../dist-exe"
+  }
+}
