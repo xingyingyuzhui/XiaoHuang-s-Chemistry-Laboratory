@@ -3,10 +3,21 @@ const router = express.Router();
 const { queryOne } = require('../db/sqlite');
 const { success, error, badRequest } = require('../utils/response');
 
-// DeepSeek 模型白名单
-const ALLOWED_MODELS = ['deepseek-v4-flash', 'deepseek-v4-pro'];
-const DEFAULT_MODEL = 'deepseek-v4-flash';
-const DEFAULT_API_BASE = 'https://api.deepseek.com';
+const {
+  DEFAULT_API_BASE,
+  DEFAULT_MODEL,
+  normalizeApiBase,
+  normalizeModel,
+} = require('../utils/ai-config');
+const {
+  validateMoleculePayload,
+  rejectComplexPrompt,
+} = require('../utils/molecule-validate');
+const {
+  reserveGlobalAiCall,
+  releaseLastGlobalAiCall,
+} = require('../utils/ai-rate-limit');
+const { storeQuizPaper } = require('../utils/quiz-paper-store');
 
 /**
  * 修复常见的 JSON 格式问题
@@ -33,6 +44,12 @@ router.post('/generate', async (req, res) => {
       return badRequest(res, '请输入要生成的分子描述');
     }
 
+    // 紫杉醇 / 阿莫西林等：LLM 编坐标必然失真，直接拒绝
+    const complexReason = rejectComplexPrompt(prompt);
+    if (complexReason) {
+      return badRequest(res, complexReason);
+    }
+
     // 从数据库读取 AI 设置
     const settingsRow = queryOne("SELECT value FROM settings WHERE key = 'ai'");
     let aiSettings = {};
@@ -50,16 +67,11 @@ router.post('/generate', async (req, res) => {
       return badRequest(res, '请先在设置 → AI 中填写 DeepSeek API Key');
     }
 
-    let apiBase = (aiSettings.apiBase || DEFAULT_API_BASE).trim().replace(/\/+$/, '');
-    if (!apiBase) apiBase = DEFAULT_API_BASE;
-
-    let model = (aiSettings.model || DEFAULT_MODEL).trim();
-    if (!ALLOWED_MODELS.includes(model)) {
-      model = DEFAULT_MODEL;
-    }
+    const { base: apiBase } = normalizeApiBase(aiSettings.apiBase);
+    const model = normalizeModel(aiSettings.model);
 
     // System Prompt
-    const systemPrompt = `你是高中化学教学助手，负责生成可用于 3D 球棍模型展示的分子结构数据。
+    const systemPrompt = `你是高中化学教学助手，负责生成可用于 3D 球棍模型展示的**小分子**结构数据。
 用户会用中文描述分子名称、化学式或用途。你必须只输出一个 JSON 对象，不要 Markdown 代码块，不要其它说明文字。
 
 JSON 字段：
@@ -82,77 +94,52 @@ JSON 字段：
   }
 }
 
-规则：
+规则（必须遵守）：
 1. el 必须是合法元素符号（H, C, O, N, Cl, S, P, Na, Fe 等），首字母大写。
-2. 坐标为埃(Å)量级示意坐标，分子大致居中，键长合理（约 0.9–2.0）。
-3. bonds 中的索引从 0 开始，且必须落在 atoms 范围内；多重键可重复写多次 [i,j]。
-4. 原子数控制在 2–24 个，适合课堂展示。
-5. 若用户描述无法对应真实分子，选最接近的常见高中分子，desc 中说明。
-6. physics 和 chemistry 字段必须提供，使用简洁的中文描述。
-7. 只输出 JSON。`;
+2. 坐标为埃(Å)量级，分子居中，**相邻成键原子间距约 1.0～1.8**，不要把所有原子堆在原点。
+3. bonds 索引从 0 开始，必须在 atoms 范围内；单键写一次 [i,j]，双键写两次，三键写三次。
+4. **原子总数 2～18 个**（含氢）。葡萄糖等可含氢到上限内；更大的分子禁止输出。
+5. **禁止**输出紫杉醇、阿莫西林、蛋白质、聚合物等复杂药物/生物大分子的完整结构。
+6. 若用户要的是复杂分子：不要硬编坐标，应改输出一个**高中可教的相关小分子**（如青霉素→简化内酰胺示例可改为「乙酸」或「苯」并在 desc 说明「原请求过复杂，已改为…」）。
+7. physics 和 chemistry 用简洁中文。
+8. 只输出 JSON。`;
 
-    // 调用 DeepSeek API
-    const url = `${apiBase}/chat/completions`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `请为以下描述生成分子 JSON：\n${prompt.trim()}` }
-        ],
+    let content;
+    try {
+      const chat = await callDeepSeekChat({
+        system: systemPrompt,
+        user: `请为以下描述生成分子 JSON：\n${prompt.trim()}`,
         temperature: 0.3,
         max_tokens: 4096,
-        // 禁用思考模式，直接返回结果
-        thinking: { type: 'disabled' }
-      })
-    });
-
-    if (!response.ok) {
-      let detail = '';
-      try {
-        const errBody = await response.json();
-        detail = errBody?.error?.message || JSON.stringify(errBody);
-      } catch {
-        detail = await response.text();
+        kind: 'mol-generate',
+      });
+      content = chat.content;
+    } catch (e) {
+      const status = e.status || 502;
+      if (status === 400) return badRequest(res, e.message);
+      if (status === 429) {
+        return res.status(429).json({
+          success: false,
+          message: e.message,
+          data: null,
+        });
       }
-      return error(res, `DeepSeek 请求失败（${response.status}）：${detail || response.statusText}`, 502);
+      return error(res, e.message || 'DeepSeek 请求失败', status >= 400 ? status : 502);
     }
-
-    const body = await response.json();
-    console.log('DeepSeek API 响应:', JSON.stringify(body).substring(0, 500));
-    // 优先从 content 获取，如果为空则从 reasoning_content 获取
-    const content = body?.choices?.[0]?.message?.content || 
-                    body?.choices?.[0]?.message?.reasoning_content || '';
-    console.log('提取的内容:', content.substring(0, 200));
 
     // 提取 JSON
     let parsed;
-    console.log('DeepSeek 返回内容:', content.substring(0, 500));
     try {
-      // 尝试直接解析
       parsed = JSON.parse(content.trim());
     } catch (e1) {
-      console.log('直接解析失败:', e1.message);
-      // 去除 Markdown 代码块
       let s = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
       try {
         parsed = JSON.parse(s);
       } catch (e2) {
-        console.log('去除代码块后解析失败:', e2.message);
-        // 截取第一个 { 到最后一个 }
         const a = s.indexOf('{');
         const b = s.lastIndexOf('}');
         if (a >= 0 && b > a) {
-          let jsonStr = s.slice(a, b + 1);
-          console.log('截取的 JSON:', jsonStr.substring(0, 200));
-          // 修复常见的 JSON 问题
-          jsonStr = fixJson(jsonStr);
-          console.log('修复后的 JSON:', jsonStr.substring(0, 200));
+          let jsonStr = fixJson(s.slice(a, b + 1));
           parsed = JSON.parse(jsonStr);
         } else {
           return error(res, '模型返回不是合法 JSON', 502);
@@ -160,8 +147,22 @@ JSON 字段：
       }
     }
 
-    // 验证并规范化数据
-    const validated = validateMoleculePayload(parsed);
+    // 验证 + 几何松弛 + 质量检查（fromAi 更严格）
+    let validated;
+    try {
+      validated = validateMoleculePayload(parsed, {
+        fromAi: true,
+        strictGeometry: true,
+        relax: true,
+        maxAtoms: 24,
+      });
+    } catch (ve) {
+      return badRequest(
+        res,
+        ve.message ||
+          '生成的 3D 结构不可靠。请改用高中常见小分子（乙醇、苯、葡萄糖等）重试。',
+      );
+    }
 
     success(res, validated);
   } catch (err) {
@@ -174,84 +175,107 @@ JSON 字段：
  * 读取 AI 设置并调用 DeepSeek Chat Completions
  * @returns {Promise<{ content: string, model: string }>}
  */
-async function callDeepSeekChat({ system, user, temperature = 0.8, max_tokens = 256 }) {
-  const settingsRow = queryOne("SELECT value FROM settings WHERE key = 'ai'");
-  let aiSettings = {};
-  if (settingsRow) {
-    try {
-      aiSettings = JSON.parse(settingsRow.value);
-    } catch (e) {
-      console.warn('解析 AI 设置失败:', e);
+async function callDeepSeekChat({
+  system,
+  user,
+  temperature = 0.8,
+  max_tokens = 256,
+  kind = 'chat',
+  skipGlobalLimit = false,
+}) {
+  let reserved = false;
+  if (!skipGlobalLimit) {
+    const lim = reserveGlobalAiCall(kind);
+    if (!lim.allowed) {
+      const err = new Error(lim.message || 'AI 调用过于频繁');
+      err.status = 429;
+      throw err;
     }
+    reserved = true;
   }
 
-  const apiKey = aiSettings.apiKey;
-  if (!apiKey) {
-    const err = new Error('请先在设置 → AI 中填写 DeepSeek API Key');
-    err.status = 400;
-    throw err;
-  }
-
-  let apiBase = (aiSettings.apiBase || DEFAULT_API_BASE).trim().replace(/\/+$/, '');
-  if (!apiBase) apiBase = DEFAULT_API_BASE;
-
-  let model = (aiSettings.model || DEFAULT_MODEL).trim();
-  if (!ALLOWED_MODELS.includes(model)) {
-    model = DEFAULT_MODEL;
-  }
-
-  const url = `${apiBase}/chat/completions`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user },
-      ],
-      temperature,
-      max_tokens,
-      thinking: { type: 'disabled' },
-    }),
-  });
-
-  if (!response.ok) {
-    let detail = '';
-    try {
-      const errBody = await response.json();
-      detail = errBody?.error?.message || JSON.stringify(errBody);
-    } catch {
-      detail = await response.text();
+  try {
+    const settingsRow = queryOne("SELECT value FROM settings WHERE key = 'ai'");
+    let aiSettings = {};
+    if (settingsRow) {
+      try {
+        aiSettings = JSON.parse(settingsRow.value);
+      } catch (e) {
+        console.warn('解析 AI 设置失败:', e);
+      }
     }
-    const err = new Error(
-      `DeepSeek 请求失败（${response.status}）：${detail || response.statusText}`,
-    );
-    err.status = 502;
-    throw err;
-  }
 
-  const body = await response.json();
-  const content =
-    body?.choices?.[0]?.message?.content ||
-    body?.choices?.[0]?.message?.reasoning_content ||
-    '';
-  return { content: String(content).trim(), model };
+    const apiKey = aiSettings.apiKey;
+    if (!apiKey) {
+      const err = new Error('请先在设置 → AI 中填写 DeepSeek API Key');
+      err.status = 400;
+      throw err;
+    }
+
+    const { base: apiBase } = normalizeApiBase(aiSettings.apiBase);
+    const model = normalizeModel(aiSettings.model);
+
+    const url = `${apiBase}/chat/completions`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+        temperature,
+        max_tokens,
+        thinking: { type: 'disabled' },
+      }),
+    });
+
+    if (!response.ok) {
+      let detail = '';
+      try {
+        const errBody = await response.json();
+        detail = errBody?.error?.message || JSON.stringify(errBody);
+      } catch {
+        try {
+          detail = await response.text();
+        } catch {
+          detail = response.statusText;
+        }
+      }
+      const short = String(detail || '').slice(0, 200);
+      const err = new Error(
+        `DeepSeek 请求失败（${response.status}）：${short || response.statusText}`,
+      );
+      err.status = 502;
+      throw err;
+    }
+
+    const body = await response.json();
+    const content =
+      body?.choices?.[0]?.message?.content ||
+      body?.choices?.[0]?.message?.reasoning_content ||
+      '';
+    return { content: String(content).trim(), model };
+  } catch (e) {
+    if (reserved) releaseLastGlobalAiCall();
+    throw e;
+  }
 }
 
 /**
  * POST /api/ai/tip
- * 高中化学小知识：1h 内最多 20 次调模型；超额或失败走本地库。
+ * 高中化学小知识：1h 内最多 40 次调模型；超额或失败走本地库。
  * 成功调模型后写入本地库（去重积累）。不向前端暴露剩余次数。
  */
 router.post('/tip', async (req, res) => {
   const {
     ensureTablesAndSeed,
-    canCallModel,
-    recordAiCall,
+    tryReserveAiCall,
+    releaseLastAiCall,
     normalizeTip,
     saveAiTip,
     pickLocalTip,
@@ -260,8 +284,8 @@ router.post('/tip', async (req, res) => {
   try {
     ensureTablesAndSeed();
 
-    // 超限：静默走本地，不报错、不返回剩余次数
-    if (!canCallModel()) {
+    // 先占位计次，避免并发打穿限额；失败/无效则 release
+    if (!tryReserveAiCall()) {
       return success(res, { tip: pickLocalTip(), source: 'local' });
     }
 
@@ -286,19 +310,17 @@ router.post('/tip', async (req, res) => {
 
       let tip = normalizeTip(content);
       if (!tip) {
-        // 模型废话：不记调用次数，直接本地
+        releaseLastAiCall();
         return success(res, { tip: pickLocalTip(), source: 'local' });
       }
 
-      // 仅成功产出有效 tip 时计次 + 入库
-      recordAiCall();
       const saved = saveAiTip(tip);
       tip = saved || tip;
 
       return success(res, { tip, source: 'ai' });
     } catch (aiErr) {
+      releaseLastAiCall();
       console.warn('AI 小知识调模型失败，回落本地:', aiErr.message || aiErr);
-      // 失败不计次，本地兜底，接口仍 200
       return success(res, { tip: pickLocalTip(), source: 'local' });
     }
   } catch (err) {
@@ -446,22 +468,47 @@ router.post('/quiz/generate', async (req, res) => {
       user,
       temperature: 0.55,
       max_tokens: 4096,
+      kind: 'quiz-generate',
     });
 
     const parsed = parseModelJson(content);
     const questions = normalizeQuizQuestions(parsed, n);
-    success(res, { questions, meta: { count: questions.length, difficulty, grades: gradeLabels, topics: topicLabels } });
+    const meta = {
+      count: questions.length,
+      difficulty,
+      grades: gradeLabels,
+      topics: topicLabels,
+    };
+    // 服务端快照标准答案，交卷时不信客户端 answer
+    let paperId = null;
+    try {
+      paperId = storeQuizPaper(questions, meta);
+    } catch (e) {
+      console.warn('保存出题快照失败', e?.message || e);
+    }
+    success(res, {
+      questions,
+      paperId,
+      meta,
+    });
   } catch (err) {
     console.error('智能出题失败:', err);
     const status = err.status || 500;
     if (status === 400) return badRequest(res, err.message);
+    if (status === 429) {
+      return res.status(429).json({
+        success: false,
+        message: err.message,
+        data: null,
+      });
+    }
     error(res, err.message || '出题失败', status >= 400 ? status : 502);
   }
 });
 
 /**
  * POST /api/ai/quiz/hint
- * 单题提示（气泡用）；1h 内最多 10 次成功调模型
+ * 单题提示（气泡用）；1h 内最多 20 次成功调模型
  */
 router.post('/quiz/hint', async (req, res) => {
   const { reserveCall, releaseCall } = require('../utils/quiz-assist-limit');
@@ -520,7 +567,7 @@ ${opts}
 
 /**
  * POST /api/ai/quiz/explain
- * 单题解答；1h 内最多 10 次成功调模型（与提示分开计数）
+ * 单题解答；1h 内最多 20 次成功调模型（与提示分开计数）
  */
 router.post('/quiz/explain', async (req, res) => {
   const { reserveCall, releaseCall } = require('../utils/quiz-assist-limit');
@@ -924,76 +971,6 @@ ${lines}
 });
 
 /**
- * 验证并规范化分子数据
- */
-function validateMoleculePayload(data) {
-  if (!data || typeof data !== 'object') {
-    throw new Error('结构数据无效');
-  }
-
-  const name = String(data.name || '').trim() || '未命名分子';
-  const formula = String(data.formula || '').trim() || '?';
-  const desc = String(data.desc || '').trim() || '由 AI 生成的教学示意结构。';
-
-  if (!Array.isArray(data.atoms) || data.atoms.length < 1) {
-    throw new Error('缺少 atoms 原子坐标');
-  }
-  if (data.atoms.length > 40) {
-    throw new Error('原子数过多，请换更简单的分子');
-  }
-
-  const atoms = data.atoms.map((a, i) => {
-    const el = String(a.el || a.element || '').trim();
-    if (!/^[A-Z][a-z]?$/.test(el)) {
-      throw new Error(`第 ${i + 1} 个原子元素符号无效：${el || '(空)'}`);
-    }
-    const x = Number(a.x);
-    const y = Number(a.y);
-    const z = Number(a.z);
-    if (![x, y, z].every(Number.isFinite)) {
-      throw new Error(`第 ${i + 1} 个原子坐标无效`);
-    }
-    return { el, x, y, z };
-  });
-
-  const n = atoms.length;
-  const bonds = [];
-  const rawBonds = Array.isArray(data.bonds) ? data.bonds : [];
-  for (const b of rawBonds) {
-    if (!Array.isArray(b) || b.length < 2) continue;
-    const i = Number(b[0]);
-    const j = Number(b[1]);
-    if (!Number.isInteger(i) || !Number.isInteger(j)) continue;
-    if (i < 0 || j < 0 || i >= n || j >= n || i === j) continue;
-    bonds.push([i, j]);
-  }
-
-  // 兜底：无键时串联相邻原子
-  if (bonds.length === 0 && n > 1) {
-    for (let i = 0; i < n - 1; i++) {
-      bonds.push([i, i + 1]);
-    }
-  }
-
-  // 物理性质
-  const physics = {
-    state: String(data.physics?.state || '').trim() || '未知',
-    density: String(data.physics?.density || '').trim() || '未知',
-    meltingPoint: String(data.physics?.meltingPoint || '').trim() || '未知',
-    boilingPoint: String(data.physics?.boilingPoint || '').trim() || '未知'
-  };
-
-  // 化学性质
-  const chemistry = {
-    acidity: String(data.chemistry?.acidity || '').trim() || '未知',
-    solubility: String(data.chemistry?.solubility || '').trim() || '未知',
-    reactivity: String(data.chemistry?.reactivity || '').trim() || '未知'
-  };
-
-  return { name, formula, desc, atoms, bonds, physics, chemistry };
-}
-
-/**
  * POST /api/ai/reaction
  * 根据描述生成高中化学反应（结构化 JSON，不落库；前端确认后再 POST /api/reactions）
  */
@@ -1136,6 +1113,92 @@ router.post('/reaction', async (req, res) => {
     const status = err.status || 500;
     if (status === 400) return badRequest(res, err.message);
     error(res, err.message || '生成反应失败', status >= 400 ? status : 502);
+  }
+});
+
+/**
+ * POST /api/ai/stoich
+ * 化学计量分步解答（教学示意）
+ */
+router.post('/stoich', async (req, res) => {
+  try {
+    const prompt = String(req.body?.prompt || '').trim();
+    if (!prompt) return badRequest(res, '请输入计量题目');
+
+    const system = `你是高中化学老师。对学生的化学计量题给出分步解答。
+只输出 JSON：
+{
+  "equation": "相关配平方程式（若有）",
+  "steps": [
+    { "title": "步骤名", "detail": "计算与说明" }
+  ],
+  "answer": "最终答案含单位"
+}
+规则：步骤 3～6 步；数值合理；不要 Markdown。`;
+
+    const { content } = await callDeepSeekChat({
+      system,
+      user: prompt,
+      temperature: 0.3,
+      max_tokens: 1200,
+    });
+    const parsed = parseModelJson(content);
+    if (!parsed || typeof parsed !== 'object') {
+      return error(res, '模型返回无法解析', 502);
+    }
+    const steps = Array.isArray(parsed.steps)
+      ? parsed.steps.slice(0, 8).map((s, i) => ({
+          title: String(s.title || s.label || `步骤${i + 1}`).slice(0, 40),
+          detail: String(s.detail || s.text || '').slice(0, 300),
+        }))
+      : [];
+    success(res, {
+      equation: String(parsed.equation || '').slice(0, 200),
+      steps,
+      answer: String(parsed.answer || '').slice(0, 200),
+    });
+  } catch (err) {
+    console.error('AI 计量失败:', err);
+    const status = err.status || 500;
+    if (status === 400) return badRequest(res, err.message);
+    error(res, err.message || '分步解答失败', status >= 400 ? status : 502);
+  }
+});
+
+/**
+ * POST /api/ai/balance
+ * AI 建议配平（前端仍应本地校验）
+ */
+router.post('/balance', async (req, res) => {
+  try {
+    const equation = String(req.body?.equation || '').trim();
+    if (!equation) return badRequest(res, '请输入方程式');
+
+    const system = `你是高中化学老师。将用户给出的化学方程式配平。
+只输出 JSON：{ "equation": "配平后的式子，用 → 连接", "steps": ["步骤说明"] }
+系数用最小整数；不要 Markdown。`;
+
+    const { content } = await callDeepSeekChat({
+      system,
+      user: equation,
+      temperature: 0.2,
+      max_tokens: 512,
+    });
+    const parsed = parseModelJson(content);
+    if (!parsed?.equation) {
+      return error(res, '模型未返回配平式', 502);
+    }
+    success(res, {
+      equation: String(parsed.equation).slice(0, 200),
+      steps: Array.isArray(parsed.steps)
+        ? parsed.steps.map((s) => String(s).slice(0, 120)).slice(0, 6)
+        : [],
+    });
+  } catch (err) {
+    console.error('AI 配平失败:', err);
+    const status = err.status || 500;
+    if (status === 400) return badRequest(res, err.message);
+    error(res, err.message || '配平建议失败', status >= 400 ? status : 502);
   }
 });
 

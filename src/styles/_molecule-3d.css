@@ -86,7 +86,9 @@
   top: 0.85rem;
   left: 0.85rem;
   z-index: 3;
-  max-width: min(320px, calc(100% - 2rem));
+  max-width: min(340px, calc(100% - 2rem));
+  max-height: min(48vh, 360px);
+  overflow: auto;
   padding: 0.75rem 0.95rem;
   border-radius: 12px;
   background: var(--card-elevated);
@@ -101,12 +103,59 @@
   left: 0.85rem;
   z-index: 3;
   max-width: min(280px, calc(100% - 2rem));
+  max-height: min(36vh, 280px);
+  overflow: auto;
   padding: 0.65rem 0.85rem;
   border-radius: 12px;
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
   pointer-events: none;
+}
+
+.mol-bond-card {
+  position: absolute;
+  top: 0.85rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  min-width: 200px;
+  max-width: min(360px, 70%);
+  padding: 0.65rem 0.85rem 0.7rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card-elevated) 96%, transparent);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  box-shadow: var(--shadow-print);
+  backdrop-filter: blur(8px);
+  text-align: center;
+}
+
+.mol-bond-card h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  color: var(--stamp);
+  font-family: var(--font-serif-cjk);
+}
+
+.mol-bond-title {
+  margin: 0 0 0.15rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mol-bond-kind {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--diagram, var(--ink));
+}
+
+.mol-bond-tip {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .mol-props-section {
@@ -163,6 +212,33 @@
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1.55;
+}
+
+.mol-info-card .mol-desc-base {
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.mol-info-card .mol-desc-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed color-mix(in srgb, var(--border-ink) 30%, transparent);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.mol-info-card .mol-desc-meta > span {
+  display: block;
+}
+
+.mol-info-card .mol-desc-meta em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--stamp);
+  margin-right: 0.35rem;
+  font-size: 0.72rem;
 }
 
 .hud {

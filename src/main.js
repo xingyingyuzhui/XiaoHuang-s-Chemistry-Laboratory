@@ -169,6 +169,31 @@ async function init() {
     switchTab('table');
     runMolar();
   }
+
+  await revealApp();
 }
 
-init().catch(console.error);
+/** 等字体与首帧布局后再显示，减少刷新闪屏 */
+async function revealApp() {
+  try {
+    if (document.fonts?.ready) {
+      await Promise.race([
+        document.fonts.ready,
+        new Promise((r) => setTimeout(r, 1200)),
+      ]);
+    }
+  } catch {
+    /* ignore */
+  }
+  // 双 rAF：等主题/布局应用完
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  document.documentElement.classList.remove('app-booting');
+  document.documentElement.classList.add('app-ready');
+  scheduleFit();
+}
+
+init().catch((err) => {
+  console.error(err);
+  document.documentElement.classList.remove('app-booting');
+  document.documentElement.classList.add('app-ready');
+});

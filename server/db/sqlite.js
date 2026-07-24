@@ -43,6 +43,12 @@ async function initDatabase(dbFilePath) {
   db.run(initSQL);
 
   try {
+    db.run('PRAGMA foreign_keys = ON');
+  } catch (e) {
+    /* ignore */
+  }
+
+  try {
     db.run("ALTER TABLE molecules ADD COLUMN physics JSON DEFAULT '{}'");
   } catch (e) {
     /* 列已存在 */

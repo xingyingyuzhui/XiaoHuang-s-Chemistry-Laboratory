@@ -245,7 +245,7 @@ export function showAppBubble(opts = {}) {
   const anchor = document.getElementById('appBrandIcon');
   if (!anchor) return;
   const {
-    title = 'AI 课堂',
+    title = '课堂',
     text = '',
     loading = false,
     duration,

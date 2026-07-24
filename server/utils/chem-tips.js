@@ -6,7 +6,7 @@
 const { query, queryOne, run } = require('../db/sqlite');
 
 const WINDOW_MS = 60 * 60 * 1000; // 1 小时
-const MAX_AI_CALLS_PER_WINDOW = 20;
+const MAX_AI_CALLS_PER_WINDOW = 40;
 const MAX_STORED_TIPS = 200;
 
 const SEED_TIPS = [
@@ -87,11 +87,33 @@ function canCallModel(now = Date.now()) {
 }
 
 /**
- * 记录一次成功的模型调用
+ * 记录一次模型调用
  */
 function recordAiCall(now = Date.now()) {
   ensureTablesAndSeed();
   run(`INSERT INTO ai_tip_calls (called_at) VALUES (?)`, [now]);
+}
+
+/**
+ * 先占位再请求，降低并发打穿限额
+ * @returns {boolean} 是否占位成功
+ */
+function tryReserveAiCall(now = Date.now()) {
+  if (!canCallModel(now)) return false;
+  recordAiCall(now);
+  return true;
+}
+
+/** 请求失败 / 无效结果时释放最近一次占位 */
+function releaseLastAiCall() {
+  try {
+    ensureTablesAndSeed();
+    run(
+      `DELETE FROM ai_tip_calls WHERE id = (SELECT id FROM ai_tip_calls ORDER BY id DESC LIMIT 1)`,
+    );
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
@@ -178,6 +200,8 @@ module.exports = {
   ensureTablesAndSeed,
   canCallModel,
   recordAiCall,
+  tryReserveAiCall,
+  releaseLastAiCall,
   normalizeTip,
   saveAiTip,
   pickLocalTip,

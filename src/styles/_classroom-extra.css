@@ -1,0 +1,627 @@
+/* 课堂：点名 + 实验脚本 */
+
+.rollcall-layout {
+  display: grid;
+  /* 动画区为主，名单侧栏收窄 */
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 1rem;
+  align-items: stretch;
+  padding: 0.25rem 0 0.5rem;
+  min-height: min(62vh, 560px);
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .rollcall-layout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+}
+
+.rollcall-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  padding: 1.25rem 1rem 1.5rem;
+  min-height: 100%;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--paper) 35%, transparent);
+}
+
+.rollcall-deck {
+  perspective: 1100px;
+  width: min(100%, 560px);
+  max-width: 92%;
+}
+
+.rollcall-card {
+  --flip: 0deg;
+  position: relative;
+  min-height: min(42vh, 320px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 22px;
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--stamp) 18%, transparent), transparent 50%),
+    var(--card-elevated);
+  box-shadow: var(--shadow-print);
+  transform: rotateY(var(--flip)) scale(1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.rollcall-card.is-spinning {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--stamp) 40%, transparent),
+    var(--shadow-print);
+}
+
+.rollcall-card.is-winner {
+  animation: rollcall-win 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--stamp) 28%, transparent), transparent 55%),
+    var(--card-elevated);
+  box-shadow:
+    0 0 0 3px var(--stamp),
+    var(--shadow-print);
+}
+
+@keyframes rollcall-win {
+  0% {
+    transform: rotateY(18deg) scale(0.92);
+  }
+  55% {
+    transform: rotateY(-6deg) scale(1.06);
+  }
+  100% {
+    transform: rotateY(0) scale(1);
+  }
+}
+
+.rollcall-card-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--stamp);
+  text-transform: uppercase;
+}
+
+.rollcall-card-name {
+  font-size: clamp(2.2rem, 6.5vw, 3.6rem);
+  font-weight: 800;
+  font-family: var(--font-serif-cjk), inherit;
+  color: var(--text-primary);
+  line-height: 1.15;
+  text-align: center;
+  padding: 0 1rem;
+  word-break: break-all;
+}
+
+.rollcall-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.rollcall-manage {
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 14px;
+  padding: 0.85rem;
+  background: var(--paper);
+  box-shadow: var(--shadow-print-sm);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: min(70vh, 620px);
+}
+
+/* 点名整页在 stage 内拉高 */
+#aiSectionRollcall {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+#aiSectionRollcall[hidden] {
+  display: none !important;
+}
+
+.rollcall-manage h4 {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-serif-cjk), inherit;
+}
+
+.rollcall-add-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+}
+
+.rollcall-add-row input {
+  flex: 1;
+  min-width: 0;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  background: var(--card-elevated);
+}
+
+.rollcall-import-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rollcall-import-label textarea {
+  width: 100%;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-size: 0.86rem;
+  resize: vertical;
+  box-sizing: border-box;
+  background: var(--card-elevated);
+}
+
+.rollcall-import-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.45rem 0 0.65rem;
+  flex-wrap: wrap;
+}
+
+.rollcall-student-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 120px;
+  max-height: none;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.rollcall-student {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--border-ink) 25%, transparent);
+  background: var(--card-elevated);
+}
+
+.rollcall-student-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rollcall-student-acts {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.rollcall-empty {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  padding: 0.5rem 0;
+}
+
+/* 实验探究：三级目录（左）+ 脚本（右） */
+.lab-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: stretch;
+  min-height: 0;
+  flex: 1;
+  padding-bottom: 0.5rem;
+}
+
+@media (max-width: 720px) {
+  .lab-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lab-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 0;
+  max-height: min(62vh, 520px);
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.lab-nav-item {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  font: inherit;
+  box-shadow: var(--shadow-print-sm);
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
+}
+
+.lab-nav-item:hover {
+  background: var(--diagram-soft, var(--paper));
+}
+
+.lab-nav-item.is-active {
+  background: color-mix(in srgb, var(--stamp) 12%, var(--paper));
+  border-color: var(--stamp);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--stamp) 30%, transparent);
+}
+
+.lab-nav-type {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--stamp);
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.03em;
+}
+
+.lab-nav-title {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  font-family: var(--font-serif-cjk), inherit;
+}
+
+.lab-script-detail {
+  min-height: 0;
+  overflow: auto;
+  padding: 0.15rem 0.25rem 1rem 0.15rem;
+  max-width: none;
+}
+
+.lab-detail-head {
+  margin-bottom: 0.75rem;
+}
+
+.lab-type {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--stamp);
+  margin-bottom: 0.3rem;
+}
+
+.lab-detail-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  font-family: var(--font-serif-cjk), inherit;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.lab-eq {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--diagram, var(--ink));
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.lab-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+}
+
+@media (max-width: 560px) {
+  .lab-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lab-meta-item {
+  border: 1px solid color-mix(in srgb, var(--border-ink) 28%, transparent);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+  background: var(--paper);
+}
+
+.lab-meta-item span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--stamp);
+  margin-bottom: 0.2rem;
+}
+
+.lab-meta-item strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.lab-steps-heading {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+  font-family: var(--font-serif-cjk), inherit;
+  color: var(--text-primary);
+}
+
+.lab-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.lab-step {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 35%, transparent);
+  background: var(--card-elevated, var(--paper));
+}
+
+.lab-step-n {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: var(--stamp);
+  color: #fffaf5;
+  margin-top: 0.05rem;
+}
+
+.lab-step-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.lab-step-label {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin-bottom: 0.15rem;
+}
+
+.lab-step-tip {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.lab-notes {
+  margin: 0.85rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* 实验区在课堂 stage 内占满高度 */
+#aiSectionLab {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+#aiSectionLab[hidden] {
+  display: none !important;
+}
+
+/* 计算页二级分区 */
+.molar-stage.stage-ai {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.85rem 1rem 1.1rem;
+}
+
+.molar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.molar-section[hidden] {
+  display: none !important;
+}
+
+.molar-section-body {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .molar-section-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.molar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.molar-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.molar-form .field span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.molar-form input,
+.molar-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.molar-form textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.molar-tool-panel {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-print-sm);
+  min-height: 120px;
+}
+
+.molar-tool-panel h4 {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-serif-cjk), inherit;
+}
+
+.molar-balance-eq {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0.5rem;
+  color: var(--diagram, var(--ink));
+}
+
+.molar-balance-steps {
+  margin: 0.35rem 0 0;
+  padding-left: 1.15rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.molar-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+}
+
+/* 反应 scrub / 导出 */
+.rxn-player-bar-track {
+  position: relative;
+}
+
+.rxn-player-scrub {
+  position: absolute;
+  inset: -6px 0 -6px;
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.rxn-export-row {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.rxn-export-row .btn,
+.rxn-import-label {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.rxn-eq-pop {
+  animation: rxn-eq-pop 0.35s ease;
+}
+
+@keyframes rxn-eq-pop {
+  from {
+    transform: scale(0.97);
+    opacity: 0.65;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.stage-3d.rxn-playing .mol-bond-card {
+  display: none;
+}
+
+.electron-explain {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.detail-teach {
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--stamp) 40%, transparent);
+  background: color-mix(in srgb, var(--stamp) 6%, var(--paper));
+}
+
+.detail-teach h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  color: var(--stamp);
+  font-family: var(--font-serif-cjk), inherit;
+}
+
+.detail-teach p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}

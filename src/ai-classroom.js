@@ -1,5 +1,5 @@
 /**
- * AI 课堂：侧栏二级导航 + 智能出题 / 历史 / 错题本
+ * 课堂：侧栏二级导航 + 出题 / 错题 / 点名 / 实验
  */
 
 import { aiApi, quizApi } from './api/client.js';
@@ -11,6 +11,8 @@ import {
   REVEAL_MODES,
   topicsForGrades,
 } from './data/chem-topics.js';
+import { initRollcall, onRollcallSectionEnter } from './classroom-rollcall.js';
+import { LAB_SCRIPTS } from './data/lab-scripts.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -24,6 +26,16 @@ const AI_SECTIONS = [
     id: 'wrong',
     title: '错题本',
     desc: '重练做对后自动移出',
+  },
+  {
+    id: 'rollcall',
+    title: '随机点名',
+    desc: '名单与点名',
+  },
+  {
+    id: 'lab',
+    title: '实验探究',
+    desc: '实验脚本',
   },
 ];
 
@@ -42,6 +54,8 @@ let submitted = false;
 let submitting = false;
 let currentSection = 'quiz';
 let lastSessionId = null;
+/** 出题快照 id：交卷时交给服务端按标准答案判分 */
+let currentPaperId = null;
 let expandedResultIdx = null;
 
 /** @type {Array<any>} */
@@ -94,8 +108,12 @@ function selectSection(id) {
   renderNav();
   const quiz = $('#aiSectionQuiz');
   const wrong = $('#aiSectionWrong');
+  const roll = $('#aiSectionRollcall');
+  const lab = $('#aiSectionLab');
   if (quiz) quiz.hidden = id !== 'quiz';
   if (wrong) wrong.hidden = id !== 'wrong';
+  if (roll) roll.hidden = id !== 'rollcall';
+  if (lab) lab.hidden = id !== 'lab';
   if (id === 'wrong') {
     expandedWrongId = null;
     wrongUiState = {};
@@ -104,6 +122,124 @@ function selectSection(id) {
   if (id === 'quiz') {
     refreshStatsAndWrongBook();
   }
+  if (id === 'rollcall') {
+    onRollcallSectionEnter();
+  }
+  if (id === 'lab') {
+    renderLabScripts();
+  }
+}
+
+let currentLabId = LAB_SCRIPTS[0]?.id || null;
+
+function renderLabScripts() {
+  const nav = $('#labNavList');
+  const detail = $('#labScriptDetail');
+  if (!nav || !detail) return;
+
+  if (!currentLabId && LAB_SCRIPTS[0]) currentLabId = LAB_SCRIPTS[0].id;
+
+  nav.innerHTML = LAB_SCRIPTS.map((lab) => {
+    const active = lab.id === currentLabId ? ' is-active' : '';
+    return `
+    <button type="button" class="lab-nav-item${active}" data-lab="${escapeHtml(lab.id)}" role="listitem">
+      <span class="lab-nav-type">${escapeHtml(lab.type)}</span>
+      <strong class="lab-nav-title">${escapeHtml(lab.title)}</strong>
+    </button>`;
+  }).join('');
+
+  nav.querySelectorAll('[data-lab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentLabId = btn.dataset.lab;
+      renderLabScripts();
+    });
+  });
+
+  showLabDetail(currentLabId);
+}
+
+function showLabDetail(id) {
+  const lab = LAB_SCRIPTS.find((x) => x.id === id);
+  const detail = $('#labScriptDetail');
+  if (!detail) return;
+  if (!lab) {
+    detail.innerHTML = `<div class="molar-empty">请选择左侧实验</div>`;
+    return;
+  }
+
+  const steps = Array.isArray(lab.steps) ? lab.steps : [];
+  detail.innerHTML = `
+    <div class="lab-detail-head">
+      <span class="lab-type">${escapeHtml(lab.type)}</span>
+      <h3 class="lab-detail-title">${escapeHtml(lab.title)}</h3>
+      <p class="lab-eq">${escapeHtml(lab.equation || '')}</p>
+    </div>
+    <div class="lab-meta">
+      <div class="lab-meta-item">
+        <span>现象</span>
+        <strong>${escapeHtml(lab.phenomena || '—')}</strong>
+      </div>
+      <div class="lab-meta-item">
+        <span>安全</span>
+        <strong>${escapeHtml(lab.safety || '—')}</strong>
+      </div>
+    </div>
+    <h4 class="lab-steps-heading">实验步骤</h4>
+    <div class="lab-step-list">
+      ${
+        steps.length
+          ? steps
+              .map((s, i) => {
+                const label = typeof s === 'string' ? s : s?.label || `步骤 ${i + 1}`;
+                const tip = typeof s === 'string' ? '' : s?.tip || '';
+                return `
+          <div class="lab-step">
+            <span class="lab-step-n">${i + 1}</span>
+            <div class="lab-step-body">
+              <strong class="lab-step-label">${escapeHtml(label)}</strong>
+              ${tip ? `<p class="lab-step-tip">${escapeHtml(tip)}</p>` : ''}
+            </div>
+          </div>`;
+              })
+              .join('')
+          : `<p class="rxn-muted">暂无步骤说明</p>`
+      }
+    </div>
+  `;
+}
+
+/** 导出本场测验为 Markdown 文本并下载 */
+export function exportQuizMarkdown() {
+  if (!paper.length) {
+    alert('当前没有可导出的题目（请先生成并进入练习或交卷结果）');
+    return;
+  }
+  const lines = [
+    '# 课堂练习导出',
+    '',
+    `导出时间：${new Date().toLocaleString()}`,
+    `题量：${paper.length}`,
+    '',
+  ];
+  paper.forEach((q, i) => {
+    lines.push(`## ${i + 1}. ${q.stem || q.question || ''}`);
+    (q.options || []).forEach((opt, j) => {
+      const mark = String.fromCharCode(65 + j);
+      lines.push(`- ${mark}. ${opt}`);
+    });
+    if (submitted || q.answer != null) {
+      const ans = typeof q.answer === 'number' ? String.fromCharCode(65 + q.answer) : q.answer;
+      lines.push(`- **答案**：${ans ?? ''}`);
+    }
+    if (q.explain) lines.push(`- **解析**：${q.explain}`);
+    lines.push('');
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `课堂练习-${Date.now()}.md`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function renderGradeChips() {
@@ -665,6 +801,7 @@ async function generateQuiz() {
       })
       .filter(Boolean);
     if (!paper.length) throw new Error('生成的题目无效，请重试');
+    currentPaperId = data?.paperId || null;
     submitted = false;
     submitting = false;
     lastSessionId = null;
@@ -907,6 +1044,7 @@ async function submitPaper() {
       usedExplain: Boolean(q.usedExplain),
     }));
     const saved = await quizApi.saveSession({
+      paperId: currentPaperId,
       grades: gradeLabels(),
       difficulty: diffLabel(),
       topics: topicLabels(),
@@ -1081,6 +1219,7 @@ export function initAiClassroom() {
   renderRevealChips();
   bindCount();
   showView('config');
+  initRollcall();
 
   const defaults = topicsForGrades(config.grades).slice(0, 2).map((t) => t.id);
   if (!config.topics.length) {
@@ -1107,5 +1246,8 @@ export function initAiClassroom() {
     expandedWrongId = null;
     wrongUiState = {};
     loadWrongBookPage();
+  });
+  document.querySelectorAll('.btn-quiz-export').forEach((btn) => {
+    btn.addEventListener('click', exportQuizMarkdown);
   });
 }

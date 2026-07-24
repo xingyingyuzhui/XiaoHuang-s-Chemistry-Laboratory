@@ -71,6 +71,15 @@ export function createMoleculeViewer(container) {
   let labelsVisible = true; // 标签可见性状态
   /** @type {{ target: THREE.Vector3, position: THREE.Vector3 } | null} */
   let homeView = null;
+  /** @type {((info: object | null) => void) | null} */
+  let bondSelectHandler = null;
+  /** @type {THREE.Mesh | null} */
+  let selectedBondMesh = null;
+  /** @type {THREE.Mesh[]} */
+  let bondMeshes = [];
+  let currentMolecule = null;
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
 
   const spherical = new THREE.Spherical();
   const offset = new THREE.Vector3();
@@ -115,7 +124,7 @@ export function createMoleculeViewer(container) {
       bondOffset = perp.multiplyScalar(t * spread);
     }
 
-    const geom = new THREE.CylinderGeometry(0.06, 0.06, len, 12);
+    const geom = new THREE.CylinderGeometry(0.07, 0.07, len, 12);
     const mat = new THREE.MeshStandardMaterial({
       color: 0x94a3b8,
       metalness: 0.1,
@@ -128,6 +137,69 @@ export function createMoleculeViewer(container) {
     const quaternion = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
     mesh.setRotationFromQuaternion(quaternion);
     return mesh;
+  }
+
+  function clearBondHighlight() {
+    if (selectedBondMesh?.material) {
+      selectedBondMesh.material.color.setHex(0x94a3b8);
+      selectedBondMesh.material.emissive?.setHex?.(0x000000);
+    }
+    selectedBondMesh = null;
+  }
+
+  function describeBond(i, j, order) {
+    const atoms = currentMolecule?.atoms || [];
+    const a = atoms[i];
+    const b = atoms[j];
+    const elA = a?.el || '?';
+    const elB = b?.el || '?';
+    const orderName =
+      order >= 3 ? '三键' : order === 2 ? '双键' : '单键';
+    const metal = new Set(['Na', 'K', 'Mg', 'Ca', 'Fe', 'Al']);
+    let kind = '共价键（中学简化）';
+    if (metal.has(elA) || metal.has(elB)) kind = '可能含离子/金属特性（示意）';
+    let tip = `${elA}—${elB} ${orderName}。`;
+    if (order === 2) tip += '双键中含 σ 与 π（示意），加成常发生在双键。';
+    else if (order >= 3) tip += '三键不饱和度更高，可发生多步加成。';
+    else tip += '单键以 σ 键为主，可旋转（示意）。';
+    return {
+      i,
+      j,
+      order,
+      elA,
+      elB,
+      orderName,
+      kind,
+      tip,
+      label: `${elA}—${elB} · ${orderName}`,
+    };
+  }
+
+  function onPointerClick(event) {
+    if (!bondMeshes.length) return;
+    const rect = canvas.getBoundingClientRect();
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(bondMeshes, false);
+    if (!hits.length) {
+      clearBondHighlight();
+      bondSelectHandler?.(null);
+      return;
+    }
+    const mesh = hits[0].object;
+    clearBondHighlight();
+    selectedBondMesh = mesh;
+    if (mesh.material) {
+      mesh.material.color.setHex(0xe11d48);
+      if (mesh.material.emissive) mesh.material.emissive.setHex(0x4c0519);
+    }
+    const info = describeBond(
+      mesh.userData.i,
+      mesh.userData.j,
+      mesh.userData.order || 1,
+    );
+    bondSelectHandler?.(info);
   }
 
   function makeAtomLabel(el, radius) {
@@ -265,26 +337,33 @@ export function createMoleculeViewer(container) {
 
   function load(molecule) {
     clearRoot();
+    clearBondHighlight();
+    bondMeshes = [];
+    currentMolecule = molecule || null;
     if (!molecule || !molecule.atoms?.length) {
+      bondSelectHandler?.(null);
       resize();
       return;
     }
 
     const pairCount = new Map();
-    for (const [i, j] of molecule.bonds) {
+    for (const [i, j] of molecule.bonds || []) {
       const key = i < j ? `${i}-${j}` : `${j}-${i}`;
       pairCount.set(key, (pairCount.get(key) || 0) + 1);
     }
     const pairSeen = new Map();
 
-    for (const [i, j] of molecule.bonds) {
+    for (const [i, j] of molecule.bonds || []) {
       const key = i < j ? `${i}-${j}` : `${j}-${i}`;
       const total = pairCount.get(key) || 1;
       const seen = pairSeen.get(key) || 0;
       pairSeen.set(key, seen + 1);
       const a = molecule.atoms[i];
       const b = molecule.atoms[j];
-      root.add(makeBond(a, b, seen, total));
+      const mesh = makeBond(a, b, seen, total);
+      mesh.userData = { isBond: true, i, j, order: total };
+      bondMeshes.push(mesh);
+      root.add(mesh);
     }
 
     for (const atom of molecule.atoms) {
@@ -354,10 +433,18 @@ export function createMoleculeViewer(container) {
     window.addEventListener('chem-theme-change', onThemeChange);
   }
 
+  function setOnBondSelect(fn) {
+    bondSelectHandler = typeof fn === 'function' ? fn : null;
+  }
+
   function start() {
     bindControls();
     syncBackground();
     resize();
+    if (!canvas.dataset.bondClick) {
+      canvas.dataset.bondClick = '1';
+      canvas.addEventListener('click', onPointerClick);
+    }
     if (!ro && typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => resize());
       ro.observe(container);
@@ -391,5 +478,15 @@ export function createMoleculeViewer(container) {
     labelRenderer.domElement.remove();
   }
 
-  return { load, resize, start, stop, dispose, setAutoRotate, toggleLabels, syncBackground };
+  return {
+    load,
+    resize,
+    start,
+    stop,
+    dispose,
+    setAutoRotate,
+    toggleLabels,
+    syncBackground,
+    setOnBondSelect,
+  };
 }

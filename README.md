@@ -2,23 +2,23 @@
 
 面向中学化学教学与自学的本地应用。
 
-包含：**元素周期表**、**3D 分子**、**摩尔质量**、**电子排布**、**AI 课堂**。
+包含：**元素周期表**、**3D 分子**、**计算**、**电子排布**、**课堂**。
 
 数据保存在本机 SQLite。AI 功能使用 DeepSeek API（需自行填写 Key）。
 
-**当前版本：v1.1.0**
+**当前版本：v2.0.0**
 
 ---
 
 ## 下载安装（推荐）
 
-发布页：[Releases · v1.1.0](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v1.1.0)
+发布页：[Releases · v2.0.0](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v2.0.0)
 
 | 文件 | 平台 | 说明 |
 |------|------|------|
-| `XiaoHuang-ChemLab-Setup-1.1.0.exe` | Windows x64 | **Electron 安装包**（无黑色控制台，桌面快捷方式） |
-| `XiaoHuang-ChemLab-1.1.0-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1/M2/M3/M4） |
-| `XiaoHuang-ChemLab.exe` | Windows x64 | 路线 B 轻量便携包（约 44MB，有黑色控制台 + 浏览器） |
+| `XiaoHuang-ChemLab-Setup-2.0.0.exe` 或同目录 NSIS 产物 | Windows x64 | **Electron 安装包**（无黑色控制台） |
+| `XiaoHuang-ChemLab-2.0.0-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1/M2/M3/M4） |
+| `XiaoHuang-ChemLab.exe` | Windows x64 | 路线 B 轻量便携包（有黑色控制台 + 浏览器） |
 
 ### Electron 版（Win 安装包 / Mac dmg）
 
@@ -43,53 +43,43 @@
 ### 1. 元素周期表
 
 - 标准 18 族 × 7 周期主表，含镧系 / 锕系
-- 族标、周期标、s/p/d/ds/f 分区配色（与图例同源，随主题变化）
+- 分区配色与图例同源，随主题变化
 - 金属与非金属分界线开关
-- 点选元素，详情区展示基本信息与电子排布
+- 左侧详情：电子排布 + 课堂提示
 
 ### 2. 3D 分子
 
 - 内置常见中学分子球棍模型（Three.js）
-- 旋转、缩放、慢转、视角复位；可开关原子标签
-- 首次进入默认加载列表第一项
-- 侧栏列表排序 / 删除；AI 按描述生成分子
-- 3D 画布背景跟随主题
+- 点选化学键说明；简介含类别 / 用途 / 性质要点
+- 右上角「反应」：内置高中常见反应示意动画 + AI 添加
+- AI 生成分子（适合小分子；复杂药物会拦截）
 
-### 3. 摩尔质量
+### 3. 计算
 
-- 化学式计算摩尔质量与分元素明细
-- 支持括号、结晶水；示例与 3D 分子库同步
+- **摩尔质量**：化学式计算与分元素明细
+- **配平方程**：本地配平 + 守恒校验，可选 AI 建议
+- **分步计量**：AI 分步化学计量（需 API Key）
 
 ### 4. 电子排布
 
-- 前 18 号元素玻尔多壳层 3D 示意
+- 1～36 号元素玻尔多壳层 3D 示意
 - 列表可拖拽排序并持久化
 
-### 5. AI 课堂
+### 5. 课堂
 
-- 智能出题：年级、章节、难度、题量、对错显示策略
-- 提示 / 解答限流；练习记录与 AI 评分缓存
-- 错题本：答错或使用过 AI 解答收录，做对后移出
+- 智能出题 / 错题本 / 练习导出
+- 随机点名（名单导入、卡牌轮转）
+- 实验探究脚本（步骤含键变化说明）
 
-### 6. 界面主题（v1.1）
+### 6. 界面主题
 
-设置 → **主题** 一键切换（非自定义色值）：
-
-| 主题 | 气质 |
-|------|------|
-| 默认 | 教材浅色 · 清爽蓝 |
-| 文具 | 校刊纸张 · 红泥章 |
-| 试剂架 | 石灰柜 · 紫铜扣 |
-| 黑板 | 墨绿板 · 粉笔黄 |
-| 像素 | 厚描边 · 色块阴影 |
-
-主题采用分层结构：`src/theme/catalog.js` + `src/styles/themes/<id>/`（tokens + skin）。
+设置 → 主题：默认 / 文具 / 试剂架 / 黑板 / 像素
 
 ### 7. 其它
 
-- 设置：品牌标题 / 图标、主题、默认启动页、DeepSeek API
+- 设置：品牌、主题、默认页、DeepSeek API
 - 课间小知识：点击左上角品牌图标
-- AI 提示 / 解答限流：各约每小时 10 次
+- AI 限流（约每小时）：提示/解答各 20 次；小知识 40 次；全局约 120 次
 
 ---
 
@@ -114,10 +104,10 @@ npm run dev
 ### 打包
 
 ```bash
-# Windows Electron 安装包 + 便携（本机需可打 win 包）
+# Windows Electron 安装包（本机需可打 win 包 / Wine）
 npm run dist:win
 
-# 仅 macOS（当前配置默认 arm64 dmg）
+# macOS Apple 芯片 dmg
 npm run dist:mac
 
 # 路线 B：Windows 轻量单文件 exe
@@ -134,35 +124,16 @@ npm run build:exe
 - **后端**：Express  
 - **数据库**：sql.js（SQLite 文件）  
 - **桌面**：Electron（内嵌 Express）  
-- **AI**：DeepSeek Chat Completions（服务端代理）
+- **AI**：DeepSeek Chat Completions（服务端代理；apiBase 白名单）
 
 主要接口：
 
 - `/api/molecules` — 分子  
-- `/api/settings` — 品牌、主题 id、默认页、AI、电子列表顺序  
-- `/api/ai` — 分子生成、小知识、出题 / 提示 / 解答 / 评分  
-- `/api/quiz` — 练习场次、错题本  
-
-数据文件：
-
-- 开发：`server/data/chem-lab.db`  
-- Electron：用户目录 `…/xiaohuang-chem-lab/data/`  
-- 便携 exe：程序旁 `data/`  
-
----
-
-## 项目结构
-
-```
-├── index.html / src/          前端（含 theme/ 与 styles/themes/）
-├── electron/                  Electron 主进程
-├── server/                    Express + SQLite
-├── scripts/stage-electron-server.js
-├── electron-builder.yml
-├── dist-electron/             桌面安装包输出（不入库）
-├── dist-exe/                  便携 exe 输出（不入库）
-└── package.json
-```
+- `/api/settings` — 品牌、主题、默认页、AI  
+- `/api/ai` — 分子生成、小知识、出题 / 提示 / 解答、反应 / 配平 / 计量  
+- `/api/quiz` — 练习场次、错题本、出题快照  
+- `/api/reactions` — 化学反应  
+- `/api/students` — 课堂点名名单  
 
 ---
 
@@ -171,7 +142,8 @@ npm run build:exe
 | 版本 | 说明 |
 |------|------|
 | 1.0.0 | 五大模块、AI 课堂、SQLite、Windows 便携包 |
-| **1.1.0** | Electron 桌面端；多主题（默认/文具/试剂架/黑板/像素）；高分屏与 3D 背景/分区色修复；Win 安装包 + Apple 芯片 dmg |
+| 1.1.0 | Electron；多主题；Win 安装包 + Mac arm64 dmg |
+| **2.0.0** | 课堂（点名/实验）；计算（配平/计量）；反应示意；安全与限流加固；周期表布局统一 |
 
 ---
 

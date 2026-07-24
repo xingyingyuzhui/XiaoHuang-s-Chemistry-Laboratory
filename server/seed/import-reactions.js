@@ -1,5 +1,8 @@
-const { queryOne, run, runBatch } = require('../db/sqlite');
+const { queryOne, run, runBatch, query } = require('../db/sqlite');
 const { BUILTIN_REACTIONS } = require('./builtin-reactions');
+
+/** 种子版本：升版本时覆盖内置 id；AI 自定义 id 永不碰 */
+const BUILTIN_SEED_VERSION = 2;
 
 function rowFromReaction(r, source = 'builtin') {
   const now = Date.now();
@@ -44,26 +47,82 @@ function insertReaction(row) {
   );
 }
 
-/** 同步内置反应（INSERT OR REPLACE，不覆盖 AI 添加的非内置 id） */
+function insertBuiltinIfMissing(row) {
+  const existing = queryOne('SELECT id, source FROM chem_reactions WHERE id = ?', [
+    row.id,
+  ]);
+  if (!existing) {
+    insertReaction(row);
+    return 'insert';
+  }
+  // 仅覆盖仍标记为 builtin 的行；AI 占用同 id 时不碰
+  if (existing.source === 'builtin') {
+    insertReaction(row);
+    return 'replace';
+  }
+  return 'skip';
+}
+
+/**
+ * 同步内置反应：
+ * - 库中无记录 → 全量导入
+ * - 有记录 → 仅 upsert source=builtin 的 id，且仅当 seed 版本升高时强制覆盖 builtin
+ * - 永不覆盖 source=ai
+ */
 function syncBuiltinReactions() {
   const rows = BUILTIN_REACTIONS.map((r) => rowFromReaction(r, 'builtin'));
-  if (typeof runBatch === 'function') {
-    runBatch(() => {
-      rows.forEach(insertReaction);
-    });
-  } else {
-    rows.forEach(insertReaction);
+  const verRow = queryOne(
+    "SELECT value FROM settings WHERE key = 'builtin_reactions_version'",
+  );
+  let curVer = 0;
+  try {
+    curVer = Number(JSON.parse(verRow?.value ?? '0')) || 0;
+  } catch {
+    curVer = Number(verRow?.value) || 0;
   }
-  console.log(`已同步 ${rows.length} 条内置化学反应`);
+
+  const force = curVer < BUILTIN_SEED_VERSION;
+  let inserted = 0;
+  let replaced = 0;
+  let skipped = 0;
+
+  const apply = () => {
+    for (const row of rows) {
+      if (force) {
+        const existing = queryOne(
+          'SELECT id, source FROM chem_reactions WHERE id = ?',
+          [row.id],
+        );
+        if (existing && existing.source === 'ai') {
+          skipped += 1;
+          continue;
+        }
+        insertReaction(row);
+        if (existing) replaced += 1;
+        else inserted += 1;
+      } else {
+        const r = insertBuiltinIfMissing(row);
+        if (r === 'insert') inserted += 1;
+        else if (r === 'replace') replaced += 1;
+        else skipped += 1;
+      }
+    }
+    run(
+      `INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
+      ['builtin_reactions_version', JSON.stringify(BUILTIN_SEED_VERSION)],
+    );
+  };
+
+  if (typeof runBatch === 'function') runBatch(apply);
+  else apply();
+
+  console.log(
+    `内置反应同步 v${BUILTIN_SEED_VERSION}：新增 ${inserted}，更新 ${replaced}，跳过 ${skipped}`,
+  );
   return rows.length;
 }
 
-/** 库为空时导入；否则仍同步内置以便种子更新生效 */
 function importBuiltinReactionsIfEmpty() {
-  const count = queryOne('SELECT COUNT(*) as c FROM chem_reactions');
-  if (count && Number(count.c) > 0) {
-    return syncBuiltinReactions();
-  }
   return syncBuiltinReactions();
 }
 
@@ -73,4 +132,5 @@ module.exports = {
   rowFromReaction,
   insertReaction,
   BUILTIN_REACTIONS,
+  BUILTIN_SEED_VERSION,
 };

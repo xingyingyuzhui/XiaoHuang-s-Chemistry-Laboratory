@@ -6,6 +6,7 @@
 import { moleculeApi } from './api/client.js';
 import { createMoleculeViewer } from './molecule3d.js';
 import { refreshMolarPresets } from './molar-ui.js';
+import { getSubstanceCard } from './data/substance-cards.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -64,7 +65,24 @@ export function getCurrentMolId() {
 export function ensureMolViewer() {
   if (molViewer) return molViewer;
   molViewer = createMoleculeViewer($('#mol-root'));
+  molViewer.setOnBondSelect?.(onBondSelected);
   return molViewer;
+}
+
+function onBondSelected(info) {
+  const card = document.getElementById('molBondCard');
+  if (!card) return;
+  if (!info) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  const t = document.getElementById('molBondTitle');
+  const k = document.getElementById('molBondKind');
+  const tip = document.getElementById('molBondTip');
+  if (t) t.textContent = info.label || '—';
+  if (k) k.textContent = info.kind || '';
+  if (tip) tip.textContent = info.tip || '';
 }
 
 /**
@@ -252,7 +270,24 @@ export async function loadMolecule(id) {
     currentMolId = id;
     molViewer.load(m);
     if (molTitle) molTitle.textContent = `${m.name}（${formulaToSubscript(m.formula)}）`;
-    if (molDesc) molDesc.textContent = m.desc;
+    // 简介 = 原 desc + 课标信息（融合进左上角当前分子卡）
+    if (molDesc) {
+      const card = getSubstanceCard(m.id);
+      const base = m.desc || '';
+      if (card) {
+        const point = card.point || card.role || '';
+        molDesc.innerHTML = `
+          <span class="mol-desc-base">${escapeHtml(base)}</span>
+          <span class="mol-desc-meta">
+            <span><em>类别</em>${escapeHtml(card.category)}</span>
+            <span><em>用途</em>${escapeHtml(card.uses)}</span>
+            ${point ? `<span><em>性质要点</em>${escapeHtml(point)}</span>` : ''}
+            <span><em>注意</em>${escapeHtml(card.caution)}</span>
+          </span>`;
+      } else {
+        molDesc.textContent = base || '暂无简介';
+      }
+    }
 
     const molProps = document.getElementById('moleculeProps');
     if (molProps) {
@@ -303,6 +338,12 @@ export async function loadMolecule(id) {
  * 初始化分子列表
  */
 export function initMoleculeList() {
+  document.getElementById('molBondClose')?.addEventListener('click', () => {
+    const card = document.getElementById('molBondCard');
+    if (card) card.hidden = true;
+    molViewer?.setOnBondSelect?.(onBondSelected);
+  });
+
   // 绑定编辑按钮
   btnEditMolecules?.addEventListener('click', async () => {
     if (molEditMode) {

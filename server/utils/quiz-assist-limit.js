@@ -6,7 +6,7 @@
 const { queryOne, run, exec } = require('../db/sqlite');
 
 const WINDOW_MS = 60 * 60 * 1000;
-const MAX_PER_KIND = 10;
+const MAX_PER_KIND = 20;
 const KINDS = new Set(['hint', 'explain']);
 
 function ensureTable() {

@@ -150,6 +150,12 @@
   width: 100%;
 }
 
+.mol-rxn-panel-foot .rxn-export-row .btn,
+.mol-rxn-panel-foot .rxn-import-label {
+  width: auto;
+  font-size: 0.78rem;
+}
+
 .rxn-card {
   border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 12px;

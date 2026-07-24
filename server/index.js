@@ -7,7 +7,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const net = require('net');
 const { exec } = require('child_process');
 const { initDatabase, closeDatabase, queryOne } = require('./db/sqlite');
 const {
@@ -25,6 +24,7 @@ const settingsRouter = require('./routes/settings');
 const aiRouter = require('./routes/ai');
 const quizRouter = require('./routes/quiz');
 const reactionsRouter = require('./routes/reactions');
+const studentsRouter = require('./routes/students');
 
 const app = express();
 const PREFERRED_PORT = Number(process.env.PORT) || 3000;
@@ -64,16 +64,21 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/reactions', reactionsRouter);
+app.use('/api/students', studentsRouter);
 
 app.get('/api/health', (req, res) => {
-  res.json({
+  const payload = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     pkg: isPkg(),
     electron: isElectron(),
-    publicDir,
-    dataDir: getDataDir(),
-  });
+  };
+  // 开发模式才返回路径，降低信息暴露
+  if (!isPkg() && !isElectron() && process.env.NODE_ENV !== 'production') {
+    payload.publicDir = publicDir;
+    payload.dataDir = getDataDir();
+  }
+  res.json(payload);
 });
 
 app.use('/api', (req, res) => {
@@ -107,26 +112,37 @@ app.use((err, req, res, next) => {
   });
 });
 
-function findFreePort(startPort) {
+/**
+ * 在 host 上尝试从 startPort 起监听；占用则 +1，避免先探测再释放的竞态
+ * @returns {Promise<{ server: import('http').Server, port: number }>}
+ */
+function listenWithRetry(appInstance, startPort, host) {
   return new Promise((resolve, reject) => {
     let port = startPort;
+    let attempts = 0;
+    const maxAttempts = 50;
+
     const tryListen = () => {
-      const server = net.createServer();
-      server.unref();
-      server.on('error', (err) => {
-        if (err.code === 'EADDRINUSE') {
+      const s = appInstance.listen(port, host, () => {
+        resolve({ server: s, port });
+      });
+      s.on('error', (err) => {
+        if (err.code === 'EADDRINUSE' && attempts < maxAttempts) {
+          attempts += 1;
           port += 1;
-          if (port > startPort + 50) {
-            reject(new Error('找不到可用端口'));
-            return;
+          try {
+            s.close();
+          } catch {
+            /* ignore */
           }
           tryListen();
         } else {
-          reject(err);
+          reject(
+            err.code === 'EADDRINUSE'
+              ? new Error('找不到可用端口')
+              : err,
+          );
         }
-      });
-      server.listen(port, '127.0.0.1', () => {
-        server.close(() => resolve(port));
       });
     };
     tryListen();
@@ -178,13 +194,11 @@ async function startServer(options = {}) {
       console.warn('导入内置反应失败:', e?.message || e);
     }
 
-    const port = await findFreePort(PREFERRED_PORT);
-    const url = `http://127.0.0.1:${port}`;
-    const urlLocalhost = `http://localhost:${port}`;
-
-    // pkg 便携版：绑 0.0.0.0，兼容 Win 上 localhost / 局域网访问
-    // Electron / 开发：仅本机回环
-    const defaultHost = isPkg() ? '0.0.0.0' : '127.0.0.1';
+    // 默认仅本机；需要局域网时设 CHEM_LAB_BIND=0.0.0.0 或 options.host
+    // pkg 若需局域网可环境变量覆盖（默认 127.0.0.1 更安全）
+    const defaultHost =
+      process.env.CHEM_LAB_BIND ||
+      (isPkg() ? '127.0.0.1' : '127.0.0.1');
     const host = options.host != null ? options.host : defaultHost;
 
     const shouldOpenBrowser =
@@ -192,28 +206,33 @@ async function startServer(options = {}) {
         ? options.openBrowser
         : isPkg() || process.env.OPEN_BROWSER === '1';
 
-    const server = await new Promise((resolve, reject) => {
-      const s = app.listen(port, host, () => {
-        console.log(`\n================================`);
-        console.log(`小黄的化学实验室`);
-        if (isElectron()) {
-          console.log(`Electron 内嵌服务: ${url}`);
-        } else {
-          console.log(`请用浏览器打开（勿关本窗口）:`);
-          console.log(`  ${url}`);
-          console.log(`  ${urlLocalhost}`);
-        }
-        console.log(`监听: ${host}:${port}`);
-        console.log(`数据目录: ${dataDir}`);
-        console.log(`================================\n`);
+    const { server, port } = await listenWithRetry(
+      app,
+      PREFERRED_PORT,
+      host,
+    );
+    const url = `http://127.0.0.1:${port}`;
+    const urlLocalhost = `http://localhost:${port}`;
 
-        if (shouldOpenBrowser) {
-          setTimeout(() => openBrowser(url), 600);
-        }
-        resolve(s);
-      });
-      s.on('error', reject);
-    });
+    console.log(`\n================================`);
+    console.log(`小黄的化学实验室`);
+    if (isElectron()) {
+      console.log(`Electron 内嵌服务: ${url}`);
+    } else {
+      console.log(`请用浏览器打开（勿关本窗口）:`);
+      console.log(`  ${url}`);
+      console.log(`  ${urlLocalhost}`);
+      if (host === '0.0.0.0') {
+        console.log(`（已绑定 0.0.0.0，局域网可访问；请注意 API Key 安全）`);
+      }
+    }
+    console.log(`监听: ${host}:${port}`);
+    console.log(`数据目录: ${dataDir}`);
+    console.log(`================================\n`);
+
+    if (shouldOpenBrowser) {
+      setTimeout(() => openBrowser(url), 600);
+    }
 
     return { port, url, urlLocalhost, server };
   } catch (err) {

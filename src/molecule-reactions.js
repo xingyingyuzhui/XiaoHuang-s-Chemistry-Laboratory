@@ -117,6 +117,10 @@ export function initMoleculeReactions() {
   $('#rxnAiCancel')?.addEventListener('click', () => closeAiAdd());
   $('#rxnAiGenerate')?.addEventListener('click', () => generateAiReaction());
   $('#rxnAiSave')?.addEventListener('click', () => saveAiReaction());
+  $('#btnExportReactions')?.addEventListener('click', exportReactionsPack);
+  $('#btnImportReactions')?.addEventListener('change', onImportReactionsFile);
+  $('#rxnPlayerScrub')?.addEventListener('input', onScrubInput);
+  $('#rxnPlayerScrub')?.addEventListener('change', onScrubInput);
   $('#rxnAiDiscard')?.addEventListener('click', () => {
     $('#rxnAiPreview')?.classList.add('is-hidden');
     const row = $('#rxnAiSaveRow');
@@ -399,11 +403,15 @@ async function loadReactant3D(reaction) {
   await fadeLoadMolecule(first, false);
 }
 
+/** 串行化 3D 加载，避免 scrub 时乱序 */
+let molLoadSeq = 0;
+
 /**
- * 淡入淡出加载分子；sameId 时也可做一次轻闪提示切换感
+ * 淡入淡出加载分子
  */
 async function fadeLoadMolecule(id, fade = true) {
   if (!id) return false;
+  const seq = ++molLoadSeq;
   const root = $('#mol-root');
   try {
     ensureMolViewer();
@@ -412,18 +420,20 @@ async function fadeLoadMolecule(id, fade = true) {
       root.style.opacity = '0.12';
       await new Promise((r) => setTimeout(r, 380));
     }
+    if (seq !== molLoadSeq) return false; // 已被更新请求取代
     const m = await moleculeApi.getById(id);
+    if (seq !== molLoadSeq) return false;
     if (m) getMolViewer()?.load(m);
-    if (root) root.style.opacity = '1';
+    if (root && seq === molLoadSeq) root.style.opacity = '1';
     return true;
   } catch {
-    if (root) root.style.opacity = '1';
+    if (root && seq === molLoadSeq) root.style.opacity = '1';
     return false;
   }
 }
 
 /**
- * 步骤变化时切换 3D；返回是否成功换到目标 id
+ * 步骤变化时切换 3D
  */
 async function applyStep3D(reaction, step, stepIdx) {
   if (!reaction) return;
@@ -438,7 +448,8 @@ async function applyStep3D(reaction, step, stepIdx) {
   }
   reaction.__lastMolId = id;
   const ok = await fadeLoadMolecule(id, true);
-  setMol3dHint(step, ok, id);
+  // 若中途被新请求取代，不要更新 hint 状态误导
+  if (ok) setMol3dHint(step, true, id);
 }
 
 function setMol3dHint(step, hasModel, molId) {
@@ -608,15 +619,20 @@ function renderPlayerFrame(reaction, step, progress, idx = 0) {
   const labelEl = $('#rxnPlayerStepLabel');
   const tipEl = $('#rxnPlayerTip');
   const barEl = $('#rxnPlayerBar');
+  const scrub = $('#rxnPlayerScrub');
   const metaEl = $('#rxnPlayerMeta');
   const focus = step?.focus || 'reactant';
 
   playerEl.dataset.focus = focus;
   if (eqEl) {
+    // 符号动画感：整式 + 高亮片段
     eqEl.innerHTML = highlightEquation(
       reaction.equation,
       step?.equationHighlight || '',
     );
+    eqEl.classList.remove('rxn-eq-pop');
+    void eqEl.offsetWidth;
+    eqEl.classList.add('rxn-eq-pop');
   }
   if (labelEl) {
     labelEl.textContent = step
@@ -624,12 +640,96 @@ function renderPlayerFrame(reaction, step, progress, idx = 0) {
       : reaction.title;
   }
   if (tipEl) tipEl.textContent = step?.tip || reaction.notes || '';
-  if (barEl) barEl.style.width = `${Math.round((progress || 0) * 100)}%`;
+  const pct = Math.round((progress || 0) * 100);
+  if (barEl) barEl.style.width = `${pct}%`;
+  if (scrub && document.activeElement !== scrub) {
+    scrub.value = String(Math.round((progress || 0) * 1000));
+  }
   if (metaEl) {
     metaEl.innerHTML = `
       <div title="${escapeHtml(reaction.conditions || '')}"><span>条件</span><strong>${escapeHtml(reaction.conditions || '—')}</strong></div>
       <div title="${escapeHtml(reaction.phenomena || '')}"><span>现象</span><strong>${escapeHtml(reaction.phenomena || '—')}</strong></div>
     `;
+  }
+}
+
+function onScrubInput(e) {
+  if (!activeReaction) return;
+  const steps = activeReaction.steps || [];
+  if (!steps.length) return;
+  const v = Number(e.target.value) / 1000;
+  const total = totalDuration(steps);
+  const t = Math.max(0, Math.min(1, v)) * total;
+  playing = false;
+  playbackEnded = false;
+  cancelAnimationFrame(animRaf);
+  pausedElapsed = t;
+  playStart = performance.now() - t * 1000;
+  setPauseButtonState('paused');
+  const idx = stepIndexAt(t, steps);
+  const step = steps[idx];
+  lastStepIdx = idx;
+  renderPlayerFrame(activeReaction, step, Math.min(1, t / total), idx);
+  updateHistory(idx, t >= total);
+  applyStep3D(activeReaction, step, idx);
+}
+
+async function exportReactionsPack() {
+  try {
+    const list = await reactionApi.getList();
+    const pack = {
+      type: 'xiaohuang-reactions',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      reactions: list || [],
+    };
+    const blob = new Blob([JSON.stringify(pack, null, 2)], {
+      type: 'application/json',
+    });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `reactions-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) {
+    alert(err.message || '导出失败');
+  }
+}
+
+async function onImportReactionsFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const pack = JSON.parse(text);
+    const list = Array.isArray(pack)
+      ? pack
+      : Array.isArray(pack.reactions)
+        ? pack.reactions
+        : [];
+    if (!list.length) {
+      alert('文件中没有反应数据');
+      return;
+    }
+    let ok = 0;
+    let fail = 0;
+    for (const r of list) {
+      try {
+        const payload = { ...r, source: 'ai' };
+        delete payload.createdAt;
+        if (!payload.id) payload.id = `rxn-import-${Date.now()}-${ok}`;
+        else payload.id = `${payload.id}-imp-${Date.now().toString(36).slice(-4)}`;
+        await reactionApi.add(payload);
+        ok += 1;
+      } catch {
+        fail += 1;
+      }
+    }
+    await refreshForMolecule(currentMoleculeId, currentMoleculeMeta);
+    alert(`导入完成：成功 ${ok}，失败 ${fail}`);
+  } catch (err) {
+    alert(err.message || '导入失败');
   }
 }
 
@@ -723,4 +823,20 @@ async function saveAiReaction() {
 
 export function getReactionPanelOpen() {
   return panelEl?.classList.contains('is-open');
+}
+
+/** 外部跳转：按 id 播放（课标卡片 / 实验脚本） */
+export async function playReactionById(id) {
+  if (!id) return;
+  try {
+    const list = await reactionApi.getList();
+    const r = (list || []).find((x) => x.id === id);
+    if (r) {
+      panelEl?.classList.add('is-open');
+      btnToggle?.setAttribute('aria-expanded', 'true');
+      await startPlayback(r);
+    }
+  } catch (err) {
+    console.warn('播放反应失败', err);
+  }
 }

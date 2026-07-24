@@ -218,8 +218,29 @@ router.post('/sessions', (req, res) => {
   try {
     ensureQuizTables();
     const body = req.body || {};
-    const items = Array.isArray(body.items) ? body.items : [];
+    let items = Array.isArray(body.items) ? body.items : [];
     if (!items.length) return badRequest(res, '缺少题目');
+
+    // 优先用出题快照中的标准答案（忽略客户端篡改的 answer）
+    const { getQuizPaper } = require('../utils/quiz-paper-store');
+    const paperSnap = body.paperId ? getQuizPaper(body.paperId) : null;
+    if (paperSnap?.items?.length) {
+      const byIdx = paperSnap.items;
+      items = items.map((it, idx) => {
+        const snap =
+          byIdx.find((s) => s.id && it.id && s.id === it.id) || byIdx[idx];
+        if (!snap) return it;
+        return {
+          ...it,
+          stem: snap.stem || it.stem,
+          options: snap.options?.length ? snap.options : it.options,
+          answer: snap.answer,
+          knowledge: snap.knowledge || it.knowledge,
+          hint: snap.hint || it.hint,
+          explain: snap.explain || it.explain,
+        };
+      });
+    }
 
     const sessionId = body.id || uid('qs');
     const now = Date.now();
@@ -227,9 +248,11 @@ router.post('/sessions', (req, res) => {
     let answered = 0;
 
     for (const it of items) {
-      if (it.chosen !== null && it.chosen !== undefined && it.chosen !== '') {
+      const chosen = parseChosen(it.chosen);
+      const ans = parseAnswer(it.answer);
+      if (chosen !== null) {
         answered += 1;
-        if (Number(it.chosen) === Number(it.answer)) correct += 1;
+        if (chosen === ans) correct += 1;
       }
     }
 

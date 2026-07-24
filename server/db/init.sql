@@ -113,6 +113,16 @@ CREATE TABLE IF NOT EXISTS chem_reactions (
 
 CREATE INDEX IF NOT EXISTS idx_chem_reactions_source ON chem_reactions(source);
 
+-- 课堂点名：班级同学
+CREATE TABLE IF NOT EXISTS class_students (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_class_students_sort ON class_students(sort_order);
+
 -- 创建索引
 CREATE INDEX IF NOT EXISTS idx_molecules_custom ON molecules(custom);
 CREATE INDEX IF NOT EXISTS idx_ai_quiz_assist_kind_at ON ai_quiz_assist_calls(kind, called_at);

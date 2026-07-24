@@ -12,13 +12,15 @@
 }
 
 @media (max-width: 1100px) {
+  /* 窄屏：详情在上、周期表在下（DOM 已是左详情右表，纵向堆叠即此序） */
   #panel-table.active {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(140px, 26vh);
+    grid-template-rows: minmax(140px, 28vh) minmax(0, 1fr);
   }
 
-  .detail-card {
-    order: -1;
+  #panel-table .detail-card {
+    max-height: 28vh;
+    overflow: auto;
   }
 }
 

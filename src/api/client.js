@@ -152,6 +152,38 @@ export const settingsApi = {
 };
 
 /**
+ * 课堂点名名单
+ */
+export const studentApi = {
+  async getList() {
+    return request('/students');
+  },
+  async add(name) {
+    return request('/students', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  },
+  async importNames(names, mode = 'append') {
+    return request('/students/import', {
+      method: 'POST',
+      body: JSON.stringify({ names, mode }),
+    });
+  },
+  async update(id, name) {
+    return request(`/students/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    });
+  },
+  async remove(id) {
+    return request(`/students/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+/**
  * AI 相关 API
  */
 export const aiApi = {
@@ -168,6 +200,22 @@ export const aiApi = {
   /** 生成化学反应（预览，不落库） */
   async reaction(payload) {
     return request('/ai/reaction', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /** 摩尔分步化学计量 */
+  async stoich(payload) {
+    return request('/ai/stoich', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /** AI 建议配平（前端仍做本地校验） */
+  async balance(payload) {
+    return request('/ai/balance', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

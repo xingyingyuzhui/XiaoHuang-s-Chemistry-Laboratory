@@ -149,6 +149,7 @@ export function selectElement(z) {
       : `${el.group}${GROUP_OLD[el.group] ? ` (${GROUP_OLD[el.group]})` : ''}`;
 
   const configHtml = getElectronConfigHtml(el.z);
+  const tip = buildElementTip(el);
   detailEl.innerHTML = `
     <div class="detail-head">
       <div class="detail-badge" data-zone="${zone}" style="--zone-bg:${color}">${el.symbol}</div>
@@ -164,8 +165,39 @@ export function selectElement(z) {
       <div><span>族</span><strong>${groupText}</strong></div>
       <div class="kv-config"><span>电子排布</span><strong class="electron-config">${configHtml}</strong></div>
     </div>
-    <p class="detail-summary">点击其他元素可切换；开启「分界」可查看金属–非金属阶梯边界元素。</p>
+    <div class="detail-teach">
+      <h4>课堂提示</h4>
+      <p>${tip}</p>
+    </div>
   `;
+}
+
+/** 中学向趋势 / 误区提示（本地模板，非百科） */
+function buildElementTip(el) {
+  const parts = [];
+  if (el.block === 's' && el.group === 1) {
+    parts.push('碱金属：同主族从上到下金属性增强；钾比钠更易失电子（中学表述）。');
+  } else if (el.block === 's' && el.group === 2) {
+    parts.push('碱土金属：较活泼金属；钙、镁是地壳常见元素。');
+  } else if (el.group === 17) {
+    parts.push('卤素：同主族从上到下非金属性减弱；氟的非金属性最强。');
+  } else if (el.group === 18) {
+    parts.push('稀有气体：最外层稳定，化学性质很不活泼（一般不形成化合物）。');
+  } else if (el.block === 'd' || el.block === 'ds') {
+    parts.push('过渡元素：常有多种化合价与有色离子，中学记代表物即可。');
+  } else if (el.symbol === 'C') {
+    parts.push('碳：有机物骨架；同主族硅是半导体与地壳重要元素。');
+  } else if (el.symbol === 'O') {
+    parts.push('氧：地壳中含量最高的元素；非金属性很强，易形成氧化物。');
+  } else if (el.symbol === 'N') {
+    parts.push('氮：空气中约 78%；氮分子三键稳定，工业固氮重要。');
+  } else if (el.period) {
+    parts.push(
+      `位于第 ${el.period} 周期：同周期从左到右原子半径总体减小、非金属性增强（中学规律）。`,
+    );
+  }
+  parts.push('易错：比较活泼性时要分清「金属性 / 非金属性」与「氧化性 / 还原性」对象。');
+  return parts.join(' ');
 }
 
 /**

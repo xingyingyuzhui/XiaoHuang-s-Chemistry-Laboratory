@@ -2,14 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { query, queryOne, run, runBatch } = require('../db/sqlite');
 const { success, error, notFound, badRequest } = require('../utils/response');
+const {
+  validateMoleculePayload,
+  mapMoleculeRow,
+} = require('../utils/molecule-validate');
 
 /**
  * GET /api/molecules
- * 获取排序后的分子列表
  */
 router.get('/', (req, res) => {
   try {
-    // 获取排序后的分子列表
     const molecules = query(`
       SELECT m.*, COALESCE(o.sort_order, 999999) as sort_order
       FROM molecules m
@@ -17,15 +19,14 @@ router.get('/', (req, res) => {
       ORDER BY sort_order, m.created_at
     `);
 
-    // 解析 JSON 字段
-    const result = molecules.map(mol => ({
-      ...mol,
-      atoms: JSON.parse(mol.atoms),
-      bonds: JSON.parse(mol.bonds),
-      physics: JSON.parse(mol.physics || '{}'),
-      chemistry: JSON.parse(mol.chemistry || '{}'),
-      custom: Boolean(mol.custom)
-    }));
+    const result = molecules.map((mol) => {
+      try {
+        return mapMoleculeRow(mol);
+      } catch (e) {
+        console.warn('跳过损坏分子行:', mol?.id, e?.message);
+        return null;
+      }
+    }).filter(Boolean);
 
     success(res, result);
   } catch (err) {
@@ -36,26 +37,15 @@ router.get('/', (req, res) => {
 
 /**
  * GET /api/molecules/:id
- * 获取单个分子
  */
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-
     const molecule = queryOne('SELECT * FROM molecules WHERE id = ?', [id]);
-
     if (!molecule) {
       return notFound(res, '分子不存在');
     }
-
-    success(res, {
-      ...molecule,
-      atoms: JSON.parse(molecule.atoms),
-      bonds: JSON.parse(molecule.bonds),
-      physics: JSON.parse(molecule.physics || '{}'),
-      chemistry: JSON.parse(molecule.chemistry || '{}'),
-      custom: Boolean(molecule.custom)
-    });
+    success(res, mapMoleculeRow(molecule));
   } catch (err) {
     console.error('获取分子失败:', err);
     error(res, '获取分子失败');
@@ -64,38 +54,40 @@ router.get('/:id', (req, res) => {
 
 /**
  * POST /api/molecules
- * 新增分子（AI 生成或手动添加）
  */
 router.post('/', (req, res) => {
   try {
-    const { id, name, formula, desc, atoms, bonds, physics, chemistry } = req.body;
-
-    // 参数验证
-    if (!id || !name || !formula || !atoms || !bonds) {
-      return badRequest(res, '缺少必要参数');
+    const body = req.body || {};
+    if (!body.id) {
+      return badRequest(res, '缺少分子 id');
     }
+    const id = String(body.id).slice(0, 80);
 
-    // 检查 ID 是否已存在
     const existing = queryOne('SELECT id FROM molecules WHERE id = ?', [id]);
     if (existing) {
       return badRequest(res, '分子 ID 已存在');
     }
 
+    let validated;
+    try {
+      validated = validateMoleculePayload(body);
+    } catch (e) {
+      return badRequest(res, e.message || '分子数据无效');
+    }
+
     runBatch(() => {
       run(
-        `
-      INSERT INTO molecules (id, name, formula, desc, atoms, bonds, custom, physics, chemistry)
-      VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `,
+        `INSERT INTO molecules (id, name, formula, desc, atoms, bonds, custom, physics, chemistry)
+         VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
         [
           id,
-          name,
-          formula,
-          desc || '',
-          JSON.stringify(atoms),
-          JSON.stringify(bonds),
-          JSON.stringify(physics || {}),
-          JSON.stringify(chemistry || {}),
+          validated.name,
+          validated.formula,
+          validated.desc,
+          JSON.stringify(validated.atoms),
+          JSON.stringify(validated.bonds),
+          JSON.stringify(validated.physics),
+          JSON.stringify(validated.chemistry),
         ],
       );
 
@@ -116,26 +108,24 @@ router.post('/', (req, res) => {
 
 /**
  * DELETE /api/molecules/:id
- * 删除分子
  */
 router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
-
-    // 检查分子是否存在
-    const molecule = queryOne('SELECT id, custom FROM molecules WHERE id = ?', [id]);
+    const molecule = queryOne('SELECT id, custom FROM molecules WHERE id = ?', [
+      id,
+    ]);
     if (!molecule) {
       return notFound(res, '分子不存在');
     }
-
-    // 只允许删除自定义分子
     if (!molecule.custom) {
       return badRequest(res, '内置分子不能删除');
     }
 
-    // 删除分子
-    run('DELETE FROM molecules WHERE id = ?', [id]);
-    run('DELETE FROM molecule_order WHERE molecule_id = ?', [id]);
+    runBatch(() => {
+      run('DELETE FROM molecules WHERE id = ?', [id]);
+      run('DELETE FROM molecule_order WHERE molecule_id = ?', [id]);
+    });
 
     success(res, null, '分子已删除');
   } catch (err) {
@@ -146,20 +136,39 @@ router.delete('/:id', (req, res) => {
 
 /**
  * PUT /api/molecules/order
- * 更新分子排序
  */
 router.put('/order', (req, res) => {
   try {
     const { order } = req.body;
-
     if (!Array.isArray(order)) {
       return badRequest(res, '排序参数必须是数组');
     }
+    if (!order.length) {
+      return badRequest(res, '排序不能为空');
+    }
 
-    // 批量写：先清空再插入，只落盘一次
+    const existing = new Set(
+      query('SELECT id FROM molecules').map((r) => r.id),
+    );
+    const clean = [];
+    const seen = new Set();
+    for (const raw of order) {
+      const id = String(raw || '');
+      if (!id || seen.has(id) || !existing.has(id)) continue;
+      seen.add(id);
+      clean.push(id);
+    }
+    if (!clean.length) {
+      return badRequest(res, '排序中无有效分子 id');
+    }
+    // 未出现在 order 里的分子补到末尾
+    for (const id of existing) {
+      if (!seen.has(id)) clean.push(id);
+    }
+
     runBatch(() => {
       run('DELETE FROM molecule_order');
-      order.forEach((id, index) => {
+      clean.forEach((id, index) => {
         run('INSERT INTO molecule_order (molecule_id, sort_order) VALUES (?, ?)', [
           id,
           index + 1,

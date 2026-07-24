@@ -154,11 +154,39 @@ export function loadElement(z) {
 
   if (symbolEl) symbolEl.textContent = `${el.symbol} (${el.z})`;
   if (nameEl) nameEl.textContent = el.name;
-  if (configEl) configEl.textContent = el.config;
+
+  const shells = el.electrons || [];
+  const outer = shells[shells.length - 1] || 0;
+  const total = shells.reduce((a, b) => a + b, 0);
+  let explain = `共 ${total} 个电子，分 ${shells.length} 层（玻尔示意）。最外层 ${outer} 个电子`;
+  if (outer === 8 || (el.z <= 2 && outer === el.z)) {
+    explain += '，达到相对稳定结构。';
+  } else if (outer <= 3) {
+    explain += '，易失电子显金属性（中学简化）。';
+  } else if (outer >= 5) {
+    explain += '，易得电子显非金属性（中学简化）。';
+  } else {
+    explain += '。';
+  }
+  if (el.z >= 19) {
+    explain += ' 过渡元素涉及 d 电子，层模型仅为示意。';
+  }
+
+  if (configEl) {
+    configEl.innerHTML = `<div>${escapeHtml(el.config)}</div><p class="electron-explain">${escapeHtml(explain)}</p>`;
+  }
 
   if (viewerRef && typeof viewerRef.load === 'function') {
     viewerRef.load(el);
   }
+}
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**

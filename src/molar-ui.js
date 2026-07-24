@@ -1,16 +1,24 @@
 /**
- * 摩尔质量 UI 模块
- * 示例化学式与「3D 分子」库同步，仅作快捷填入
+ * 计算页 UI：二级导航 — 摩尔质量 / 配平方程 / 分步计量
  */
 
 import { calcMolarMass, normalizeFormulaInput } from './molar.js';
-import { moleculeApi } from './api/client.js';
+import { moleculeApi, aiApi } from './api/client.js';
+import { balanceEquation, checkConservation } from './equation-balance.js';
 
 const $ = (sel) => document.querySelector(sel);
 
 const formulaInput = $('#formulaInput');
 const molarResult = $('#molarResult');
 const molarPresets = $('#molarPresets');
+
+const MOLAR_SECTIONS = [
+  { id: 'mass', title: '摩尔质量', desc: '化学式 · 分元素明细' },
+  { id: 'balance', title: '配平方程', desc: '本地校验 · AI 建议' },
+  { id: 'stoich', title: '分步计量', desc: '题目分步解答' },
+];
+
+let currentMolarSection = 'mass';
 
 /**
  * 示例/输入框一律用可键盘输入的 ASCII 化学式（H2O，不要 H₂O）
@@ -158,7 +166,151 @@ export async function refreshMolarPresets(list = null) {
 /**
  * 初始化摩尔质量 UI
  */
+function renderMolarNav() {
+  const list = $('#molarNavList');
+  if (!list) return;
+  list.innerHTML = MOLAR_SECTIONS.map(
+    (s) => `
+    <button type="button" class="ai-nav-card${currentMolarSection === s.id ? ' is-active' : ''}" data-molar-section="${s.id}" role="listitem">
+      <span class="ai-nav-card-title"><strong>${escapeHtml(s.title)}</strong></span>
+      <span>${escapeHtml(s.desc)}</span>
+    </button>`,
+  ).join('');
+  list.querySelectorAll('[data-molar-section]').forEach((btn) => {
+    btn.addEventListener('click', () => selectMolarSection(btn.dataset.molarSection));
+  });
+}
+
+function selectMolarSection(id) {
+  currentMolarSection = id || 'mass';
+  renderMolarNav();
+  const mass = $('#molarSectionMass');
+  const bal = $('#molarSectionBalance');
+  const st = $('#molarSectionStoich');
+  if (mass) mass.hidden = currentMolarSection !== 'mass';
+  if (bal) bal.hidden = currentMolarSection !== 'balance';
+  if (st) st.hidden = currentMolarSection !== 'stoich';
+}
+
+function runBalanceLocal() {
+  const input = $('#balanceInput')?.value?.trim();
+  const status = $('#balanceStatus');
+  const box = $('#balanceResult');
+  if (!input) {
+    if (status) {
+      status.textContent = '请输入方程式';
+      status.className = 'quiz-status is-err';
+    }
+    return;
+  }
+  try {
+    const result = balanceEquation(input);
+    const check = checkConservation(result.equation.replace('→', '='));
+    if (box) {
+      box.innerHTML = `
+        <h4>配平结果</h4>
+        <p class="molar-balance-eq">${escapeHtml(result.equation)}</p>
+        <p class="quiz-status ${check.ok ? 'is-ok' : 'is-err'}">${escapeHtml(check.message)}</p>
+        <ol class="molar-balance-steps">
+          ${(result.steps || []).map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
+        </ol>
+      `;
+    }
+    if (status) {
+      status.textContent = check.ok ? '已配平并校验守恒' : '配平后校验异常';
+      status.className = 'quiz-status ' + (check.ok ? 'is-ok' : 'is-err');
+    }
+  } catch (err) {
+    if (status) {
+      status.textContent = err.message || '配平失败';
+      status.className = 'quiz-status is-err';
+    }
+  }
+}
+
+async function runBalanceAi() {
+  const input = $('#balanceInput')?.value?.trim();
+  const status = $('#balanceStatus');
+  if (!input) {
+    if (status) {
+      status.textContent = '请输入方程式';
+      status.className = 'quiz-status is-err';
+    }
+    return;
+  }
+  if (status) {
+    status.textContent = 'AI 建议中…';
+    status.className = 'quiz-status';
+  }
+  try {
+    const data = await aiApi.balance({ equation: input });
+    const suggested = data?.equation || data?.balanced || '';
+    if (suggested) {
+      const inputEl = $('#balanceInput');
+      if (inputEl) inputEl.value = String(suggested).replace(/→/g, '=');
+    }
+    // 始终本地再配平/校验
+    runBalanceLocal();
+    if (status) {
+      status.textContent = (status.textContent || '') + '（含 AI 建议）';
+    }
+  } catch (err) {
+    if (status) {
+      status.textContent = err.message || 'AI 建议失败，可直接本地配平';
+      status.className = 'quiz-status is-err';
+    }
+  }
+}
+
+async function runStoich() {
+  const prompt = $('#stoichInput')?.value?.trim();
+  const status = $('#stoichStatus');
+  const box = $('#stoichResult');
+  if (!prompt) {
+    if (status) {
+      status.textContent = '请输入题目';
+      status.className = 'quiz-status is-err';
+    }
+    return;
+  }
+  if (status) {
+    status.textContent = '生成分步解答…';
+    status.className = 'quiz-status';
+  }
+  try {
+    const data = await aiApi.stoich({ prompt });
+    if (box) {
+      const steps = Array.isArray(data?.steps) ? data.steps : [];
+      box.innerHTML = `
+        <h4>分步化学计量</h4>
+        ${data?.equation ? `<p class="molar-balance-eq">${escapeHtml(data.equation)}</p>` : ''}
+        <ol class="molar-balance-steps">
+          ${steps
+            .map(
+              (s) =>
+                `<li><strong>${escapeHtml(s.title || s.label || '')}</strong> ${escapeHtml(s.detail || s.text || s)}</li>`,
+            )
+            .join('')}
+        </ol>
+        ${data?.answer ? `<p><strong>结果：</strong>${escapeHtml(data.answer)}</p>` : ''}
+        <p class="rxn-muted">示意教学步骤，数值请与计算过程交叉核对。</p>
+      `;
+    }
+    if (status) {
+      status.textContent = '已生成';
+      status.className = 'quiz-status is-ok';
+    }
+  } catch (err) {
+    if (status) {
+      status.textContent = err.message || '生成失败';
+      status.className = 'quiz-status is-err';
+    }
+  }
+}
+
 export function initMolarUI() {
+  renderMolarNav();
+  selectMolarSection('mass');
   refreshMolarPresets();
 
   $('#btnCalcMolar')?.addEventListener('click', runMolar);
@@ -177,5 +329,12 @@ export function initMolarUI() {
 
   formulaInput?.addEventListener('input', () => {
     formulaInput.classList.remove('is-invalid');
+  });
+
+  $('#btnBalance')?.addEventListener('click', runBalanceLocal);
+  $('#btnBalanceAi')?.addEventListener('click', runBalanceAi);
+  $('#btnStoich')?.addEventListener('click', runStoich);
+  $('#balanceInput')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runBalanceLocal();
   });
 }

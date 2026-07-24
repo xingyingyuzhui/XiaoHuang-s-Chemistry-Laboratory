@@ -24,6 +24,7 @@
 @import './_settings.css';
 @import './_molar.css';
 @import './_ai-classroom.css';
+@import './_classroom-extra.css';
 @import './_responsive.css';
 
 /* 主题 skin 最后加载，保证 Tab/顶栏等结构差异生效 */
