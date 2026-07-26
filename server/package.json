@@ -1,6 +1,6 @@
 {
   "name": "chem-lab-server",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "小黄的化学实验室后端（v3.0）",
   "main": "index.js",
   "bin": "index.js",

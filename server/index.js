@@ -16,7 +16,10 @@ const {
   getDbPath,
   getPublicDir,
 } = require('./paths');
-const { importBuiltinMolecules } = require('./seed/import-builtin');
+const {
+  importBuiltinMolecules,
+  syncBuiltinMoleculeProperties,
+} = require('./seed/import-builtin');
 const { importBuiltinReactionsIfEmpty } = require('./seed/import-reactions');
 
 const moleculesRouter = require('./routes/molecules');
@@ -186,6 +189,11 @@ async function startServer(options = {}) {
     if (!count || Number(count.count) === 0) {
       console.log('正在导入内置分子…');
       importBuiltinMolecules();
+    }
+
+    const syncedProperties = syncBuiltinMoleculeProperties();
+    if (syncedProperties > 0) {
+      console.log(`已补齐 ${syncedProperties} 个内置分子的性质数据`);
     }
 
     try {

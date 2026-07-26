@@ -1,0 +1,4 @@
+interface:
+  display_name: "小黄项目维护"
+  short_description: "Layer-aware project maintenance guide"
+  default_prompt: "请按项目分层分析并处理这个需求。"

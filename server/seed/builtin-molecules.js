@@ -1,3 +1,5 @@
+const { MOLECULE_PROPERTIES } = require('./molecule-properties');
+
 const BUILTIN_MOLECULES = [
   {
     id: 'h2',
@@ -224,7 +226,10 @@ const BUILTIN_MOLECULES = [
       [0, 6], [1, 7], [2, 8], [3, 9], [4, 10], [5, 11]
     ]
   }
-];
+].map((molecule) => ({
+  ...molecule,
+  ...MOLECULE_PROPERTIES[molecule.id],
+}));
 
 
 module.exports = { BUILTIN_MOLECULES };
