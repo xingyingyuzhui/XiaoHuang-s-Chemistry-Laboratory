@@ -42,6 +42,11 @@
     grid-template-rows: minmax(140px, 32vh) minmax(0, 1fr);
   }
 
+  #panel-battle.active {
+    /* 乱斗为整页画布，不强制左右分栏 */
+    display: flex;
+  }
+
   #panel-molecule .sidebar,
   #panel-molar .sidebar,
   #panel-electron .sidebar,

@@ -56,3 +56,21 @@ html[data-theme='stationery'] .brand h1 {
   font-size: 1.2rem;
 }
 
+
+/* 元素乱斗 · 文具纸感 */
+html[data-theme='stationery'] #panel-battle.active {
+  box-shadow: var(--shadow-print);
+  border-color: var(--border-ink);
+  --b-dim-z: color-mix(in srgb, var(--accent) 80%, var(--ink-lab));
+  --b-dim-en: color-mix(in srgb, var(--stamp) 70%, var(--note));
+  --b-dim-radius: color-mix(in srgb, var(--note) 60%, var(--accent));
+  --b-glow-accent: 0 0 10px color-mix(in srgb, var(--stamp) 12%, transparent);
+}
+
+html[data-theme='stationery'] .battle-mode-card.is-ready {
+  background: color-mix(in srgb, var(--card-elevated) 92%, var(--stamp-soft));
+}
+
+html[data-theme='stationery'] .battle-card-el.is-playable:not(:disabled) {
+  box-shadow: var(--shadow-print-sm);
+}

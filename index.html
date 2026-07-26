@@ -60,6 +60,9 @@
             <button class="tab" data-tab="electron" role="tab" aria-selected="false">
               电子排布
             </button>
+            <button class="tab" data-tab="battle" role="tab" aria-selected="false">
+              元素乱斗
+            </button>
             <button class="tab" data-tab="ai" role="tab" aria-selected="false">
               课堂
             </button>
@@ -164,6 +167,7 @@
                   <option value="molecule">3D 分子</option>
                   <option value="molar">计算</option>
                   <option value="electron">电子排布</option>
+                  <option value="battle">元素乱斗</option>
                   <option value="ai">课堂</option>
                 </select>
               </label>
@@ -569,6 +573,11 @@
               <button type="button" class="mol-ctrl" data-act="reset" title="复位">⌂</button>
             </div>
           </div>
+        </section>
+
+        <!-- 元素乱斗 -->
+        <section id="panel-battle" class="panel" role="tabpanel" hidden>
+          <!-- 由 element-battle.js 渲染大厅 / 对局 -->
         </section>
 
         <!-- 课堂 -->

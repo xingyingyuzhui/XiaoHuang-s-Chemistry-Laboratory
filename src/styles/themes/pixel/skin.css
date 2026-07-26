@@ -58,6 +58,52 @@ html[data-theme='pixel'] .tab.active {
   box-shadow: 2px 2px 0 var(--border-ink);
 }
 
+/* 元素乱斗：像素厚框 */
+html[data-theme='pixel'] #panel-battle.active {
+  border: 3px solid var(--border-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--border-ink);
+  --b-dim-z: var(--accent);
+  --b-dim-en: var(--note);
+  --b-dim-radius: var(--stamp, var(--accent));
+  --b-glow-accent: none;
+  --b-r-xs: 0;
+  --b-r-sm: 0;
+  --b-r-md: 0;
+  --b-r-lg: 0;
+}
+
+html[data-theme='pixel'] .battle-mode-card,
+html[data-theme='pixel'] .battle-card,
+html[data-theme='pixel'] .battle-end-box,
+html[data-theme='pixel'] .battle-row,
+html[data-theme='pixel'] .battle-flip-pop,
+html[data-theme='pixel'] .battle-help {
+  border-radius: 0;
+  border-width: 2px;
+  box-shadow: 3px 3px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .battle-card {
+  border-radius: 0;
+}
+
+html[data-theme='pixel'] .battle-card-el.is-playable:not(:disabled) {
+  box-shadow: 3px 3px 0 var(--accent);
+}
+
+html[data-theme='pixel'] .battle-dim-track,
+html[data-theme='pixel'] .battle-dim-slider,
+html[data-theme='pixel'] .battle-status,
+html[data-theme='pixel'] .battle-toast {
+  border-radius: 0;
+}
+
+html[data-theme='pixel'] .battle-felt-grid {
+  opacity: 0.12;
+  background-size: 16px 16px;
+}
+
 html[data-theme='pixel'] .brand-mark {
   border: 3px solid var(--border-ink);
   border-radius: 0;

@@ -28,6 +28,7 @@ import { createElectronViewer } from './electron-renderer.js';
 import { initSettingsUI } from './settings.js';
 import { initBrandTip } from './brand-tip.js';
 import { initAiClassroom } from './ai-classroom.js';
+import { initElementBattle } from './element-battle.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -37,6 +38,7 @@ const panels = {
   molecule: $('#panel-molecule'),
   molar: $('#panel-molar'),
   electron: $('#panel-electron'),
+  battle: $('#panel-battle'),
   ai: $('#panel-ai'),
 };
 
@@ -134,6 +136,7 @@ async function init() {
   await initElectronList();
   initBrandTip();
   initAiClassroom();
+  initElementBattle();
 
   const settingsApi = await initSettingsUI({
     onDefaultPageChange: () => {},
@@ -163,6 +166,8 @@ async function init() {
     runMolar();
   } else if (defaultPage === 'electron') {
     switchTab('electron');
+  } else if (defaultPage === 'battle') {
+    switchTab('battle');
   } else if (defaultPage === 'ai') {
     switchTab('ai');
   } else {

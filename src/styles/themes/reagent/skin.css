@@ -164,3 +164,29 @@ html[data-theme='reagent'] .settings-section-title::before {
   border-color: var(--border-ink);
   box-shadow: none;
 }
+
+/* 元素乱斗 · 试剂架 */
+html[data-theme='reagent'] #panel-battle.active {
+  border-color: var(--border-ink);
+  --b-dim-z: color-mix(in srgb, var(--stamp) 70%, var(--ink-lab));
+  --b-dim-en: color-mix(in srgb, var(--note) 75%, var(--flame, #c2410c));
+  --b-dim-radius: color-mix(in srgb, var(--note) 55%, var(--stamp));
+  --b-glow-accent: 0 0 12px color-mix(in srgb, var(--stamp) 16%, transparent);
+}
+
+html[data-theme='reagent'] .battle-dim-pill {
+  background: var(--note-soft);
+  color: var(--note);
+  border-color: color-mix(in srgb, var(--note) 40%, var(--border));
+}
+
+html[data-theme='reagent'] .battle-card-back {
+  background: linear-gradient(160deg, var(--stamp) 0%, var(--note) 100%);
+}
+
+html[data-theme='reagent'] .battle-hand .bc.is-playable {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--stamp) 55%, var(--border)),
+    0 6px 12px color-mix(in srgb, var(--ink) 8%, transparent);
+  animation: none;
+}

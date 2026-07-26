@@ -61,7 +61,9 @@ export async function loadSettings() {
         iconDataUrl: settings.brand?.iconDataUrl || null,
       },
       theme: normalizeTheme(settings.theme),
-      defaultPage: ['table', 'molecule', 'molar', 'electron', 'ai'].includes(settings.defaultPage)
+      defaultPage: ['table', 'molecule', 'molar', 'electron', 'battle', 'ai'].includes(
+        settings.defaultPage,
+      )
         ? settings.defaultPage
         : 'table',
       electronOrder: Array.isArray(settings.electronOrder)

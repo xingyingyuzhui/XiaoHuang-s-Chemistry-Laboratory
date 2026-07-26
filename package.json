@@ -7,6 +7,7 @@
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
+    "test": "node --test",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -20,7 +21,10 @@
     "dist:mac": "npm run build:frontend && npm run stage:electron && electron-builder --mac dmg --arm64 -c.electronDist=node_modules/electron/dist",
     "dist:electron": "npm run build:frontend && npm run stage:electron && electron-builder -c.electronDist=node_modules/electron/dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "animejs": "^4.5.0",
+    "canvas-confetti": "^1.9.4"
+  },
   "devDependencies": {
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",

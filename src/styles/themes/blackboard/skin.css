@@ -425,3 +425,26 @@ html[data-theme='blackboard'] ::selection {
   background: color-mix(in srgb, var(--stamp) 45%, transparent);
   color: #fff;
 }
+
+/* 元素乱斗 · 黑板粉笔感 */
+html[data-theme='blackboard'] #panel-battle.active {
+  background: color-mix(in srgb, var(--card-bg) 88%, #0a2018);
+  border-color: var(--border);
+  --b-dim-z: color-mix(in srgb, var(--accent) 70%, #e2e8f0);
+  --b-dim-en: color-mix(in srgb, var(--note) 75%, #fde68a);
+  --b-dim-radius: color-mix(in srgb, var(--accent) 45%, #86efac);
+  --b-glow-accent: 0 0 14px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+html[data-theme='blackboard'] .battle-table {
+  background: rgba(0, 0, 0, 0.18);
+  border-color: var(--border);
+}
+
+html[data-theme='blackboard'] .battle-card {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme='blackboard'] .battle-status {
+  color: var(--note);
+}
