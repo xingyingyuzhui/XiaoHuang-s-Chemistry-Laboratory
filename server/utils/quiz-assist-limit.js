@@ -86,7 +86,9 @@ function reserveCall(kind) {
 
   // 占位（先记次，失败再删）
   run(`INSERT INTO ai_quiz_assist_calls (kind, called_at) VALUES (?, ?)`, [kind, now]);
-  const idRow = queryOne(`SELECT last_insert_rowid() AS id`);
+  // sql.js 的 last_insert_rowid() 在部分运行模式会返回 0；插入与读取之间
+  // 没有异步边界，因此可安全读取本表当前最大 id。
+  const idRow = queryOne(`SELECT MAX(id) AS id FROM ai_quiz_assist_calls`);
   const reservationId = idRow?.id ?? null;
 
   return {

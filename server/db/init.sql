@@ -41,6 +41,13 @@ CREATE TABLE IF NOT EXISTS ai_tip_calls (
   called_at INTEGER NOT NULL
 );
 
+-- 所有 AI 功能共用的调用预约（用于全局 1 小时限额）
+CREATE TABLE IF NOT EXISTS ai_global_calls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  kind TEXT NOT NULL,
+  called_at INTEGER NOT NULL
+);
+
 -- 智能出题：练习场次
 CREATE TABLE IF NOT EXISTS quiz_sessions (
   id TEXT PRIMARY KEY,
@@ -129,6 +136,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_quiz_assist_kind_at ON ai_quiz_assist_calls(ki
 CREATE INDEX IF NOT EXISTS idx_molecule_order_sort ON molecule_order(sort_order);
 CREATE INDEX IF NOT EXISTS idx_chem_tips_source ON chem_tips(source);
 CREATE INDEX IF NOT EXISTS idx_ai_tip_calls_at ON ai_tip_calls(called_at);
+CREATE INDEX IF NOT EXISTS idx_ai_global_calls_at ON ai_global_calls(called_at);
 CREATE INDEX IF NOT EXISTS idx_quiz_sessions_created ON quiz_sessions(created_at);
 CREATE INDEX IF NOT EXISTS idx_quiz_items_session ON quiz_items(session_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_wrong_dismissed ON quiz_wrong_book(dismissed);

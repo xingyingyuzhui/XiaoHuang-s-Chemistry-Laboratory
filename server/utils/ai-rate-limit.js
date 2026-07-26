@@ -3,28 +3,12 @@
  * 1 小时窗口内合计上限，防局域网盗刷
  */
 
-const { queryOne, run, exec } = require('../db/sqlite');
+const { queryOne, run } = require('../db/sqlite');
 
 const WINDOW_MS = 60 * 60 * 1000;
 const MAX_CALLS = 120; // 每小时 120 次成功占位
 
-function ensureTable() {
-  try {
-    exec(`CREATE TABLE IF NOT EXISTS ai_global_calls (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      kind TEXT NOT NULL DEFAULT 'any',
-      called_at INTEGER NOT NULL
-    )`);
-    exec(
-      `CREATE INDEX IF NOT EXISTS idx_ai_global_calls_at ON ai_global_calls(called_at)`,
-    );
-  } catch {
-    /* ignore */
-  }
-}
-
 function countInWindow(now = Date.now()) {
-  ensureTable();
   const since = now - WINDOW_MS;
   try {
     run(`DELETE FROM ai_global_calls WHERE called_at < ?`, [since - WINDOW_MS]);
@@ -42,7 +26,6 @@ function countInWindow(now = Date.now()) {
  * @returns {{ allowed: boolean, message?: string }}
  */
 function reserveGlobalAiCall(kind = 'any') {
-  ensureTable();
   const now = Date.now();
   if (countInWindow(now) >= MAX_CALLS) {
     return {
@@ -54,15 +37,16 @@ function reserveGlobalAiCall(kind = 'any') {
     String(kind || 'any').slice(0, 40),
     now,
   ]);
-  return { allowed: true };
+  // sql.js 的 last_insert_rowid() 在部分运行模式会返回 0；此处插入与读取之间
+  // 没有异步边界，读取当前最大 id 可以稳定拿到本次预约。
+  const idRow = queryOne('SELECT MAX(id) AS id FROM ai_global_calls');
+  return { allowed: true, reservationId: idRow?.id ?? null };
 }
 
-function releaseLastGlobalAiCall() {
+function releaseGlobalAiCall(reservationId) {
+  if (reservationId == null) return;
   try {
-    ensureTable();
-    run(
-      `DELETE FROM ai_global_calls WHERE id = (SELECT id FROM ai_global_calls ORDER BY id DESC LIMIT 1)`,
-    );
+    run('DELETE FROM ai_global_calls WHERE id = ?', [reservationId]);
   } catch {
     /* ignore */
   }
@@ -72,6 +56,6 @@ module.exports = {
   MAX_CALLS,
   WINDOW_MS,
   reserveGlobalAiCall,
-  releaseLastGlobalAiCall,
+  releaseGlobalAiCall,
   countInWindow,
 };

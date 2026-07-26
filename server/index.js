@@ -8,7 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-const { initDatabase, closeDatabase, queryOne } = require('./db/sqlite');
+const { initDatabase, closeDatabase } = require('./db/sqlite');
 const {
   isPkg,
   isElectron,
@@ -17,8 +17,7 @@ const {
   getPublicDir,
 } = require('./paths');
 const {
-  importBuiltinMolecules,
-  syncBuiltinMoleculeProperties,
+  syncBuiltinMolecules,
 } = require('./seed/import-builtin');
 const { importBuiltinReactionsIfEmpty } = require('./seed/import-reactions');
 
@@ -31,6 +30,14 @@ const studentsRouter = require('./routes/students');
 
 const app = express();
 const PREFERRED_PORT = Number(process.env.PORT) || 3000;
+
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  next();
+});
 
 // 本机 Origin（含 localhost / 127.0.0.1 / [::1] / 常见内网）
 const ORIGIN_OK =
@@ -185,15 +192,11 @@ async function startServer(options = {}) {
   try {
     await initDatabase(dbPath);
 
-    const count = queryOne('SELECT COUNT(*) as count FROM molecules');
-    if (!count || Number(count.count) === 0) {
-      console.log('正在导入内置分子…');
-      importBuiltinMolecules();
-    }
-
-    const syncedProperties = syncBuiltinMoleculeProperties();
-    if (syncedProperties > 0) {
-      console.log(`已补齐 ${syncedProperties} 个内置分子的性质数据`);
+    const moleculeSync = syncBuiltinMolecules();
+    if (moleculeSync.inserted || moleculeSync.updated || moleculeSync.propertiesUpdated) {
+      console.log(
+        `内置分子同步：新增 ${moleculeSync.inserted}，更新 ${moleculeSync.updated}，补齐性质 ${moleculeSync.propertiesUpdated}`,
+      );
     }
 
     try {

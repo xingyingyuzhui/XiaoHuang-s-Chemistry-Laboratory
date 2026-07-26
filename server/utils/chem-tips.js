@@ -96,21 +96,23 @@ function recordAiCall(now = Date.now()) {
 
 /**
  * 先占位再请求，降低并发打穿限额
- * @returns {boolean} 是否占位成功
+ * @returns {{ allowed: boolean, reservationId: number|null }} 是否占位成功
  */
 function tryReserveAiCall(now = Date.now()) {
-  if (!canCallModel(now)) return false;
+  if (!canCallModel(now)) return { allowed: false, reservationId: null };
   recordAiCall(now);
-  return true;
+  // sql.js 的 last_insert_rowid() 在部分运行模式会返回 0；插入与读取之间
+  // 没有异步边界，因此可安全读取本表当前最大 id。
+  const idRow = queryOne('SELECT MAX(id) AS id FROM ai_tip_calls');
+  return { allowed: true, reservationId: idRow?.id ?? null };
 }
 
-/** 请求失败 / 无效结果时释放最近一次占位 */
-function releaseLastAiCall() {
+/** 请求失败 / 无效结果时仅释放本请求的占位。 */
+function releaseAiCall(reservationId) {
+  if (reservationId == null) return;
   try {
     ensureTablesAndSeed();
-    run(
-      `DELETE FROM ai_tip_calls WHERE id = (SELECT id FROM ai_tip_calls ORDER BY id DESC LIMIT 1)`,
-    );
+    run('DELETE FROM ai_tip_calls WHERE id = ?', [reservationId]);
   } catch {
     /* ignore */
   }
@@ -201,7 +203,7 @@ module.exports = {
   canCallModel,
   recordAiCall,
   tryReserveAiCall,
-  releaseLastAiCall,
+  releaseAiCall,
   normalizeTip,
   saveAiTip,
   pickLocalTip,

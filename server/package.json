@@ -22,6 +22,7 @@
   "pkg": {
     "scripts": [
       "routes/**/*.js",
+      "services/**/*.js",
       "utils/**/*.js",
       "db/**/*.js",
       "seed/**/*.js",
