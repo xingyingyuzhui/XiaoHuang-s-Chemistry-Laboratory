@@ -4,18 +4,30 @@
  */
 
 import { CHEM_TOPICS } from '../data/chem-topics.js';
-import { LAB_SCRIPTS } from '../data/lab-scripts.js';
+import { formatLabsImportSummary, downloadJsonFile } from './lab-model.js';
 
-export function createLessonPacksController({ select, escapeHtml, lessonPackApi }) {
+export function createLessonPacksController({ select, escapeHtml, lessonPackApi, labsApi }) {
   let packs = [];
   let editingId = null;
   let viewingId = null;
   /** 编辑器内临时多选状态 */
   let editSelectedTopics = [];
   let editSelectedLabs = [];
+  /** @type {Array<{id:string,title:string}>} */
+  let labOptions = [];
 
   function labTitle(id) {
-    return LAB_SCRIPTS.find((l) => l.id === id)?.title || id;
+    return labOptions.find((l) => l.id === id)?.title || id;
+  }
+
+  async function refreshLabOptions() {
+    if (!labsApi?.list) return;
+    try {
+      const data = await labsApi.list();
+      labOptions = (data?.labs || []).map((l) => ({ id: l.id, title: l.title }));
+    } catch {
+      labOptions = [];
+    }
   }
 
   function renderList() {
@@ -161,18 +173,22 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi 
 
     const labBox = select('#lpEditLabChips');
     if (labBox) {
-      labBox.innerHTML = LAB_SCRIPTS.map((lab) =>
-        `<button type="button" class="quiz-chip${editSelectedLabs.includes(lab.id) ? ' is-on' : ''}" data-lp-lab="${escapeHtml(lab.id)}">${escapeHtml(lab.title)}</button>`,
-      ).join('');
-      labBox.querySelectorAll('[data-lp-lab]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.lpLab;
-          editSelectedLabs = editSelectedLabs.includes(id)
-            ? editSelectedLabs.filter((x) => x !== id)
-            : [...editSelectedLabs, id];
-          renderEditorChips();
+      if (!labOptions.length) {
+        labBox.innerHTML = '<span class="quiz-muted">暂无实验，请先在「实验探究」中添加</span>';
+      } else {
+        labBox.innerHTML = labOptions.map((lab) =>
+          `<button type="button" class="quiz-chip${editSelectedLabs.includes(lab.id) ? ' is-on' : ''}" data-lp-lab="${escapeHtml(lab.id)}">${escapeHtml(lab.title)}</button>`,
+        ).join('');
+        labBox.querySelectorAll('[data-lp-lab]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.lpLab;
+            editSelectedLabs = editSelectedLabs.includes(id)
+              ? editSelectedLabs.filter((x) => x !== id)
+              : [...editSelectedLabs, id];
+            renderEditorChips();
+          });
         });
-      });
+      }
     }
   }
 
@@ -220,12 +236,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi 
   async function exportPack(id) {
     try {
       const data = await lessonPackApi.exportData(id);
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `备课包-${data.metadata?.name || id}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
+      downloadJsonFile(`备课包-${data.metadata?.name || id}.json`, data);
     } catch (err) {
       window.alert(`导出失败：${err.message || ''}`);
     }
@@ -246,13 +257,37 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi 
       const data = JSON.parse(text);
       const result = await lessonPackApi.importData(data);
       await loadPacks();
-      if (result.nameChanged) {
-        window.alert(`导入成功！名称已自动改为"${result.pack.name}"以避免冲突。`);
+      await refreshLabOptions();
+      if (result.kind === 'lab-pack') {
+        window.alert(formatLabsImportSummary(result.labsResult || result));
+      } else if (result.nameChanged) {
+        const lr = result.labsResult;
+        const labMsg = lr && (lr.created || lr.skipped || lr.renamed)
+          ? `\n\n${formatLabsImportSummary(lr)}`
+          : '';
+        window.alert(`备课包已导入，名称改为「${result.pack.name}」以避免冲突。${labMsg}`);
       } else {
-        window.alert('导入成功！');
+        const lr = result.labsResult;
+        const labMsg = lr && (lr.created || lr.skipped || lr.renamed || lr.updated)
+          ? `\n\n${formatLabsImportSummary(lr)}`
+          : '';
+        window.alert(`备课包导入成功。${labMsg}`);
       }
     } catch (err) {
       window.alert(`导入失败：${err.message || ''}`);
+    }
+  }
+
+  async function exportLabPackBranch() {
+    if (!labsApi?.exportPack) {
+      window.alert('实验包导出不可用');
+      return;
+    }
+    try {
+      const data = await labsApi.exportPack();
+      downloadJsonFile(`实验包-${new Date().toISOString().slice(0, 10)}.json`, data);
+    } catch (err) {
+      window.alert(`导出实验包失败：${err.message || ''}`);
     }
   }
 
@@ -264,7 +299,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi 
       renderList();
       if (viewingId) renderDetail();
       else if (detail && !packs.length) {
-        detail.innerHTML = '<p class="quiz-muted">选择左侧备课包查看详情</p>';
+        detail.innerHTML = '<p class="quiz-muted">选择左侧备课包查看详情。也可使用工具栏导入/导出「实验包」子集。</p>';
       }
     } catch (err) {
       packs = [];
@@ -276,13 +311,20 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi 
   }
 
   async function init() {
+    await refreshLabOptions();
     await loadPacks();
     const importBtn = select('#btnLessonPackImport');
     if (importBtn) importBtn.addEventListener('click', handleImport);
     const importInput = select('#lessonPackImportInput');
     if (importInput) importInput.addEventListener('change', onImportFile);
     const newBtn = select('#btnLessonPackNew');
-    if (newBtn) newBtn.addEventListener('click', () => { editingId = null; renderEditor(); });
+    if (newBtn) newBtn.addEventListener('click', async () => {
+      editingId = null;
+      await refreshLabOptions();
+      renderEditor();
+    });
+    const labExportBtn = select('#btnLabPackExport');
+    if (labExportBtn) labExportBtn.addEventListener('click', exportLabPackBranch);
   }
 
   return { init, loadPacks };

@@ -14,6 +14,7 @@
 @import './_motion.css';
 @import './_topbar.css';
 @import './_layout.css';
+@import './_side-drawer.css';
 @import './_periodic-table.css';
 @import './_detail-card.css';
 @import './_molecule.css';

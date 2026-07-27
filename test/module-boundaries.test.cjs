@@ -24,9 +24,9 @@ test('AI classroom entry delegates focused UI concerns to feature modules', () =
   const entry = source('src/ai-classroom.js');
 
   assert.match(entry, /from '\.\/ai-classroom\/quiz-config\.js'/);
-  assert.match(entry, /from '\.\/ai-classroom\/lab-scripts\.js'/);
+  assert.match(entry, /from '\.\/ai-classroom\/lab-shell\.js'/);
   assert.match(entry, /from '\.\/ai-classroom\/wrong-book\.js'/);
   assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/quiz-config.js')));
-  assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/lab-scripts.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/lab-shell.js')));
   assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/wrong-book.js')));
 });

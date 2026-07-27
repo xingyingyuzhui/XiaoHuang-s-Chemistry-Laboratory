@@ -100,9 +100,8 @@ export function startModeB({ bgmAlreadyRequested = false } = {}) {
   ui.screen = 'modeB';
   fxResetAmbient();
   if (!bgmAlreadyRequested) {
-    sfxUnlock()
-      .then(() => bgmStart())
-      .catch(() => {});
+    // 尽量同步 kick play；sfxUnlock 放在 bgmStart 内部 play 之后
+    bgmStart({ force: true }).catch(() => {});
   }
   render({ force: true });
   showToast('轮到你了 — 打出比顶牌更强的元素', 2400);

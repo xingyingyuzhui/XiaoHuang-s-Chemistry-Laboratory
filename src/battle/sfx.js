@@ -116,9 +116,13 @@ export async function sfxToggleMuted() {
 
 /* ========== BGM（MP3 循环 + 淡入淡出） ========== */
 
-const BGM_URL = '/audio/the_final_catalyst.mp3';
+// Vite public/ → 站点根路径；兼容 BASE_URL（末尾通常带 /）
+const BGM_URL = `${import.meta.env?.BASE_URL || '/'}audio/the_final_catalyst.mp3`.replace(
+  /\/{2,}audio\//,
+  '/audio/',
+);
 /** BGM 相对主音量的比例（避免盖过 UI 音效） */
-const BGM_LEVEL = 0.32;
+const BGM_LEVEL = 0.42;
 const BGM_FADE_IN_MS = 3200;
 const BGM_FADE_OUT_MS = 900;
 
@@ -195,6 +199,8 @@ function fadeBgm(from, to, ms, onDone) {
 
 /**
  * 开始 / 恢复 BGM（须在用户手势后；默认从 0 淡入）
+ * 重要：HTMLAudioElement.play() 必须尽量在手势同步路径里调用；
+ * 若先 await AudioContext.resume()，部分浏览器会丢掉 user activation，导致 play 被拒。
  * @param {{ force?: boolean }} [opts]
  */
 export async function bgmStart(opts = {}) {
@@ -202,21 +208,23 @@ export async function bgmStart(opts = {}) {
   if (muted) return false;
   const a = ensureBgm();
   try {
-    // 与 SFX 共用解锁习惯：先碰一下 AudioContext
-    await sfxUnlock();
     if (a.paused || opts.force) {
-      a.currentTime = a.paused ? a.currentTime : a.currentTime;
       // 始终从极低音量起
       bgmFadeLevel = 0;
       a.volume = 0;
-      await a.play();
+      // 先 kick play（同步拿到 Promise），再并行解锁 WebAudio
+      const playP = a.play();
+      sfxUnlock().catch(() => {});
+      await playP;
       fadeBgm(0, 1, BGM_FADE_IN_MS);
     } else if (bgmFadeLevel < 0.99) {
+      sfxUnlock().catch(() => {});
       fadeBgm(bgmFadeLevel, 1, BGM_FADE_IN_MS * (1 - bgmFadeLevel));
     }
     return true;
   } catch (e) {
-    console.warn('[battle-bgm] play failed', e);
+    console.warn('[battle-bgm] play failed', e, 'url=', a.currentSrc || BGM_URL);
+    // 手势可能已失效：标记 wanted，下次静音切换/再点开始时可 force 重试
     return false;
   }
 }

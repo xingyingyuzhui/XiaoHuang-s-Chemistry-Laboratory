@@ -1,0 +1,143 @@
+/* 一级页二级侧栏：可收起抽屉轨 */
+
+.side-drawer {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  transition: none;
+}
+
+/* 滚动交给 body，避免与 .sidebar { overflow:auto } 双重裁切 */
+.sidebar.side-drawer {
+  overflow: hidden;
+}
+
+.side-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  margin-bottom: 0.55rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1.5px dashed color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.side-drawer-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font-serif-cjk), inherit;
+  color: var(--ink);
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.side-drawer-toggle {
+  appearance: none;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  background: var(--paper, var(--card-elevated));
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-print-sm);
+  padding: 0;
+}
+
+.side-drawer-toggle:hover {
+  color: var(--ink);
+  background: var(--diagram-soft, var(--paper));
+}
+
+.side-drawer-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  /* 给卡片 hover 阴影/位移留边，避免左侧被裁切 */
+  padding: 4px 2px 8px 6px;
+  scrollbar-gutter: stable;
+}
+
+/*
+ * 侧栏内 hover 不要向左 translate（会被 overflow 切掉左缘）。
+ * 保留轻微上浮 + 阴影即可。
+ */
+.side-drawer .mol-btn:hover,
+.side-drawer .mol-btn-add:hover,
+.side-drawer .ai-nav-card:hover {
+  transform: translateY(-1px);
+}
+
+.side-drawer .ai-nav-list,
+.side-drawer .molecule-list,
+.side-drawer .electron-list {
+  padding-left: 2px;
+  padding-top: 2px;
+}
+
+/* 收起：只留 toggle 竖条 */
+.side-drawer.is-collapsed {
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  overflow: hidden;
+}
+
+.side-drawer.is-collapsed .side-drawer-head {
+  flex-direction: column;
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.side-drawer.is-collapsed .side-drawer-head h2,
+.side-drawer.is-collapsed .side-drawer-body {
+  display: none !important;
+}
+
+/* 收起时主栏加宽：覆盖 layout 里的双列宽 */
+#panel-table.active.has-drawer-collapsed,
+#panel-molecule.active.has-drawer-collapsed,
+#panel-molar.active.has-drawer-collapsed,
+#panel-electron.active.has-drawer-collapsed,
+#panel-ai.active.has-drawer-collapsed {
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  gap: 0.55rem;
+}
+
+/* 详情卡作抽屉时：滚动在 body，避免与 .detail-card overflow 双重裁切 */
+.detail-card.side-drawer {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1100px) {
+  #panel-table.active.has-drawer-collapsed {
+    grid-template-rows: 2.5rem minmax(0, 1fr);
+  }
+  #panel-table.active.has-drawer-collapsed .side-drawer {
+    max-height: 2.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  /* 小屏 panel 已是单列时，收起侧栏几乎不占高 */
+  #panel-molecule.active.has-drawer-collapsed .side-drawer,
+  #panel-molar.active.has-drawer-collapsed .side-drawer,
+  #panel-electron.active.has-drawer-collapsed .side-drawer,
+  #panel-ai.active.has-drawer-collapsed .side-drawer {
+    max-height: 2.5rem;
+  }
+}

@@ -101,6 +101,22 @@ CREATE TABLE IF NOT EXISTS ai_quiz_assist_calls (
   called_at INTEGER NOT NULL
 );
 
+-- 实验探究（脚本 + 预习配置，可编辑 / 可重置内置）
+CREATE TABLE IF NOT EXISTS lab_experiments (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  type TEXT DEFAULT '',
+  equation TEXT DEFAULT '',
+  safety TEXT DEFAULT '',
+  phenomena TEXT DEFAULT '',
+  steps_json TEXT DEFAULT '[]',
+  prestudy_json TEXT DEFAULT 'null',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  source TEXT DEFAULT 'custom',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 -- 常见化学反应（本地种子 + AI 添加）
 CREATE TABLE IF NOT EXISTS chem_reactions (
   id TEXT PRIMARY KEY,

@@ -4,6 +4,8 @@
   display: grid;
   gap: 0.5rem;
   margin-top: 0.45rem;
+  /* 避免首卡 hover 阴影被父级裁切 */
+  padding: 2px 2px 4px 4px;
 }
 
 .ai-nav-card {
@@ -61,7 +63,7 @@
 
 .ai-nav-card:hover {
   background: var(--diagram-soft);
-  transform: translate(-2px, -2px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-print);
 }
 
@@ -816,28 +818,540 @@
   color: var(--ink);
 }
 
-/* ── 实验模式切换 ── */
-.lab-mode-tabs {
+/* ── 实验探究：标题行 + 预习|脚本 + 脚本内编辑 ── */
+.lab-title-row {
   display: flex;
-  gap: 0.3rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
 }
-.lab-mode-tab {
+.lab-title-block {
+  min-width: 0;
+  flex: 1;
+}
+.lab-title-block .lab-type {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.lab-title-block .lab-detail-title {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+.lab-nav-brand {
+  font-size: 0.88rem;
+  font-family: var(--font-serif-cjk);
+  color: var(--ink);
+}
+.lab-nav-toolbar,
+.lab-step-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+.lab-tool-btn {
   appearance: none;
+  min-height: 2.4rem;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: 10px;
+  background: var(--card-elevated, var(--paper));
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+}
+.lab-tool-btn.lab-tool-add {
+  border-style: dashed;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.lab-tool-btn.lab-tool-edit.is-active {
+  background: var(--note-soft, var(--stamp-soft));
+  box-shadow: var(--shadow-print);
+}
+.lab-tool-btn.lab-tool-ai {
+  width: 100%;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  border-style: dashed;
+  background: var(--diagram-soft, var(--paper));
+}
+.lab-tool-btn.lab-tool-ai:hover {
+  border-style: solid;
+  background: var(--stamp-soft, var(--note-soft));
+}
+.lab-tool-btn:hover {
+  background: var(--diagram-soft);
+}
+.lab-nav-status {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin: 0.3rem 0 0;
+}
+.lab-nav-card {
+  position: relative;
+  min-width: 0;
+}
+.lab-nav-card.is-draft {
+  border: var(--ui-stroke) dashed var(--border-ink);
+  border-radius: 10px;
+}
+.lab-nav-card.is-editing {
+  cursor: grab;
+}
+.lab-nav-card.is-dragging,
+.lab-step-nav-card.is-dragging {
+  opacity: 0.45;
+}
+.lab-nav-card.drag-over,
+.lab-step-nav-card.drag-over {
+  outline: 2px dashed var(--stamp);
+}
+.lab-nav-item-main {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: left;
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 40%, transparent);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 0.5rem 0.55rem;
+  cursor: pointer;
+  font: inherit;
+}
+.lab-nav-card.is-active .lab-nav-item-main {
+  border-color: var(--stamp);
+  background: color-mix(in srgb, var(--stamp) 10%, var(--paper));
+  box-shadow: inset 3px 0 0 var(--stamp);
+}
+.lab-nav-item-main:hover {
+  border-color: var(--border-ink);
+  /* 不向左位移，避免侧栏 overflow 裁切 */
+  transform: none;
+  box-shadow: var(--shadow-print-sm);
+}
+.lab-nav-del {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--stamp);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  place-items: center;
+  box-shadow: var(--shadow-print-sm);
+  transform: translate(-35%, -35%);
+}
+.lab-nav-list.is-edit-mode .lab-nav-del,
+.lab-step-nav-list.is-edit-mode .lab-nav-del {
+  display: grid;
+}
+/* 编辑态给列表留出叉号空间，避免 overflow 裁切 */
+.lab-nav-list.is-edit-mode,
+.lab-step-nav-list.is-edit-mode {
+  padding: 0.55rem 0.4rem 0.35rem 0.55rem;
+}
+/* 脚本编辑输入：对齐全局 .field input（forms.css），不要扁平 paper 款 */
+.lab-input,
+.lab-script-meta .field input,
+.lab-script-meta .field textarea,
+.lab-script-meta .field select,
+.lab-step-editor .field input,
+.lab-step-editor .field textarea,
+.lab-step-editor .field select {
+  width: 100%;
+  box-sizing: border-box;
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
-  padding: 0.3rem 0.7rem;
-  font-size: 0.78rem;
+  color: var(--text-primary);
+  border-radius: var(--radius-control);
+  padding: 0.65rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  outline: none;
+  box-shadow: var(--shadow-print-sm);
+  transition: box-shadow var(--dur-fast) ease, transform var(--dur-fast) ease;
+  min-height: 2.5rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+.lab-input:focus,
+.lab-script-meta .field input:focus,
+.lab-script-meta .field textarea:focus,
+.lab-script-meta .field select:focus,
+.lab-step-editor .field input:focus,
+.lab-step-editor .field textarea:focus,
+.lab-step-editor .field select:focus {
+  border-color: var(--border-ink);
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
+  outline: none;
+}
+select.lab-input,
+.lab-step-editor .field select {
+  cursor: pointer;
+  appearance: auto;
+  resize: none;
+}
+.lab-script-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.75rem;
+}
+.lab-script-meta .field-span2 {
+  grid-column: 1 / -1;
+}
+/* 方程式 Unicode 软键盘 */
+.lab-equation-field {
+  position: relative;
+}
+.chem-keypad {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.55rem 0.55rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 10px;
+  background: var(--diagram-soft, var(--card-elevated));
+  box-shadow: var(--shadow-print-sm);
+}
+.chem-keypad[hidden] {
+  display: none !important;
+}
+.chem-keypad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.chem-keypad-close {
+  appearance: none;
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 45%, transparent);
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 0.15rem 0.45rem;
+  font: inherit;
+  font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
   color: var(--text-secondary);
-  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
-.lab-mode-tab:hover { background: var(--diagram-soft); }
-.lab-mode-tab.is-active {
-  background: var(--stamp-soft);
-  color: var(--ink);
+.chem-keypad-close:hover {
   border-color: var(--border-ink);
+  color: var(--ink);
+}
+.chem-keypad-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+.chem-keypad-row:last-child {
+  margin-bottom: 0;
+}
+.chem-keypad-label {
+  flex: 0 0 2.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding-top: 0.35rem;
+}
+.chem-keypad-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  flex: 1;
+  min-width: 0;
+}
+.chem-key {
+  appearance: none;
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.35rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  background: var(--card-elevated, var(--paper));
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+}
+.chem-key:hover {
+  background: var(--stamp-soft, var(--note-soft));
+  transform: translate(-1px, -1px);
+}
+.chem-key:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+.lab-script-meta .field {
+  display: grid;
+  gap: 0.2rem;
+}
+.lab-script-meta .field span,
+.lab-step-editor .field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lab-script-meta .field {
+  margin-bottom: 0;
+}
+.lab-step-editor .field {
+  margin-bottom: 0;
+}
+.lab-script-workspace {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-height: 16rem;
+}
+@media (max-width: 720px) {
+  .lab-script-workspace {
+    grid-template-columns: 1fr;
+  }
+  .lab-script-meta {
+    grid-template-columns: 1fr;
+  }
+}
+.lab-step-nav-panel {
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 40%, transparent);
+  border-radius: 12px;
+  background: var(--diagram-soft, var(--paper));
+  padding: 0.55rem 0.5rem 0.5rem;
+  min-height: 0;
+  overflow: visible;
+}
+.lab-step-nav-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+.lab-step-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: min(48vh, 420px);
+  overflow: auto;
+}
+.lab-step-nav-card {
+  position: relative;
+}
+.lab-step-nav-card.is-editing {
+  cursor: grab;
+}
+.lab-step-nav-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: left;
+  border: var(--ui-stroke) solid transparent;
+  border-radius: 8px;
+  background: var(--paper);
+  padding: 0.4rem 0.45rem;
+  cursor: pointer;
+  font: inherit;
+}
+.lab-step-nav-item:hover {
+  border-color: var(--border-ink);
+}
+.lab-step-nav-card.is-active .lab-step-nav-item {
+  border-color: var(--stamp);
+  background: color-mix(in srgb, var(--stamp) 10%, var(--paper));
+  box-shadow: inset 3px 0 0 var(--stamp);
+}
+.lab-step-nav-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.lab-step-editor {
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem 0.95rem;
+  background: var(--paper);
+  display: grid;
+  gap: 0.45rem;
+}
+.lab-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lab-predict-editor {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 10px;
+  background: var(--diagram-soft, #f5f3ef);
+  border: 1px dashed color-mix(in srgb, var(--border-ink) 35%, transparent);
+}
+.lab-opt-field span {
+  font-weight: 600 !important;
+}
+.lab-prestudy-meta {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 0.84rem;
+}
+.lab-prestudy-meta summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lab-script-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 14%, transparent);
+}
+/* 预习 / 脚本：与顶栏同一套 .tabs .tab，主题 skin 自动生效 */
+.lab-title-row .lab-mode-tabs {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.lab-title-row .lab-mode-tabs .tab {
+  font-size: 0.8rem;
+  padding: 0.38rem 0.75rem;
+}
+.lab-title-row .lab-mode-tabs .tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.lab-detail-body {
+  margin-top: 0.35rem;
+}
+.prestudy-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.55rem 0 0.65rem;
+}
+.prestudy-progress-row .prestudy-progress-bar {
+  flex: 1;
+  margin: 0;
+}
+.prestudy-progress-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.prestudy-page {
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem 1.25rem;
+  background: var(--card-elevated, var(--paper));
+  min-height: 12rem;
+}
+.prestudy-page-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.85rem;
+  row-gap: 0.35rem;
+}
+.prestudy-page-head .prestudy-step-n {
+  flex-shrink: 0;
+  align-self: center;
+}
+.prestudy-page-title {
+  font-size: 1.12rem;
+  font-family: var(--font-serif-cjk);
+  color: var(--ink);
+  flex-shrink: 0;
+}
+/* 步骤名右侧空白：放操作提示描述 */
+.prestudy-page-tip {
+  flex: 1;
+  min-width: 8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .prestudy-page-tip {
+    flex-basis: 100%;
+    text-align: left;
+    padding-left: 2rem;
+  }
+}
+.prestudy-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+  justify-content: flex-end;
+}
+.prestudy-done-actions,
+.lab-detail-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+.lab-edit-form {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 40rem;
+}
+.lab-edit-form .field {
+  display: grid;
+  gap: 0.25rem;
+}
+.lab-edit-form .field span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lab-edit-form input,
+.lab-edit-form textarea {
+  font: inherit;
+  padding: 0.45rem 0.55rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 /* ── 交互式预习 ── */
@@ -854,8 +1368,32 @@
   font-size: 0.82rem;
   margin-bottom: 0.3rem;
   color: var(--text-secondary);
+  line-height: 1.45;
 }
 .prestudy-info strong { color: var(--ink); }
+/* 试剂 + 器材同一行，节省纵向空间 */
+.prestudy-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.45rem;
+}
+.prestudy-info-item {
+  min-width: 0;
+}
+.prestudy-info-sep {
+  color: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  user-select: none;
+}
+@media (max-width: 560px) {
+  .prestudy-info-row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .prestudy-info-sep {
+    display: none;
+  }
+}
 .prestudy-progress-bar {
   height: 4px;
   background: var(--border-light, #e0e0e0);
@@ -920,13 +1458,25 @@
   margin: 0.3rem 0 0.5rem;
 }
 .prestudy-predict {
-  margin-top: 0.4rem;
+  margin-top: 0.25rem;
 }
+/* 预习题干放大，主视觉 */
+.prestudy-page .prestudy-predict-q,
 .prestudy-predict-q {
-  font-size: 0.84rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--font-serif-cjk);
+  line-height: 1.5;
+  margin: 0 0 0.85rem;
   color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.prestudy-page .quiz-options {
+  gap: 0.55rem;
+}
+.prestudy-page .quiz-opt {
+  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
 }
 .prestudy-explain {
   font-size: 0.8rem;

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { success, error, badRequest } = require('../../utils/response');
 const { callDeepSeekChat } = require('../../services/ai/chat-service');
+const { parseModelJson } = require('../../services/ai/response-parser');
+const { validateLab } = require('../../utils/lab-schema');
 
 router.post('/tip', async (req, res) => {
   const {
@@ -258,6 +260,138 @@ router.post('/stoich', async (req, res) => {
     const status = err.status || 500;
     if (status === 400) return badRequest(res, err.message);
     error(res, err.message || '分步解答失败', status >= 400 ? status : 502);
+  }
+});
+
+/**
+ * POST /api/ai/lab
+ * 生成实验探究草稿（脚本步骤 + 可选预习题），不落库，由前端确认后保存
+ */
+router.post('/lab', async (req, res) => {
+  try {
+    const prompt = String(req.body?.prompt || '').trim();
+    if (!prompt) return badRequest(res, '请描述要生成的实验');
+
+    const system = `你是高中化学实验教学助手，为「实验探究」模块生成可编辑的实验草稿。
+只输出一个 JSON 对象，不要 Markdown 代码块，不要其它文字。
+
+格式：
+{
+  "title": "实验名称（≤30字）",
+  "type": "气体制备|性质实验|中和|有机|定量|其他",
+  "equation": "主要化学方程式（可用 Unicode 下标）",
+  "phenomena": "主要实验现象一句",
+  "safety": "安全注意事项一句",
+  "objective": "实验目标一句",
+  "reagents": ["试剂1", "试剂2"],
+  "apparatus": ["器材1", "器材2"],
+  "summary": "预习完成后的总结一句",
+  "steps": [
+    {
+      "label": "步骤名",
+      "tip": "脚本操作提示一句",
+      "risk": "可选，安全提醒一句或空字符串",
+      "predict": {
+        "question": "预习预测题（四选一）",
+        "options": ["选项A", "选项B", "选项C", "选项D"],
+        "answer": 0,
+        "explanation": "简短解释"
+      }
+    }
+  ]
+}
+
+规则：
+1. 面向高中，科学正确；步骤 4～6 步，按真实实验顺序。
+2. 每步必须有 label、tip；predict 必填，options 必须正好 4 项，answer 为 0～3。
+3. risk 可选；危险操作步（加热、验纯、防倒吸等）务必写 risk。
+4. reagents、apparatus 各 2～8 项，用中学常见名称。
+5. 只输出 JSON。`;
+
+    const { content } = await callDeepSeekChat({
+      system,
+      user: `请生成实验：\n${prompt}`,
+      temperature: 0.4,
+      max_tokens: 2800,
+      kind: 'lab',
+    });
+
+    const parsed = parseModelJson(content);
+    if (!parsed || typeof parsed !== 'object') {
+      return error(res, '模型返回无法解析', 502);
+    }
+
+    const rawSteps = Array.isArray(parsed.steps) ? parsed.steps.slice(0, 8) : [];
+    if (rawSteps.length < 2) {
+      return error(res, '模型返回的步骤过少', 502);
+    }
+
+    // 不补造占位选项/题干：结构不完整直接 502，由前端提示重试
+    for (let i = 0; i < rawSteps.length; i++) {
+      const s = rawSteps[i];
+      if (!s || typeof s !== 'object') {
+        return error(res, `步骤 ${i + 1} 无效`, 502);
+      }
+      if (!String(s.label || '').trim()) {
+        return error(res, `步骤 ${i + 1} 缺少标题`, 502);
+      }
+      const p = s.predict;
+      if (!p || typeof p !== 'object') {
+        return error(res, `步骤 ${i + 1} 缺少预习预测题`, 502);
+      }
+    }
+
+    const reagents = Array.isArray(parsed.reagents)
+      ? parsed.reagents.map((x) => String(x).trim()).filter(Boolean)
+      : [];
+    const apparatus = Array.isArray(parsed.apparatus)
+      ? parsed.apparatus.map((x) => String(x).trim()).filter(Boolean)
+      : [];
+
+    const prestudySteps = rawSteps.map((s) => {
+      const out = {
+        label: s.label,
+        tip: s.tip || '',
+      };
+      if (s.risk) out.risk = s.risk;
+      out.predict = s.predict;
+      return out;
+    });
+
+    const checked = validateLab({
+      title: parsed.title,
+      type: parsed.type || '其他',
+      equation: parsed.equation,
+      safety: parsed.safety,
+      phenomena: parsed.phenomena,
+      steps: rawSteps.map((s) => ({ label: s.label, tip: s.tip || '' })),
+      prestudy: {
+        objective: parsed.objective || '',
+        reagents,
+        apparatus,
+        steps: prestudySteps,
+        summary: parsed.summary || '',
+      },
+    });
+    if (!checked.ok) {
+      return error(res, `模型输出未通过校验：${checked.reason}`, 502);
+    }
+
+    success(res, {
+      title: checked.lab.title,
+      type: checked.lab.type || '其他',
+      equation: checked.lab.equation || '',
+      phenomena: checked.lab.phenomena || '',
+      safety: checked.lab.safety || '',
+      steps: checked.lab.steps,
+      prestudy: checked.lab.prestudy,
+    });
+  } catch (err) {
+    console.error('AI lab 生成失败:', err);
+    const status = err.status || 500;
+    if (status === 400) return badRequest(res, err.message);
+    if (status === 429) return error(res, err.message, 429);
+    error(res, err.message || '实验生成失败', status >= 400 ? status : 502);
   }
 });
 

@@ -252,11 +252,53 @@
         </div>
       </div>
 
+      <!-- AI 生成实验弹层 -->
+      <div class="modal-backdrop" id="genLabBackdrop" aria-hidden="true"></div>
+      <div
+        class="modal-panel"
+        id="genLabModal"
+        role="dialog"
+        aria-labelledby="genLabTitle"
+        aria-hidden="true"
+      >
+        <div class="modal-head">
+          <h2 id="genLabTitle">AI 生成实验</h2>
+          <button type="button" class="settings-close" id="btnGenLabClose" aria-label="关闭">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-hint">
+            描述一个<strong>高中化学实验</strong>，将生成可编辑的脚本步骤与预习选择题草稿。
+            生成后请在脚本页检查，再点「保存脚本」写入本地。
+          </p>
+          <label class="field">
+            <span>实验描述</span>
+            <textarea
+              id="genLabPrompt"
+              rows="4"
+              placeholder="例如：高锰酸钾制氧气、实验室制二氧化碳、乙酸乙酯的制备……"
+            ></textarea>
+          </label>
+          <p class="settings-status" id="genLabStatus" aria-live="polite"></p>
+          <div class="settings-actions">
+            <button type="button" class="btn primary" id="btnGenLabSubmit">生成草稿</button>
+            <button type="button" class="btn ghost" id="btnGenLabCancel">取消</button>
+          </div>
+        </div>
+      </div>
+
       <main>
-        <!-- Periodic table：左详情（小）+ 右周期表（大），与其它页一致 -->
+        <!-- Periodic table：左详情（可收窄条）+ 右周期表 -->
         <section id="panel-table" class="panel active" role="tabpanel">
-          <aside class="detail-card" id="elementDetail">
-            <div class="detail-empty">点击元素查看详情</div>
+          <aside class="detail-card side-drawer" data-drawer-key="table">
+            <div class="side-drawer-head">
+              <h2>元素详情</h2>
+              <button type="button" class="side-drawer-toggle" aria-label="收起侧栏">«</button>
+            </div>
+            <div class="side-drawer-body" id="elementDetail">
+              <div class="detail-empty">点击元素查看详情</div>
+            </div>
           </aside>
 
           <div class="table-shell">
@@ -295,17 +337,22 @@
 
         <!-- Molecules -->
         <section id="panel-molecule" class="panel" role="tabpanel" hidden>
-          <aside class="sidebar">
-            <h2>常见分子</h2>
-            <div class="mol-toolbar">
-              <button type="button" class="mol-btn mol-btn-add" id="btnAddMolecule" title="AI 生成分子">
-                <strong class="mol-add-plus">＋</strong>
-              </button>
-              <button type="button" class="mol-btn mol-btn-edit" id="btnEditMolecules" title="编辑列表">
-                编辑
-              </button>
+          <aside class="sidebar side-drawer" data-drawer-key="molecule">
+            <div class="side-drawer-head">
+              <h2>常见分子</h2>
+              <button type="button" class="side-drawer-toggle" aria-label="收起侧栏">«</button>
             </div>
-            <div id="moleculeList" class="molecule-list"></div>
+            <div class="side-drawer-body">
+              <div class="mol-toolbar">
+                <button type="button" class="mol-btn mol-btn-add" id="btnAddMolecule" title="AI 生成分子">
+                  <strong class="mol-add-plus">＋</strong>
+                </button>
+                <button type="button" class="mol-btn mol-btn-edit" id="btnEditMolecules" title="编辑列表">
+                  编辑
+                </button>
+              </div>
+              <div id="moleculeList" class="molecule-list"></div>
+            </div>
           </aside>
           <div class="stage stage-3d">
             <div id="mol-root"></div>
@@ -460,9 +507,14 @@
 
         <!-- 计算：摩尔 / 配平 / 分步计量 -->
         <section id="panel-molar" class="panel" role="tabpanel" hidden>
-          <aside class="sidebar ai-sidebar">
-            <h2>计算</h2>
-            <div id="molarNavList" class="ai-nav-list" role="list"></div>
+          <aside class="sidebar ai-sidebar side-drawer" data-drawer-key="molar">
+            <div class="side-drawer-head">
+              <h2>计算</h2>
+              <button type="button" class="side-drawer-toggle" aria-label="收起侧栏">«</button>
+            </div>
+            <div class="side-drawer-body">
+              <div id="molarNavList" class="ai-nav-list" role="list"></div>
+            </div>
           </aside>
           <div class="stage molar-stage stage-ai">
             <!-- 摩尔质量 -->
@@ -543,14 +595,19 @@
 
         <!-- Electron configuration -->
         <section id="panel-electron" class="panel" role="tabpanel" hidden>
-          <aside class="sidebar">
-            <h2>元素列表</h2>
-            <div class="electron-toolbar">
-              <button type="button" class="mol-btn mol-btn-edit" id="btnEditElectrons" title="编辑排序">
-                编辑
-              </button>
+          <aside class="sidebar side-drawer" data-drawer-key="electron">
+            <div class="side-drawer-head">
+              <h2>元素列表</h2>
+              <button type="button" class="side-drawer-toggle" aria-label="收起侧栏">«</button>
             </div>
-            <div id="electronList" class="electron-list"></div>
+            <div class="side-drawer-body">
+              <div class="electron-toolbar">
+                <button type="button" class="mol-btn mol-btn-edit" id="btnEditElectrons" title="编辑排序">
+                  编辑
+                </button>
+              </div>
+              <div id="electronList" class="electron-list"></div>
+            </div>
           </aside>
           <div class="stage stage-electron">
             <div id="electron-root"></div>
@@ -582,9 +639,14 @@
 
         <!-- 课堂 -->
         <section id="panel-ai" class="panel" role="tabpanel" hidden>
-          <aside class="sidebar ai-sidebar">
-            <h2>课堂</h2>
-            <div id="aiNavList" class="ai-nav-list" role="list"></div>
+          <aside class="sidebar ai-sidebar side-drawer" data-drawer-key="ai">
+            <div class="side-drawer-head">
+              <h2>课堂</h2>
+              <button type="button" class="side-drawer-toggle" aria-label="收起侧栏">«</button>
+            </div>
+            <div class="side-drawer-body">
+              <div id="aiNavList" class="ai-nav-list" role="list"></div>
+            </div>
           </aside>
           <div class="stage stage-ai">
             <!-- 随机点名 -->
@@ -625,25 +687,12 @@
               </div>
             </div>
 
-            <!-- 实验探究：三级目录（左列实验）+ 右侧脚本 -->
-            <div id="aiSectionLab" class="ai-section" hidden>
-              <header class="quiz-section-head">
-                <h3>实验探究</h3>
-                <div class="lab-mode-tabs">
-                  <button type="button" class="lab-mode-tab is-active" data-lab-mode="script">阅读脚本</button>
-                  <button type="button" class="lab-mode-tab" data-lab-mode="prestudy">交互式预习</button>
-                </div>
-              </header>
-              <div id="labModeScript" class="lab-layout">
-                <nav id="labNavList" class="lab-nav-list" role="list" aria-label="实验列表"></nav>
-                <article id="labScriptDetail" class="lab-script-detail">
-                  <div class="molar-empty">请选择左侧实验</div>
-                </article>
-              </div>
-              <div id="labModePrestudy" class="lab-layout" hidden>
-                <nav id="prestudyNavList" class="lab-nav-list" role="list" aria-label="实验列表"></nav>
-                <article id="prestudyDetail" class="lab-script-detail">
-                  <div class="molar-empty">请选择左侧实验</div>
+            <!-- 实验探究：抽屉（标题/新建/列表）+ 详情（预习 | 脚本=编辑） -->
+            <div id="aiSectionLab" class="ai-section ai-section-lab" hidden>
+              <div class="lab-layout lab-layout-drawer">
+                <aside class="lab-nav-rail" id="labNavRail" aria-label="实验目录"></aside>
+                <article id="labDetail" class="lab-drawer" aria-live="polite">
+                  <div class="molar-empty">加载中…</div>
                 </article>
               </div>
             </div>
@@ -673,7 +722,8 @@
                 <h3>备课包</h3>
                 <div class="lesson-pack-toolbar">
                   <button type="button" class="btn btn-sm" id="btnLessonPackNew">新建备课包</button>
-                  <button type="button" class="btn btn-sm ghost" id="btnLessonPackImport">导入</button>
+                  <button type="button" class="btn btn-sm ghost" id="btnLessonPackImport">导入备课包/实验包</button>
+                  <button type="button" class="btn btn-sm ghost" id="btnLabPackExport">导出实验包</button>
                   <input type="file" id="lessonPackImportInput" accept=".json" hidden />
                 </div>
               </header>

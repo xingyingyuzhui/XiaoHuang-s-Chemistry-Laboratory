@@ -4,9 +4,12 @@ const express = require('express');
 const router = express.Router();
 const { query, queryOne, run } = require('../db/sqlite');
 const { success, error, badRequest, notFound } = require('../utils/response');
+const { getLab, listLabs, ensureLabsSeeded, importLabsSafe } = require('../seed/import-labs');
 
 const PACK_FORMAT = 'xiaohuang-lesson-pack';
 const PACK_VERSION = 1;
+const LAB_PACK_FORMAT = 'xiaohuang-lab-pack';
+const LAB_PACK_VERSION = 1;
 
 function uid(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -45,10 +48,42 @@ function sanitizePack(row) {
   };
 }
 
-/** 清洗导出数据：排除敏感字段 */
+/** 清洗导出数据：排除敏感字段；附带 selectedLabs 的完整实验子集 */
 function sanitizeForExport(row) {
   const pack = sanitizePack(row);
   if (!pack) return null;
+  ensureLabsSeeded();
+  const contents = { ...(pack.contents || {}) };
+  const selected = Array.isArray(contents.selectedLabs) ? contents.selectedLabs : [];
+  const labs = selected.map((id) => getLab(id)).filter(Boolean).map((l) => ({
+    id: l.id,
+    title: l.title,
+    type: l.type,
+    equation: l.equation,
+    safety: l.safety,
+    phenomena: l.phenomena,
+    steps: l.steps,
+    prestudy: l.prestudy,
+    sortOrder: l.sortOrder,
+    source: l.source,
+  }));
+  // 若未勾选具体实验但希望导出当前库中全部，可在 contents.includeAllLabs 时附带
+  if (contents.includeAllLabs) {
+    contents.labs = listLabs().map((l) => ({
+      id: l.id,
+      title: l.title,
+      type: l.type,
+      equation: l.equation,
+      safety: l.safety,
+      phenomena: l.phenomena,
+      steps: l.steps,
+      prestudy: l.prestudy,
+      sortOrder: l.sortOrder,
+      source: l.source,
+    }));
+  } else if (labs.length) {
+    contents.labs = labs;
+  }
   return {
     format: PACK_FORMAT,
     version: PACK_VERSION,
@@ -59,7 +94,22 @@ function sanitizeForExport(row) {
       notes: pack.notes,
       exportedAt: new Date().toISOString(),
     },
-    contents: pack.contents,
+    contents,
+  };
+}
+
+/** 备课包内 labs：与实验库导入同一策略——永不覆盖，冲突新 id +「（导入）」 */
+function mergeLabsFromContents(labsIn) {
+  if (!Array.isArray(labsIn) || !labsIn.length) {
+    return { created: 0, renamed: 0, skipped: 0, updated: 0, errors: [] };
+  }
+  const result = importLabsSafe(labsIn);
+  return {
+    created: result.created,
+    renamed: result.renamed,
+    skipped: result.skipped,
+    updated: 0,
+    errors: result.errors || [],
   };
 }
 
@@ -193,11 +243,25 @@ router.get('/:id/export', (req, res) => {
   }
 });
 
-// 导入备课包
+// 导入备课包（若 contents.labs 存在则合并进实验库）
 router.post('/import', (req, res) => {
   try {
     ensureTable();
     const data = req.body;
+
+    // 分支：纯实验包也可从备课包入口导入
+    if (data?.format === LAB_PACK_FORMAT) {
+      if (data.version !== LAB_PACK_VERSION) {
+        return badRequest(res, `不支持的实验包版本：${data.version}`);
+      }
+      const labsResult = mergeLabsFromContents(data.labs);
+      return success(res, {
+        kind: 'lab-pack',
+        labsResult,
+        nameChanged: false,
+      });
+    }
+
     const validation = validateImport(data);
     if (!validation.valid) {
       return badRequest(res, validation.reason);
@@ -205,6 +269,7 @@ router.post('/import', (req, res) => {
     const name = uniqueName(data.metadata.name.trim());
     const id = uid('lp');
     const now = Date.now();
+    const contents = data.contents || {};
     run(
       `INSERT INTO lesson_packs (id, name, grade, topics, notes, contents_json, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -214,13 +279,19 @@ router.post('/import', (req, res) => {
         data.metadata.grade || '',
         data.metadata.topics || '',
         data.metadata.notes || '',
-        JSON.stringify(data.contents || {}),
+        JSON.stringify(contents),
         now,
         now,
       ],
     );
+    const labsResult = mergeLabsFromContents(contents.labs);
     const row = queryOne('SELECT * FROM lesson_packs WHERE id = ?', [id]);
-    success(res, { pack: sanitizePack(row), nameChanged: name !== data.metadata.name });
+    success(res, {
+      kind: 'lesson-pack',
+      pack: sanitizePack(row),
+      nameChanged: name !== data.metadata.name,
+      labsResult,
+    });
   } catch (err) {
     error(res, err.message);
   }

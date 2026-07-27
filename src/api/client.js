@@ -205,6 +205,14 @@ export const aiApi = {
     });
   },
 
+  /** 生成实验探究草稿（脚本+预习，不落库） */
+  async labGenerate(prompt) {
+    return request('/ai/lab', {
+      method: 'POST',
+      body: JSON.stringify({ prompt }),
+    });
+  },
+
   /** 摩尔分步化学计量 */
   async stoich(payload) {
     return request('/ai/stoich', {
@@ -335,6 +343,54 @@ export const offlineQuizApi = {
 export const masteryApi = {
   async summary() {
     return request('/mastery');
+  },
+};
+
+/**
+ * 实验探究 API（可编辑脚本 / 预习 / 导入导出）
+ */
+export const labsApi = {
+  async list() {
+    return request('/labs');
+  },
+  async get(id) {
+    return request(`/labs/${encodeURIComponent(id)}`);
+  },
+  async create(payload) {
+    return request('/labs', { method: 'POST', body: JSON.stringify(payload) });
+  },
+  async update(id, payload) {
+    return request(`/labs/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+  async remove(id) {
+    return request(`/labs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  },
+  async reorder(ids) {
+    return request('/labs/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+  async resetBuiltin() {
+    return request('/labs/reset-builtin', { method: 'POST', body: '{}' });
+  },
+  async resetOne(id) {
+    return request(`/labs/${encodeURIComponent(id)}/reset`, {
+      method: 'POST',
+      body: '{}',
+    });
+  },
+  async exportPack() {
+    return request('/labs/export');
+  },
+  async importPack(data) {
+    return request('/labs/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 };
 

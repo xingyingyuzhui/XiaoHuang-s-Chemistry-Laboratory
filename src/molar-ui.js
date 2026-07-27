@@ -5,6 +5,7 @@
 import { calcMolarMass, normalizeFormulaInput } from './molar.js';
 import { moleculeApi, aiApi } from './api/client.js';
 import { balanceEquation, checkConservation } from './equation-balance.js';
+import { mountChemKeypads } from './chem-keypad.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -308,10 +309,18 @@ async function runStoich() {
   }
 }
 
+function setupMolarChemKeypads() {
+  const panel = $('#panel-molar');
+  if (!panel) return;
+  // 摩尔质量 / 配平 / 分步计量 三个输入框共用符号键盘（下标会被摩尔计算自动规范成 ASCII）
+  mountChemKeypads(panel, '#formulaInput, #balanceInput, #stoichInput');
+}
+
 export function initMolarUI() {
   renderMolarNav();
   selectMolarSection('mass');
   refreshMolarPresets();
+  setupMolarChemKeypads();
 
   $('#btnCalcMolar')?.addEventListener('click', runMolar);
 

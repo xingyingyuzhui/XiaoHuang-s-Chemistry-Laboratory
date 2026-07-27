@@ -11,6 +11,7 @@ import {
   ensureDefaultMolecule,
   getMolViewer,
   setOnMoleculeChange,
+  setMolEditMode,
 } from './molecule-list.js';
 import { initMoleculeAI } from './molecule-ai.js';
 import {
@@ -23,12 +24,14 @@ import {
   setElectronViewer,
   loadElement,
   getCurrentElementZ,
+  setElectronEditMode,
 } from './electron-list.js';
 import { createElectronViewer } from './electron-renderer.js';
 import { initSettingsUI } from './settings.js';
 import { initBrandTip } from './brand-tip.js';
 import { initAiClassroom } from './ai-classroom.js';
 import { initElementBattle } from './element-battle.js';
+import { initSideDrawers } from './side-drawer.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -137,6 +140,28 @@ async function init() {
   initBrandTip();
   initAiClassroom();
   initElementBattle();
+
+  initSideDrawers({
+    onToggle: (key, collapsed) => {
+      // 收起时退出列表编辑态，避免看不见 × 还在删
+      if (collapsed && key === 'molecule') setMolEditMode(false);
+      if (collapsed && key === 'electron') setElectronEditMode(false);
+      // 周期表 / 3D 画布随侧栏宽度重算
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (key === 'table' && !panels.table?.hidden) {
+            scheduleFit();
+          }
+          if (key === 'molecule' && !panels.molecule?.hidden) {
+            getMolViewer()?.resize?.();
+          }
+          if (key === 'electron' && !panels.electron?.hidden && electronViewer) {
+            electronViewer.resize();
+          }
+        });
+      });
+    },
+  });
 
   const settingsApi = await initSettingsUI({
     onDefaultPageChange: () => {},

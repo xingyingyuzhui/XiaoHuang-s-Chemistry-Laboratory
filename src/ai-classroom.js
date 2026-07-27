@@ -2,15 +2,14 @@
  * 课堂：侧栏二级导航 + 出题 / 错题 / 点名 / 实验
  */
 
-import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi } from './api/client.js';
+import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi, labsApi } from './api/client.js';
 import { showAppBubble, hideBrandTip } from './brand-tip.js';
 import { initRollcall, onRollcallSectionEnter } from './classroom-rollcall.js';
 import { createQuizConfigController } from './ai-classroom/quiz-config.js';
-import { createLabScriptsRenderer } from './ai-classroom/lab-scripts.js';
 import { createWrongBookController } from './ai-classroom/wrong-book.js';
 import { createOfflineQuizController } from './ai-classroom/offline-quiz.js';
 import { createMasteryMapController } from './ai-classroom/mastery-map.js';
-import { createLabPrestudyController } from './ai-classroom/lab-prestudy.js';
+import { createLabShellController } from './ai-classroom/lab-shell.js';
 import { createLessonPacksController } from './ai-classroom/lesson-packs.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -90,7 +89,7 @@ const quizConfig = createQuizConfigController({
     config = next;
   },
 });
-const labScripts = createLabScriptsRenderer({ select: $, escapeHtml });
+const labShell = createLabShellController({ select: $, escapeHtml, labsApi, aiApi });
 const wrongBook = createWrongBookController({
   select: $,
   escapeHtml,
@@ -121,13 +120,12 @@ const masteryMap = createMasteryMapController({
   masteryApi,
 });
 
-const labPrestudy = createLabPrestudyController({ select: $, escapeHtml });
-
 let lessonPackInited = false;
 const lessonPacks = createLessonPacksController({
   select: $,
   escapeHtml,
   lessonPackApi,
+  labsApi,
 });
 
 function setStatus(el, text, ok) {
@@ -201,8 +199,7 @@ function selectSection(id) {
     onRollcallSectionEnter();
   }
   if (id === 'lab') {
-    // Default to script mode
-    switchLabMode('script');
+    labShell.render();
   }
   if (id === 'lessonpack') {
     if (!lessonPackInited) {
@@ -793,21 +790,6 @@ function backToConfig() {
   if (report) report.hidden = true;
 }
 
-let currentLabMode = 'script';
-
-function switchLabMode(mode) {
-  currentLabMode = mode;
-  const scriptPanel = $('#labModeScript');
-  const prestudyPanel = $('#labModePrestudy');
-  if (scriptPanel) scriptPanel.hidden = mode !== 'script';
-  if (prestudyPanel) prestudyPanel.hidden = mode !== 'prestudy';
-  document.querySelectorAll('.lab-mode-tab').forEach((tab) => {
-    tab.classList.toggle('is-active', tab.dataset.labMode === mode);
-  });
-  if (mode === 'script') labScripts.render();
-  if (mode === 'prestudy') labPrestudy.render();
-}
-
 export function initAiClassroom() {
   renderNav();
   selectSection('quiz');
@@ -848,8 +830,4 @@ export function initAiClassroom() {
     btn.addEventListener('click', exportQuizMarkdown);
   });
 
-  // Lab mode tabs
-  document.querySelectorAll('.lab-mode-tab').forEach((tab) => {
-    tab.addEventListener('click', () => switchLabMode(tab.dataset.labMode));
-  });
 }

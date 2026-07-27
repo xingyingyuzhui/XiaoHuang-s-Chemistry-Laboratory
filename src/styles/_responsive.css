@@ -18,9 +18,14 @@
     grid-template-rows: minmax(140px, 28vh) minmax(0, 1fr);
   }
 
-  #panel-table .detail-card {
+  #panel-table .detail-card:not(.is-collapsed) {
     max-height: 28vh;
+    overflow: hidden;
+  }
+
+  #panel-table .detail-card:not(.is-collapsed) .side-drawer-body {
     overflow: auto;
+    max-height: calc(28vh - 3rem);
   }
 }
 

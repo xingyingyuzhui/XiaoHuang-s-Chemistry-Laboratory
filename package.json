@@ -1,7 +1,7 @@
 {
   "name": "xiaohuang-chem-lab",
   "private": true,
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "小黄的化学实验室",
   "author": "小黄的化学实验室",
   "main": "electron/main.cjs",
@@ -14,6 +14,7 @@
     "build:frontend": "npm --prefix server run build:frontend",
     "build:exe": "npm --prefix server run build:exe",
     "sync:offline-bank": "node scripts/sync-offline-quiz-bank.mjs",
+    "sync:labs-seed": "node scripts/sync-labs-seed.mjs",
     "electron:dev": "npm run build:frontend && electron .",
     "electron:dev:skip-build": "electron .",
     "stage:electron": "node scripts/stage-electron-server.js",

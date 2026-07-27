@@ -428,12 +428,14 @@ export function bindHelpOverlay() {
 
 
 export function bindHub() {
-  $('#btnStartModeB', rootEl)?.addEventListener('click', async () => {
-    await sfxUnlock();
-    sfxHubSelect();
-    // 手势内先触发 BGM play，再开局（淡入约 3s）
-    bgmStart().catch(() => {});
+  $('#btnStartModeB', rootEl)?.addEventListener('click', () => {
+    // 手势同步路径：先 kick BGM.play()，再开局；勿在 play 之前 await
+    const bgmP = bgmStart({ force: true });
+    sfxUnlock()
+      .then(() => sfxHubSelect())
+      .catch(() => {});
     battleActions?.startModeB({ bgmAlreadyRequested: true });
+    bgmP.catch(() => {});
   });
   rootEl.querySelector('[data-mode="a"]')?.addEventListener('click', async (e) => {
     if (e.target.closest('button')) return;
@@ -463,9 +465,15 @@ export function bindModeB() {
     setScreen('hub');
   });
   $('#btnBattleRestart', rootEl)?.addEventListener('click', () => {
-    if (window.confirm('确定重开？')) battleActions?.startModeB();
+    if (!window.confirm('确定重开？')) return;
+    // confirm 后手势可能失效，仍 force 尝试；失败则依赖下一手势
+    bgmStart({ force: true }).catch(() => {});
+    battleActions?.startModeB({ bgmAlreadyRequested: true });
   });
-  $('#btnBattleAgain', rootEl)?.addEventListener('click', () => battleActions?.startModeB());
+  $('#btnBattleAgain', rootEl)?.addEventListener('click', () => {
+    bgmStart({ force: true }).catch(() => {});
+    battleActions?.startModeB({ bgmAlreadyRequested: true });
+  });
   $('#btnBattleToHub', rootEl)?.addEventListener('click', async () => {
     await sfxUnlock();
     sfxUiTap();
