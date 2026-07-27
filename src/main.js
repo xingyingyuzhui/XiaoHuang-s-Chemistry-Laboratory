@@ -15,6 +15,11 @@ import { initBrandTip } from './brand-tip.js';
 import { initSideDrawers } from './side-drawer.js';
 import { initMolarUI, runMolar, refreshMolarPresets } from './molar-ui.js';
 import { createFeatureLoader } from './feature-loader.js';
+import {
+  showPanelLoading as showLoadingOn,
+  hidePanelLoading as hideLoadingOn,
+  showPanelError as showErrorOn,
+} from './panel-loading.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -62,46 +67,18 @@ function throttledResize() {
   });
 }
 
-// ── 面板加载状态 ──
+// ── 面板加载状态（DOM 逻辑见 panel-loading.js，样式见 _layout.css）──
 
 function showPanelLoading(name) {
-  const panel = panels[name];
-  if (!panel) return;
-  let placeholder = panel.querySelector('[data-panel-loading]');
-  if (!placeholder) {
-    placeholder = document.createElement('div');
-    placeholder.setAttribute('data-panel-loading', '');
-    placeholder.className = 'panel-loading';
-    panel.prepend(placeholder);
-  }
-  placeholder.textContent = '加载中…';
-  placeholder.hidden = false;
+  showLoadingOn(panels[name]);
 }
 
 function hidePanelLoading(name) {
-  const panel = panels[name];
-  if (!panel) return;
-  const placeholder = panel.querySelector('[data-panel-loading]');
-  if (!placeholder) return;
-  placeholder.hidden = true;
-  // 同步清文案，避免再次显示时闪旧错误信息
-  if (!placeholder.textContent.startsWith('加载失败')) {
-    placeholder.textContent = '加载中…';
-  }
+  hideLoadingOn(panels[name]);
 }
 
 function showPanelError(name, message) {
-  const panel = panels[name];
-  if (!panel) return;
-  let placeholder = panel.querySelector('[data-panel-loading]');
-  if (!placeholder) {
-    placeholder = document.createElement('div');
-    placeholder.setAttribute('data-panel-loading', '');
-    placeholder.className = 'panel-loading';
-    panel.prepend(placeholder);
-  }
-  placeholder.textContent = `加载失败：${message}`;
-  placeholder.hidden = false;
+  showErrorOn(panels[name], message);
 }
 
 /**

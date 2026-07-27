@@ -73,4 +73,15 @@ test('main.js does not static-import heavy modules (Three.js, battle, classroom)
   assert.match(entry, /import\s+.*from\s+['"]\.\/side-drawer\.js['"]/);
   assert.match(entry, /import\s+.*from\s+['"]\.\/molar-ui\.js['"]/);
   assert.match(entry, /import\s+.*from\s+['"]\.\/feature-loader\.js['"]/);
+  // 允许多行 import { a, b } from './panel-loading.js'
+  assert.match(entry, /from\s+['"]\.\/panel-loading\.js['"]/);
+});
+
+test('panel-loading module exists and is used for lazy tab overlay', () => {
+  assert.ok(fs.existsSync(path.join(root, 'src/panel-loading.js')));
+  const loading = source('src/panel-loading.js');
+  assert.match(loading, /export function showPanelLoading/);
+  assert.match(loading, /export function hidePanelLoading/);
+  assert.match(loading, /export function showPanelError/);
+  assert.match(loading, /\.hidden\s*=\s*true/);
 });

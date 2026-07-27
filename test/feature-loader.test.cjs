@@ -152,3 +152,107 @@ test('feature loader: concurrent loads for same feature share promise', async ()
   assert.equal(r1.mod, 'shared');
   assert.equal(r2.mod, 'shared');
 });
+
+/**
+ * 模拟 runFeatureLoad：成功/过期/失败时占位层 hidden 状态
+ * （对应课堂交卷后仍见「加载中」的根因：加载结束未真正 hide）
+ */
+test('runFeatureLoad-like lifecycle always hides overlay after success or cancel', async () => {
+  const { createFeatureLoader } = await import('../src/feature-loader.js');
+  const {
+    showPanelLoading,
+    hidePanelLoading,
+    showPanelError,
+  } = await import('../src/panel-loading.js');
+
+  function createMockPanel() {
+    const nodes = [];
+    const doc = {
+      createElement() {
+        return {
+          className: '',
+          textContent: '',
+          hidden: false,
+          attrs: {},
+          setAttribute(k, v) {
+            this.attrs[k] = v == null ? '' : String(v);
+          },
+          hasAttribute(k) {
+            return Object.prototype.hasOwnProperty.call(this.attrs, k);
+          },
+          getAttribute(k) {
+            return this.attrs[k] ?? null;
+          },
+        };
+      },
+    };
+    return {
+      ownerDocument: doc,
+      querySelector(sel) {
+        if (sel === '[data-panel-loading]') {
+          return nodes.find((n) => n.hasAttribute('data-panel-loading')) || null;
+        }
+        return null;
+      },
+      prepend(el) {
+        nodes.unshift(el);
+      },
+    };
+  }
+
+  const loader = createFeatureLoader();
+  let switchSeq = 0;
+  const panel = createMockPanel();
+
+  async function runFeatureLoad(mySeq, ensureReady) {
+    showPanelLoading(panel);
+    try {
+      await ensureReady();
+      if (mySeq !== switchSeq) {
+        hidePanelLoading(panel);
+        return false;
+      }
+      hidePanelLoading(panel);
+      return true;
+    } catch (err) {
+      if (mySeq !== switchSeq) {
+        hidePanelLoading(panel);
+        return false;
+      }
+      showPanelError(panel, err.message || String(err));
+      return false;
+    }
+  }
+
+  // 成功：hide
+  const s1 = ++switchSeq;
+  assert.equal(
+    await runFeatureLoad(s1, async () => {
+      await loader.load('classroom', async () => ({ ok: true }));
+    }),
+    true,
+  );
+  assert.equal(panel.querySelector('[data-panel-loading]').hidden, true);
+
+  // 过期取消：hide（不留加载中）
+  const s2 = ++switchSeq;
+  const pending = runFeatureLoad(s2, async () => {
+    await new Promise((r) => setTimeout(r, 30));
+    await loader.load('battle', async () => ({ ok: true }));
+  });
+  switchSeq += 1; // 用户已切走
+  assert.equal(await pending, false);
+  assert.equal(panel.querySelector('[data-panel-loading]').hidden, true);
+
+  // 失败且仍是当前 tab：显示错误且 hidden=false
+  const s3 = ++switchSeq;
+  assert.equal(
+    await runFeatureLoad(s3, async () => {
+      throw new Error('chunk load failed');
+    }),
+    false,
+  );
+  const errEl = panel.querySelector('[data-panel-loading]');
+  assert.equal(errEl.hidden, false);
+  assert.match(errEl.textContent, /chunk load failed/);
+});
