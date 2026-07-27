@@ -10,7 +10,7 @@
  *   resources/server → Express + public + node_modules（extraResources）
  */
 
-const { app, BrowserWindow, shell, screen, Menu } = require('electron');
+const { app, BrowserWindow, shell, screen, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -290,6 +290,19 @@ async function bootstrap() {
     await createWindow(url);
   } catch (err) {
     console.error('Electron 启动失败:', err);
+    const detail = err && err.stack ? String(err.stack) : String(err?.message || err);
+    try {
+      // 打包后无控制台时，至少弹出原因（如缺 services 模块）
+      await dialog.showMessageBox({
+        type: 'error',
+        title: '小黄的化学实验室 · 启动失败',
+        message: '应用无法启动',
+        detail: detail.slice(0, 1800),
+        buttons: ['退出'],
+      });
+    } catch {
+      /* ignore dialog failures */
+    }
     app.quit();
   }
 }

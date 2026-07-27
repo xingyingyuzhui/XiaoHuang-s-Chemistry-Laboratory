@@ -13,7 +13,8 @@ const stageRoot = join(root, '.electron-stage');
 const stageServer = join(stageRoot, 'server');
 const srcServer = join(root, 'server');
 
-const COPY_DIRS = ['db', 'routes', 'seed', 'utils', 'public'];
+// services：AI 路由顶层 require，漏拷会导致 Electron 安装后进程秒退
+const COPY_DIRS = ['db', 'routes', 'seed', 'utils', 'services', 'public'];
 const COPY_FILES = ['index.js', 'paths.js'];
 
 function rimraf(p) {
@@ -112,6 +113,22 @@ function du(p) {
   } catch {
     return '?';
   }
+}
+
+// 冒烟：能 require 入口（捕获漏拷 services 等导致 Electron 秒退）
+try {
+  const entry = join(stageServer, 'index.js');
+  const smoke = [
+    `process.env.CHEM_LAB_ELECTRON='1';`,
+    `process.env.CHEM_LAB_DATA_DIR=require('os').tmpdir()+require('path').sep+'chem-lab-stage-smoke';`,
+    `process.env.OPEN_BROWSER='0';`,
+    `require(${JSON.stringify(entry)});`,
+    `console.log('stage require ok');`,
+  ].join('');
+  execSync(`node -e ${JSON.stringify(smoke)}`, { stdio: 'inherit', cwd: root });
+} catch (e) {
+  console.error('Stage smoke require FAILED — Electron 包会启动即退出');
+  throw e;
 }
 
 console.log('Stage server size:', du(stageServer));
