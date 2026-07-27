@@ -21,6 +21,8 @@ export function createOfflineQuizController({
   let expandedResultIdx = null;
   let yearFilter = null;
   let availableYears = [];
+  let bankPage = 1;
+  let bankTotalPages = 1;
 
   // ── view switching ──
 
@@ -56,6 +58,7 @@ export function createOfflineQuizController({
     root.querySelectorAll('[data-offline-year]').forEach((btn) => {
       btn.addEventListener('click', () => {
         yearFilter = btn.dataset.offlineYear === '' ? null : Number(btn.dataset.offlineYear);
+        bankPage = 1;
         renderYearChips();
         renderBankList();
       });
@@ -67,17 +70,45 @@ export function createOfflineQuizController({
     if (!body) return;
     body.innerHTML = '<p class="quiz-muted">加载中…</p>';
     try {
-      const data = await offlineQuizApi.list(yearFilter);
+      const data = await offlineQuizApi.list(yearFilter, bankPage, 20);
       const questions = data?.questions || [];
-      if (!questions.length) {
+      const total = data?.total || 0;
+      const page = data?.page || 1;
+      const pageSize = data?.pageSize || 20;
+      bankTotalPages = data?.totalPages || 1;
+      bankPage = page;
+
+      if (!total) {
         body.innerHTML = '<p class="quiz-muted">暂无题目</p>';
         return;
       }
+
       const yearLabel = yearFilter ? `${yearFilter}年 · ` : '';
-      body.innerHTML = `<p class="quiz-muted">${yearLabel}共 ${questions.length} 题 · 历年高考题源（AGIEval）</p>` +
-        questions.map((q, i) =>
-          `<div class="quiz-result-item" style="cursor:default"><div class="quiz-result-item-summary"><span class="quiz-card-idx">${i + 1}</span><div class="quiz-result-item-text"><span class="quiz-result-brief">${formatChemPreview(q.question || '', 60)}</span><span class="quiz-card-tag">${escapeHtml(q.sourceExam || '')}</span></div></div></div>`,
-        ).join('');
+      const start = (page - 1) * pageSize + 1;
+      const end = Math.min(page * pageSize, total);
+
+      const listHtml = questions.map((q, i) => {
+        const globalIdx = start + i;
+        return `<div class="quiz-result-item" style="cursor:default"><div class="quiz-result-item-summary"><span class="quiz-card-idx">${globalIdx}</span><div class="quiz-result-item-text"><span class="quiz-result-brief">${formatChemPreview(q.question || '', 60)}</span><span class="quiz-card-tag">${escapeHtml(q.sourceExam || '')}</span></div></div></div>`;
+      }).join('');
+
+      const pagerHtml = bankTotalPages > 1
+        ? `<div class="quiz-pager">
+            <button type="button" class="quiz-chip" data-bank-prev ${page <= 1 ? 'disabled' : ''}>上一页</button>
+            <span class="quiz-muted">${start}-${end} / ${total}</span>
+            <button type="button" class="quiz-chip" data-bank-next ${page >= bankTotalPages ? 'disabled' : ''}>下一页</button>
+          </div>`
+        : '';
+
+      body.innerHTML = `<p class="quiz-muted">${yearLabel}${yearLabel ? '' : ''}共 ${total} 题 · 历年高考题源（AGIEval）</p>` +
+        listHtml + pagerHtml;
+
+      body.querySelector('[data-bank-prev]')?.addEventListener('click', () => {
+        if (bankPage > 1) { bankPage--; renderBankList(); }
+      });
+      body.querySelector('[data-bank-next]')?.addEventListener('click', () => {
+        if (bankPage < bankTotalPages) { bankPage++; renderBankList(); }
+      });
     } catch (err) {
       body.innerHTML = `<p class="quiz-muted">加载失败：${escapeHtml(err.message || '')}</p>`;
     }
@@ -191,6 +222,9 @@ export function createOfflineQuizController({
         chosen: q.chosen === null ? -1 : q.chosen,
       }));
       const data = await offlineQuizApi.submit({ paperId: currentPaperId, answers });
+
+      // 小延迟确保 UI 能 catch 到提交状态
+      await new Promise(r => setTimeout(r, 10));
 
       // Fill in answers from server response
       const items = data?.items || [];
