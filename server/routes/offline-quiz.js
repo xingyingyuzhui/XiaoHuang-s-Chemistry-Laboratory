@@ -73,8 +73,16 @@ router.get('/list', (req, res) => {
     const year = req.query.year ? Number(req.query.year) : null;
     if (year) questions = questions.filter(q => q.sourceYear === year);
     const years = [...new Set(OFFLINE_QUESTIONS.map(q => q.sourceYear))].filter(Boolean).sort((a, b) => a - b);
-    const safe = questions.map(stripAnswer);
-    success(res, { questions: safe, total: safe.length, years });
+
+    const total = questions.length;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 20));
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const start = (page - 1) * pageSize;
+    const paged = questions.slice(start, start + pageSize);
+    const safe = paged.map(stripAnswer);
+
+    success(res, { questions: safe, total, page, pageSize, totalPages, years });
   } catch (err) {
     error(res, err.message);
   }

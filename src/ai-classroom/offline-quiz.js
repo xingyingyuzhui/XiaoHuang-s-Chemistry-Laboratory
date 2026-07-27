@@ -223,9 +223,6 @@ export function createOfflineQuizController({
       }));
       const data = await offlineQuizApi.submit({ paperId: currentPaperId, answers });
 
-      // 小延迟确保 UI 能 catch 到提交状态
-      await new Promise(r => setTimeout(r, 10));
-
       // Fill in answers from server response
       const items = data?.items || [];
       for (let i = 0; i < paper.length; i++) {

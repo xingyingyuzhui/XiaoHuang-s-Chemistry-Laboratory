@@ -4,7 +4,7 @@
 
 数据全部保存在本机 SQLite；可选接入 **DeepSeek API** 做 AI 出题、提示、分子/反应生成等（仅按调用转发提示词，名单与试卷等业务数据留在本机）。
 
-**当前版本：v3.0.2** · 许可证 [MIT](./LICENSE)
+**当前版本：v3.0.3** · 许可证 [MIT](./LICENSE)
 
 <p align="center">
   <img src="docs/screenshots/01-table-default.jpg" alt="元素周期表 · 默认主题" width="900" />
@@ -30,12 +30,12 @@
 
 ## 下载安装（推荐）
 
-发布页：[Releases · v3.0.2](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.2)
+发布页：[Releases · v3.0.3](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.3)
 
 | 文件 | 平台 | 说明 |
 |------|------|------|
-| `XiaoHuang-ChemLab-Setup-3.0.2.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
-| `XiaoHuang-ChemLab-3.0.2-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
+| `XiaoHuang-ChemLab-Setup-3.0.3.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
+| `XiaoHuang-ChemLab-3.0.3-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
 
 ### Electron 版（Win 安装包 / Mac dmg）
 
@@ -442,6 +442,7 @@ npm run build:exe
 
 | 版本 | 说明 |
 |------|------|
+| **3.0.3** | **性能**：默认入口按需加载 3D/电子/课堂/乱斗（主 JS ~23KB gzip）；离线题库预览分页；resize 节流与慢写观测。**修复**：Tab 再进入误判 stale；课堂按需加载占位层 `display:flex` 盖过 `[hidden]` 导致交卷后仍显示「加载中…」并挤占布局。 |
 | **3.0.2** | **实验探究**可编辑脚本与预习、实验包导入/导出（冲突永不覆盖、强制 custom）；共享结构校验；种子只补缺失内置项；AI 生成实验草稿；侧栏抽屉与化学符号软键盘；课堂离线测验/掌握度/备课包等能力与多项 UX 修复。 |
 | **3.0.1** | 修复 3D 分子内置物质的物理/化学性质卡片为空问题；新安装直接带入性质数据，既有本地数据库会在启动时仅补齐空字段。 |
 | **3.0.0** | **元素乱斗**：新增周期律卡牌对战（Z / χ / r 维度、FLIP 改维度、单机 AI、提示/音效/动效）；对局代码按数据、规则、状态、动作、UI、视听分层，补充回归测试；提供 Windows Electron 安装包与 macOS Apple 芯片 dmg。 |

@@ -160,6 +160,7 @@ function saveDatabase() {
     dirty = true;
     return;
   }
+  const t0 = process.env.NODE_ENV !== 'production' ? performance.now() : 0;
   const data = db.export();
   const buffer = Buffer.from(data);
   const tmp = `${dbPath}.${process.pid}.${Date.now()}.tmp`;
@@ -167,6 +168,12 @@ function saveDatabase() {
     fs.writeFileSync(tmp, buffer);
     fs.renameSync(tmp, dbPath);
     dirty = false;
+    if (t0) {
+      const elapsed = performance.now() - t0;
+      if (elapsed > 100) {
+        console.warn(`[db] slow save: ${elapsed.toFixed(1)}ms (${(buffer.length / 1024).toFixed(0)}KB)`);
+      }
+    }
   } catch (e) {
     try {
       if (fs.existsSync(tmp)) fs.unlinkSync(tmp);

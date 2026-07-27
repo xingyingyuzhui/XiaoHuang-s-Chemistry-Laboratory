@@ -385,6 +385,21 @@
   color: #f5fffd;
 }
 
+.quiz-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.quiz-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 0.6rem;
+}
+
 .quiz-topics {
   display: flex;
   flex-wrap: wrap;

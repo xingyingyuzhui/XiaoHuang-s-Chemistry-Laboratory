@@ -53,3 +53,25 @@
     grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
   }
 }
+
+/* 按需加载占位：绝对覆盖，不参与 grid 占位（避免挤出真实内容行） */
+.panel {
+  position: relative;
+}
+.panel-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  color: var(--text-secondary, #888);
+  padding: 2rem;
+  background: color-mix(in srgb, var(--paper, #f7f5f0) 92%, transparent);
+  pointer-events: none;
+}
+/* author 的 display:flex 会压过 UA 的 [hidden]{display:none}，必须显式关掉 */
+.panel-loading[hidden] {
+  display: none !important;
+}

@@ -211,3 +211,64 @@ test('GET /api/offline-quiz/years returns year list', async () => {
     assert.ok(body.data.years.length > 0);
   });
 });
+
+// T7: pagination — default returns pageSize=20
+test('GET /api/offline-quiz/list default pagination returns pageSize=20', async () => {
+  await withApiServer(async (baseUrl) => {
+    const res = await fetch(`${baseUrl}/api/offline-quiz/list`);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.data.page, 1);
+    assert.equal(body.data.pageSize, 20);
+    assert.ok(body.data.questions.length <= 20);
+    assert.ok(body.data.totalPages >= 1);
+    assert.ok(body.data.total >= 200, 'total should be full bank count');
+  });
+});
+
+// T8: pagination — custom page and pageSize
+test('GET /api/offline-quiz/list custom page and pageSize', async () => {
+  await withApiServer(async (baseUrl) => {
+    const res = await fetch(`${baseUrl}/api/offline-quiz/list?page=2&pageSize=10`);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.data.page, 2);
+    assert.equal(body.data.pageSize, 10);
+    assert.equal(body.data.questions.length, 10);
+    assert.ok(body.data.totalPages > 1);
+  });
+});
+
+// T9: pagination — out-of-range page returns empty
+test('GET /api/offline-quiz/list out-of-range page returns empty items', async () => {
+  await withApiServer(async (baseUrl) => {
+    const res = await fetch(`${baseUrl}/api/offline-quiz/list?page=999&pageSize=20`);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.data.page, 999);
+    assert.equal(body.data.questions.length, 0);
+    assert.ok(body.data.total >= 200, 'total should still be full count');
+    assert.ok(body.data.totalPages >= 1);
+  });
+});
+
+// T10: pagination — year filter + pagination combined
+test('GET /api/offline-quiz/list year filter with pagination', async () => {
+  await withApiServer(async (baseUrl) => {
+    // First get years
+    const yearsRes = await fetch(`${baseUrl}/api/offline-quiz/years`);
+    const years = (await yearsRes.json()).data.years;
+    const year = years[0];
+
+    // Get filtered list with pagination
+    const res = await fetch(`${baseUrl}/api/offline-quiz/list?year=${year}&page=1&pageSize=5`);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.data.page, 1);
+    assert.equal(body.data.pageSize, 5);
+    assert.ok(body.data.questions.length <= 5);
+    assert.ok(body.data.total >= 1, 'filtered total should be at least 1');
+    // total should be count for this year only
+    assert.ok(body.data.total <= 200);
+  });
+});

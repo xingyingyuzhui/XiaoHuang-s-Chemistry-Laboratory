@@ -316,10 +316,13 @@ export const offlineQuizApi = {
   async years() {
     return request('/offline-quiz/years');
   },
-  /** 获取题库列表（不含答案） */
-  async list(year) {
-    const q = year ? `?year=${encodeURIComponent(year)}` : '';
-    return request(`/offline-quiz/list${q}`);
+  /** 获取题库列表（不含答案），支持分页 */
+  async list(year, page = 1, pageSize = 20) {
+    const params = new URLSearchParams();
+    if (year) params.set('year', year);
+    params.set('page', page);
+    params.set('pageSize', pageSize);
+    return request(`/offline-quiz/list?${params}`);
   },
   /** 生成离线练习（不含答案） */
   async generate(payload) {
