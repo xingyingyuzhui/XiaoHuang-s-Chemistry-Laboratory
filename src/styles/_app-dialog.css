@@ -1,0 +1,114 @@
+/* 应用内统一弹窗（替代系统 alert/confirm/prompt） */
+
+.app-dialog-root {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: none;
+  pointer-events: none;
+}
+
+.app-dialog-root.is-open {
+  display: block;
+  pointer-events: auto;
+}
+
+.app-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-out, ease-out);
+  z-index: 400;
+}
+
+.app-dialog-backdrop.is-open {
+  opacity: 1;
+}
+
+.app-dialog-panel.modal-panel {
+  z-index: 410;
+  width: min(420px, 92vw);
+  /* 覆盖默认 modal-panel 的 hidden 态，由 root 控制 */
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-dialog-panel.modal-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-dialog-message {
+  margin: 0 0 0.85rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.65;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+/* 仅「请输入」类弹窗使用；确认/删除框必须 hidden */
+.app-dialog-prompt-wrap[hidden] {
+  display: none !important;
+}
+
+.app-dialog-prompt-wrap:not([hidden]) {
+  display: block;
+  margin: 0 0 0.85rem;
+}
+
+.app-dialog-prompt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.app-dialog-prompt-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.app-dialog-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  color: var(--text-primary);
+  border-radius: var(--radius-control, 10px);
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  outline: none;
+  box-shadow: var(--shadow-print-sm);
+}
+
+.app-dialog-input:focus {
+  box-shadow: var(--shadow-print);
+}
+
+.app-dialog-actions {
+  margin-top: 0.25rem;
+  justify-content: flex-end;
+}
+
+.app-dialog-actions .btn.is-danger,
+.app-dialog-actions .btn.primary.is-danger {
+  background: var(--error, #dc2626);
+  border-color: color-mix(in srgb, var(--error, #dc2626) 70%, var(--border-ink));
+  color: #fff;
+}
+
+.app-dialog-actions .btn.is-danger:hover {
+  filter: brightness(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dialog-backdrop,
+  .app-dialog-panel.modal-panel {
+    transition: none;
+  }
+}

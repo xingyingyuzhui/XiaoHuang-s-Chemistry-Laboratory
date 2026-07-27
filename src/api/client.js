@@ -434,3 +434,45 @@ export const lessonPackApi = {
     });
   },
 };
+
+/**
+ * 配平脚本 API
+ */
+export const balanceScriptsApi = {
+  async list() {
+    return request('/balance-scripts');
+  },
+  async get(id) {
+    return request(`/balance-scripts/${encodeURIComponent(id)}`);
+  },
+  async create(payload) {
+    return request('/balance-scripts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  async update(id, payload) {
+    return request(`/balance-scripts/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+  async remove(id) {
+    return request(`/balance-scripts/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
+  /** 列表拖拽排序（ids 须覆盖全部脚本） */
+  async reorder(ids) {
+    return request('/balance-scripts/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    });
+  },
+  async reset(id) {
+    return request(`/balance-scripts/${encodeURIComponent(id)}/reset`, {
+      method: 'POST',
+      body: '{}',
+    });
+  },
+};

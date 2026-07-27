@@ -1,3 +1,5 @@
+import { appAlert } from '../app-dialog.js';
+
 /** 错题本独立控制器：本地展开/作答状态与 API、气泡提示解耦于课堂入口。 */
 export function createWrongBookController({
   select,
@@ -146,7 +148,7 @@ export function createWrongBookController({
         window.setTimeout(async () => { reset(); await load(); await onRefreshStats(); }, 900);
       } else render();
     } catch (error) {
-      window.alert(error.message || '提交失败');
+      await appAlert(error.message || '提交失败', { title: '提交失败' });
     }
   }
 

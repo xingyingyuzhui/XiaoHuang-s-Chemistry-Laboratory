@@ -31,6 +31,7 @@ const studentsRouter = require('./routes/students');
 const masteryRouter = require('./routes/mastery');
 const lessonPacksRouter = require('./routes/lesson-packs');
 const labsRouter = require('./routes/labs');
+const balanceScriptsRouter = require('./routes/balance-scripts');
 
 const app = express();
 const PREFERRED_PORT = Number(process.env.PORT) || 3000;
@@ -83,6 +84,7 @@ app.use('/api/students', studentsRouter);
 app.use('/api/mastery', masteryRouter);
 app.use('/api/lesson-packs', lessonPacksRouter);
 app.use('/api/labs', labsRouter);
+app.use('/api/balance-scripts', balanceScriptsRouter);
 
 app.get('/api/health', (req, res) => {
   const payload = {

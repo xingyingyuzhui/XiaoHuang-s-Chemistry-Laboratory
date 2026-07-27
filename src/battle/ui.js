@@ -25,6 +25,7 @@ import {
   fxSpawnAmbient,
   fxHighlightPlayable,
 } from './fx.js';
+import { appConfirm } from '../app-dialog.js';
 import {
   sfxUnlock,
   sfxIsMuted,
@@ -381,7 +382,7 @@ export function patchModeB() {
 }
 
 export function bindFlipOverlay() {
-  $('#btnFlipCancel', rootEl)?.addEventListener('click', (e) => {
+  $('#btnFlipCancel', rootEl)?.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!ui.modeB) return;
@@ -389,7 +390,7 @@ export function bindFlipOverlay() {
     ui.modeB.flipPickerOpen = false;
     patchModeB();
   });
-  $('#btnFlipMask', rootEl)?.addEventListener('click', (e) => {
+  $('#btnFlipMask', rootEl)?.addEventListener('click', async (e) => {
     if (e.target === e.currentTarget) {
       if (!ui.modeB) return;
       sfxUiTap();
@@ -398,7 +399,7 @@ export function bindFlipOverlay() {
     }
   });
   rootEl?.querySelectorAll('[data-flip]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       const d = btn.getAttribute('data-flip');
@@ -409,7 +410,7 @@ export function bindFlipOverlay() {
 }
 
 export function bindHelpOverlay() {
-  $('#btnHelpClose', rootEl)?.addEventListener('click', (e) => {
+  $('#btnHelpClose', rootEl)?.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!ui.modeB) return;
@@ -417,7 +418,7 @@ export function bindHelpOverlay() {
     ui.modeB.helpOpen = false;
     patchModeB();
   });
-  $('#btnHelpMask', rootEl)?.addEventListener('click', (e) => {
+  $('#btnHelpMask', rootEl)?.addEventListener('click', async (e) => {
     if (e.target === e.currentTarget && ui.modeB) {
       sfxUiTap();
       ui.modeB.helpOpen = false;
@@ -428,7 +429,7 @@ export function bindHelpOverlay() {
 
 
 export function bindHub() {
-  $('#btnStartModeB', rootEl)?.addEventListener('click', () => {
+  $('#btnStartModeB', rootEl)?.addEventListener('click', async () => {
     // 手势同步路径：先 kick BGM.play()，再开局；勿在 play 之前 await
     const bgmP = bgmStart({ force: true });
     sfxUnlock()
@@ -464,13 +465,19 @@ export function bindModeB() {
     sfxUiTap();
     setScreen('hub');
   });
-  $('#btnBattleRestart', rootEl)?.addEventListener('click', () => {
-    if (!window.confirm('确定重开？')) return;
+  $('#btnBattleRestart', rootEl)?.addEventListener('click', async () => {
+    const ok = await appConfirm('确定重开本局？当前进度将丢失。', {
+      title: '重开对局',
+      okText: '重开',
+      cancelText: '取消',
+      danger: true,
+    });
+    if (!ok) return;
     // confirm 后手势可能失效，仍 force 尝试；失败则依赖下一手势
     bgmStart({ force: true }).catch(() => {});
     battleActions?.startModeB({ bgmAlreadyRequested: true });
   });
-  $('#btnBattleAgain', rootEl)?.addEventListener('click', () => {
+  $('#btnBattleAgain', rootEl)?.addEventListener('click', async () => {
     bgmStart({ force: true }).catch(() => {});
     battleActions?.startModeB({ bgmAlreadyRequested: true });
   });

@@ -4,6 +4,7 @@
  */
 
 import { studentApi } from './api/client.js';
+import { appConfirm, appPrompt } from './app-dialog.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -81,7 +82,11 @@ function renderStudentList() {
       const id = btn.dataset.edit;
       const stu = students.find((x) => x.id === id);
       if (!stu) return;
-      const next = window.prompt('修改姓名', stu.name);
+      const next = await appPrompt('修改姓名', stu.name, {
+        title: '编辑同学',
+        inputLabel: '姓名',
+        okText: '保存',
+      });
       if (next == null) return;
       const name = next.trim();
       if (!name) return;
@@ -97,7 +102,12 @@ function renderStudentList() {
   list.querySelectorAll('[data-del]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.del;
-      if (!window.confirm('删除该同学？')) return;
+      const ok = await appConfirm('删除该同学？', {
+        title: '删除同学',
+        okText: '删除',
+        danger: true,
+      });
+      if (!ok) return;
       try {
         await studentApi.remove(id);
         await loadStudents();
@@ -221,8 +231,13 @@ export function initRollcall() {
       setStatus('没有解析到姓名', false);
       return;
     }
-    if (mode === 'replace' && !window.confirm(`将清空现有名单并导入 ${names.length} 人，确定？`)) {
-      return;
+    if (mode === 'replace') {
+      const ok = await appConfirm(`将清空现有名单并导入 ${names.length} 人，确定？`, {
+        title: '替换导入',
+        okText: '确定导入',
+        danger: true,
+      });
+      if (!ok) return;
     }
     try {
       const data = await studentApi.importNames(names, mode);

@@ -398,11 +398,64 @@ router.post('/lab', async (req, res) => {
 /**
  * POST /api/ai/balance
  * AI 建议配平（前端仍应本地校验）
+ * body.mode === 'step_tip' 时：只针对当前练习步骤给一条提示，不返回完整配平答案
  */
 router.post('/balance', async (req, res) => {
   try {
     const equation = String(req.body?.equation || '').trim();
     if (!equation) return badRequest(res, '请输入方程式');
+
+    const mode = String(req.body?.mode || '').trim();
+
+    // ── 分步练习：只提示当前步，禁止剧透最终系数/整式 ──
+    if (mode === 'step_tip') {
+      const step = req.body?.step && typeof req.body.step === 'object' ? req.body.step : {};
+      const idx = Number(step.index);
+      const total = Number(step.total) || 1;
+      const label = String(step.label || '').slice(0, 80);
+      const action = String(step.action || 'explain').slice(0, 20);
+      const guide = String(step.guide || '').slice(0, 200);
+      const focusFormula = String(step.focusFormula || '').slice(0, 40);
+      const currentEquation = String(step.currentEquation || equation).slice(0, 200);
+
+      const system = `你是高中化学老师，辅导学生「分步配平」练习。
+学生正处在第 ${Number.isFinite(idx) ? idx + 1 : 1}/${total} 步。
+只输出 JSON：{ "tip": "一两句中文提示" }
+硬性要求：
+1. 只谈当前这一步怎么想，不要讲解整道题的全部配平过程；
+2. 禁止直接给出最终配平式、禁止说出具体该填的系数数字；
+3. 可以提示看哪个元素、左右原子数如何比较、为什么要改某个物种的系数；
+4. tip 不超过 80 字；不要 Markdown。`;
+
+      const user = [
+        `起式：${equation}`,
+        `学生当前式：${currentEquation}`,
+        `本步标题：${label || '（无）'}`,
+        `本步动作：${action}`,
+        focusFormula ? `本步焦点物种：${focusFormula}` : '',
+        guide ? `脚本引导（勿重复剧透数字）：${guide}` : '',
+        '请只给本步的思路提示。',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const { content } = await callDeepSeekChat({
+        system,
+        user,
+        temperature: 0.35,
+        max_tokens: 220,
+      });
+      const parsed = parseModelJson(content);
+      const tip = String(parsed?.tip || parsed?.steps?.[0] || '').trim();
+      if (!tip) {
+        return error(res, '模型未返回步骤提示', 502);
+      }
+      return success(res, {
+        tip: tip.slice(0, 160),
+        equation: '',
+        steps: [],
+      });
+    }
 
     const system = `你是高中化学老师。将用户给出的化学方程式配平。
 只输出 JSON：{ "equation": "配平后的式子，用 → 连接", "steps": ["步骤说明"] }

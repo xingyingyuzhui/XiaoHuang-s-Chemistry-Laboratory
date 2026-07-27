@@ -2,7 +2,7 @@
  * 课堂：侧栏二级导航 + 出题 / 错题 / 点名 / 实验
  */
 
-import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi, labsApi } from './api/client.js';
+import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi, labsApi, balanceScriptsApi } from './api/client.js';
 import { showAppBubble, hideBrandTip } from './brand-tip.js';
 import { initRollcall, onRollcallSectionEnter } from './classroom-rollcall.js';
 import { createQuizConfigController } from './ai-classroom/quiz-config.js';
@@ -11,6 +11,8 @@ import { createOfflineQuizController } from './ai-classroom/offline-quiz.js';
 import { createMasteryMapController } from './ai-classroom/mastery-map.js';
 import { createLabShellController } from './ai-classroom/lab-shell.js';
 import { createLessonPacksController } from './ai-classroom/lesson-packs.js';
+import { createBalanceShellController } from './ai-classroom/balance-shell.js';
+import { appAlert, appConfirm } from './app-dialog.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -49,6 +51,11 @@ const AI_SECTIONS = [
     id: 'lessonpack',
     title: '备课包',
     desc: '教学材料打包 · 导入导出',
+  },
+  {
+    id: 'balance',
+    title: '分步配平',
+    desc: '脚本演示 · 逐步学配平',
   },
 ];
 
@@ -128,6 +135,14 @@ const lessonPacks = createLessonPacksController({
   labsApi,
 });
 
+let balanceInited = false;
+const balanceShell = createBalanceShellController({
+  select: $,
+  escapeHtml,
+  balanceScriptsApi,
+  aiApi,
+});
+
 function setStatus(el, text, ok) {
   if (!el) return;
   el.textContent = text || '';
@@ -153,11 +168,48 @@ function renderNav() {
   }).join('');
 
   list.querySelectorAll('[data-ai-section]').forEach((btn) => {
-    btn.addEventListener('click', () => selectSection(btn.dataset.aiSection));
+    btn.addEventListener('click', () => {
+      selectSection(btn.dataset.aiSection);
+    });
   });
 }
 
-function selectSection(id) {
+/**
+ * 离开实验探究 / 分步配平时：有未保存脚本则确认，否则可直接切走
+ * @returns {Promise<boolean>}
+ */
+async function confirmLeaveSectionIfNeeded(fromId) {
+  if (fromId === 'balance' && balanceInited && typeof balanceShell.isDirty === 'function' && balanceShell.isDirty()) {
+    if (!(await balanceShell.confirmLeaveDirty())) return false;
+    balanceShell.discardUnsaved?.();
+  }
+  if (fromId === 'lab' && typeof labShell.isDirty === 'function' && labShell.isDirty()) {
+    if (!(await labShell.confirmLeaveDirty())) return false;
+    labShell.discardUnsaved?.();
+  }
+  if (fromId === 'balance') balanceShell.onDeactivate?.();
+  if (fromId === 'lab') labShell.onDeactivate?.();
+  return true;
+}
+
+async function selectSection(id) {
+  if (!id || id === currentSection) {
+    // 重复点当前分区：仍刷新入口（如实验/配平）
+    if (id === 'lab') labShell.render();
+    if (id === 'balance') {
+      if (!balanceInited) {
+        balanceInited = true;
+        await balanceShell.init();
+      } else {
+        balanceShell.render();
+      }
+    }
+    return;
+  }
+
+  const ok = await confirmLeaveSectionIfNeeded(currentSection);
+  if (!ok) return;
+
   currentSection = id;
   renderNav();
   const quiz = $('#aiSectionQuiz');
@@ -167,6 +219,7 @@ function selectSection(id) {
   const roll = $('#aiSectionRollcall');
   const lab = $('#aiSectionLab');
   const lessonpack = $('#aiSectionLessonPack');
+  const balance = $('#aiSectionBalance');
   if (quiz) quiz.hidden = id !== 'quiz';
   if (offline) offline.hidden = id !== 'offline';
   if (wrong) wrong.hidden = id !== 'wrong';
@@ -174,6 +227,7 @@ function selectSection(id) {
   if (roll) roll.hidden = id !== 'rollcall';
   if (lab) lab.hidden = id !== 'lab';
   if (lessonpack) lessonpack.hidden = id !== 'lessonpack';
+  if (balance) balance.hidden = id !== 'balance';
   if (id === 'offline') {
     if (!offlineInited) {
       offlineInited = true;
@@ -207,12 +261,20 @@ function selectSection(id) {
       lessonPacks.init();
     }
   }
+  if (id === 'balance') {
+    if (!balanceInited) {
+      balanceInited = true;
+      await balanceShell.init();
+    } else {
+      balanceShell.render();
+    }
+  }
 }
 
 /** 导出本场测验为 Markdown 文本并下载 */
-export function exportQuizMarkdown() {
+export async function exportQuizMarkdown() {
   if (!paper.length) {
-    alert('当前没有可导出的题目（请先生成并进入练习或交卷结果）');
+    await appAlert('当前没有可导出的题目（请先生成并进入练习或交卷结果）');
     return;
   }
   const lines = [
@@ -450,7 +512,7 @@ function renderPaper() {
     .join('');
 
   root.querySelectorAll('.quiz-opt').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (submitted) return;
       paper[Number(btn.dataset.q)].chosen = Number(btn.dataset.opt);
       renderPaper();
@@ -635,7 +697,7 @@ async function submitPaper() {
     saveOk = true;
   } catch (err) {
     console.error('保存练习场次失败', err);
-    window.alert(
+    await appAlert(
       `练习记录保存失败：${err.message || err}\n仍可查看本场结果，但错题本/历史可能未更新。`,
     );
   } finally {
@@ -722,7 +784,7 @@ function renderResultList() {
         card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     };
-    el.addEventListener('click', (e) => {
+    el.addEventListener('click', async (e) => {
       // 避免选中文字误触多次 — 整卡可点
       toggle();
     });
@@ -808,21 +870,21 @@ export function initAiClassroom() {
   }
 
   $('#btnQuizGenerate')?.addEventListener('click', generateQuiz);
-  $('#btnQuizSubmit')?.addEventListener('click', () => {
+  $('#btnQuizSubmit')?.addEventListener('click', async () => {
     if (!paper.length) return;
-    if (!window.confirm('确定交卷？交卷后将显示本场结果并写入练习记录。')) return;
+    if (!(await appConfirm('确定交卷？交卷后将显示本场结果并写入练习记录。', { title: '交卷确认', okText: '交卷' }))) return;
     submitPaper();
   });
-  $('#btnQuizBackConfig')?.addEventListener('click', () => {
+  $('#btnQuizBackConfig')?.addEventListener('click', async () => {
     if (paper.length && !submitted) {
-      if (!window.confirm('当前练习尚未交卷，确定放弃并重新出题？')) return;
+      if (!(await appConfirm('当前练习尚未交卷，确定放弃并重新出题？', { title: '放弃练习', okText: '放弃', danger: true }))) return;
     }
     backToConfig();
   });
   $('#btnQuizAgain')?.addEventListener('click', backToConfig);
   $('#btnQuizSummary')?.addEventListener('click', runSummary);
   $('#btnQuizStatsRefresh')?.addEventListener('click', refreshStatsAndWrongBook);
-  $('#btnWrongRefresh')?.addEventListener('click', () => {
+  $('#btnWrongRefresh')?.addEventListener('click', async () => {
     wrongBook.reset();
     wrongBook.load();
   });

@@ -6,6 +6,7 @@
  */
 
 import { bindChemKeypad } from '../chem-keypad.js';
+import { appAlert, appConfirm } from '../app-dialog.js';
 import {
   DRAWER_KEY,
   loadProgress,
@@ -130,14 +131,18 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     }
   }
 
-  function confirmLeaveDirty() {
+  async function confirmLeaveDirty() {
     if (!dirty) return true;
-    return window.confirm('脚本有未保存的修改，确定放弃？');
+    return appConfirm('脚本有未保存的修改，确定放弃？', {
+      title: '未保存修改',
+      okText: '放弃修改',
+      danger: true,
+    });
   }
 
-  function selectLab(id) {
+  async function selectLab(id) {
     if (id === labId && !draft?.isNew && mode === 'prestudy') return;
-    if (!confirmLeaveDirty()) return;
+    if (!(await confirmLeaveDirty())) return;
     labId = id;
     stepIdx = 0;
     // 点进实验默认预习（有预习步骤时）
@@ -152,8 +157,8 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     render();
   }
 
-  function startCreate() {
-    if (!confirmLeaveDirty()) return;
+  async function startCreate() {
+    if (!(await confirmLeaveDirty())) return;
     labId = null;
     mode = 'script';
     beginScriptDraft(null);
@@ -162,10 +167,10 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     render();
   }
 
-  function openGenLabModal() {
-    if (!confirmLeaveDirty()) return;
+  async function openGenLabModal() {
+    if (!(await confirmLeaveDirty())) return;
     if (!aiApi?.labGenerate) {
-      window.alert('AI 接口不可用');
+      await appAlert('AI 接口不可用');
       return;
     }
     const backdrop = select('#genLabBackdrop');
@@ -288,7 +293,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
 
   async function exportLabPack() {
     if (!labsApi?.exportPack) {
-      window.alert('实验包导出不可用');
+      await appAlert('实验包导出不可用');
       return;
     }
     try {
@@ -297,7 +302,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       statusMsg = '已导出实验包';
       renderRail();
     } catch (err) {
-      window.alert(`导出失败：${err.message || ''}`);
+      await appAlert(`导出失败：${err.message || ''}`);
     }
   }
 
@@ -319,7 +324,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
   async function onImportFile(e) {
     const file = e.target?.files?.[0];
     if (!file) return;
-    if (!confirmLeaveDirty()) return;
+    if (!(await confirmLeaveDirty())) return;
     try {
       const text = await file.text();
       const data = JSON.parse(text);
@@ -329,15 +334,15 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       dirty = false;
       draft = null;
       await loadLabs({ keepSelection: false });
-      window.alert(summary);
+      await appAlert(summary);
     } catch (err) {
-      window.alert(`导入失败：${err.message || ''}`);
+      await appAlert(`导入失败：${err.message || ''}`);
     }
   }
 
   // ── 左侧抽屉（添加 / 编辑·保存，逻辑对齐 3D 分子列表） ──
 
-  function renderRail() {
+  async function renderRail() {
     const rail = select('#labNavRail');
     if (!rail) return;
 
@@ -357,23 +362,23 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       ${statusMsg ? `<p class="lab-nav-status">${escapeHtml(statusMsg)}</p>` : ''}`;
 
     select('#btnLabDrawerToggle')?.addEventListener('click', () => setDrawerCollapsed(!drawerCollapsed));
-    select('#btnLabAdd')?.addEventListener('click', () => {
+    select('#btnLabAdd')?.addEventListener('click', async () => {
       if (listEditMode) listEditMode = false;
       startCreate();
     });
-    select('#btnLabAi')?.addEventListener('click', () => {
+    select('#btnLabAi')?.addEventListener('click', async () => {
       if (listEditMode) listEditMode = false;
       startAiCreate();
     });
-    select('#btnLabExport')?.addEventListener('click', () => {
+    select('#btnLabExport')?.addEventListener('click', async () => {
       if (listEditMode) listEditMode = false;
       exportLabPack();
     });
-    select('#btnLabImport')?.addEventListener('click', () => {
+    select('#btnLabImport')?.addEventListener('click', async () => {
       if (listEditMode) listEditMode = false;
       pickImportFile();
     });
-    select('#btnLabListEdit')?.addEventListener('click', () => {
+    select('#btnLabListEdit')?.addEventListener('click', async () => {
       // 与分子列表相同：点「保存」仅退出编辑态（排序已在拖拽时写入）
       listEditMode = !listEditMode;
       render();
@@ -422,14 +427,14 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     }
 
     nav.querySelectorAll('[data-lab-pick]').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (listEditMode) return;
         selectLab(btn.dataset.labPick);
       });
     });
 
     nav.querySelectorAll('[data-lab-draft-pick]').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (listEditMode) return;
         mode = 'script';
         render();
@@ -443,7 +448,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
         const id = btn.dataset.del;
         if (!id) return;
         // 列表编辑态删除：不拦截「脚本未保存」
-        if (!window.confirm('确定删除该实验？')) return;
+        if (!(await appConfirm('确定删除该实验？'))) return;
         try {
           const wasCurrent = labId === id;
           await labsApi.remove(id);
@@ -466,17 +471,17 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
             render();
           }
         } catch (err) {
-          window.alert(`删除失败：${err.message || ''}`);
+          await appAlert(`删除失败：${err.message || ''}`);
         }
       });
     });
 
     nav.querySelectorAll('[data-del-draft]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!listEditMode) return;
         // 未保存草稿：编辑态可直接丢弃
-        if (!window.confirm('丢弃这个未保存的实验？')) return;
+        if (!(await appConfirm('丢弃这个未保存的实验？'))) return;
         draft = null;
         dirty = false;
         saving = false;
@@ -525,7 +530,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
             labs = data?.labs || labs;
             render();
           } catch (err) {
-            window.alert(`排序失败：${err.message || ''}`);
+            await appAlert(`排序失败：${err.message || ''}`);
           }
         });
       });
@@ -632,7 +637,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     if (block && en) block.hidden = !en.checked;
   }
 
-  function bindScriptEditor(detail) {
+  async function bindScriptEditor(detail) {
     const onMeta = () => {
       dirty = true;
       readDraftFieldsFromDom();
@@ -653,7 +658,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     });
 
     detail.querySelectorAll('[data-script-pick]').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (stepEditMode) return;
         readDraftFieldsFromDom();
         selectedStep = Number(btn.dataset.scriptPick);
@@ -661,7 +666,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       });
     });
 
-    detail.querySelector('#btnStepAdd')?.addEventListener('click', () => {
+    detail.querySelector('#btnStepAdd')?.addEventListener('click', async () => {
       readDraftFieldsFromDom();
       if (stepEditMode) stepEditMode = false;
       draft.steps.push(emptyStep());
@@ -669,21 +674,21 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       dirty = true;
       render();
     });
-    detail.querySelector('#btnStepListEdit')?.addEventListener('click', () => {
+    detail.querySelector('#btnStepListEdit')?.addEventListener('click', async () => {
       readDraftFieldsFromDom();
       stepEditMode = !stepEditMode;
       render();
     });
 
     detail.querySelectorAll('[data-step-del]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         if (!stepEditMode) return;
         if (draft.steps.length <= 1) {
-          window.alert('至少保留一个步骤');
+          await appAlert('至少保留一个步骤');
           return;
         }
-        if (!window.confirm('删除该步骤？')) return;
+        if (!(await appConfirm('删除该步骤？'))) return;
         readDraftFieldsFromDom();
         const i = Number(btn.dataset.stepDel);
         draft.steps.splice(i, 1);
@@ -712,7 +717,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
           card.classList.add('drag-over');
         });
         card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-        card.addEventListener('drop', (e) => {
+        card.addEventListener('drop', async (e) => {
           e.preventDefault();
           card.classList.remove('drag-over');
           const to = Number(card.dataset.scriptStep);
@@ -751,7 +756,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     readDraftFieldsFromDom();
     const built = draftToPayload(draft);
     if (!built.ok) {
-      window.alert(built.reason || '请完善实验内容');
+      await appAlert(built.reason || '请完善实验内容');
       return;
     }
     const payload = built.payload;
@@ -777,21 +782,21 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       await loadLabs({ keepSelection: true });
     } catch (err) {
       saving = false;
-      window.alert(`保存失败：${err.message || ''}`);
+      await appAlert(`保存失败：${err.message || ''}`);
       render();
     }
   }
 
   async function resetOne() {
     if (!labId) return;
-    if (!window.confirm('恢复为内置版本？当前未保存和已保存的修改都会被覆盖。')) return;
+    if (!(await appConfirm('恢复为内置版本？当前未保存和已保存的修改都会被覆盖。'))) return;
     try {
       await labsApi.resetOne(labId);
       dirty = false;
       draft = null;
       await loadLabs();
     } catch (err) {
-      window.alert(`重置失败：${err.message || ''}`);
+      await appAlert(`重置失败：${err.message || ''}`);
     }
   }
 
@@ -809,14 +814,14 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     render();
   }
 
-  function bindDetail(detail, lab) {
+  async function bindDetail(detail, lab) {
     detail.querySelectorAll('[data-lab-mode]').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (btn.disabled) return;
         const next = btn.dataset.labMode;
         if (next === mode) return;
         if (mode === 'script' && dirty && next === 'prestudy') {
-          if (!confirmLeaveDirty()) return;
+          if (!(await confirmLeaveDirty())) return;
           // 放弃未保存，从服务器副本重载 draft
           dirty = false;
         }
@@ -836,25 +841,25 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
 
     if (mode === 'prestudy' && lab) {
       detail.querySelectorAll('[data-prestudy-opt]').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
           e.stopPropagation();
           handleAnswer(Number(btn.dataset.prestudyStep), Number(btn.dataset.prestudyOpt));
         });
       });
-      detail.querySelector('#btnPrestudyNext')?.addEventListener('click', () => {
+      detail.querySelector('#btnPrestudyNext')?.addEventListener('click', async () => {
         const steps = prestudySteps(lab);
         if (stepIdx < steps.length - 1) {
           stepIdx += 1;
           render();
         }
       });
-      detail.querySelector('#btnPrestudyPrev')?.addEventListener('click', () => {
+      detail.querySelector('#btnPrestudyPrev')?.addEventListener('click', async () => {
         if (stepIdx > 0) {
           stepIdx -= 1;
           render();
         }
       });
-      detail.querySelector('#btnPrestudyRestart')?.addEventListener('click', () => {
+      detail.querySelector('#btnPrestudyRestart')?.addEventListener('click', async () => {
         delete progress[labId];
         saveProgress(progress);
         stepResults = {};
@@ -866,7 +871,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     if (mode === 'script') bindScriptEditor(detail);
   }
 
-  function renderDetail() {
+  async function renderDetail() {
     const detail = select('#labDetail');
     if (!detail) return;
 
@@ -875,7 +880,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
       detail.querySelector('#btnLabEmptyAdd')?.addEventListener('click', () => startCreate());
       detail.querySelector('#btnLabEmptyImport')?.addEventListener('click', () => pickImportFile());
       detail.querySelector('#btnLabEmptyReset')?.addEventListener('click', async () => {
-        if (!window.confirm('恢复全部内置实验？')) return;
+        if (!(await appConfirm('恢复全部内置实验？'))) return;
         await labsApi.resetBuiltin();
         await loadLabs({ keepSelection: false });
       });
@@ -922,5 +927,42 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     await loadLabs({ keepSelection: true });
   }
 
-  return { render: renderShell };
+  function isDirty() {
+    return !!dirty;
+  }
+
+  /** 确认放弃后重置草稿（与切到预习时一致） */
+  function discardUnsaved() {
+    dirty = false;
+    saving = false;
+    stepEditMode = false;
+    if (labId) {
+      beginScriptDraft(currentLab());
+      dirty = false;
+    } else {
+      draft = null;
+    }
+  }
+
+  function onDeactivate() {
+    // 关闭 AI 生成弹窗（若开着）
+    try {
+      const backdrop = select('#genLabBackdrop');
+      const modal = select('#genLabModal');
+      backdrop?.classList.remove('is-open');
+      modal?.classList.remove('is-open');
+      backdrop?.setAttribute('aria-hidden', 'true');
+      modal?.setAttribute('aria-hidden', 'true');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return {
+    render: renderShell,
+    isDirty,
+    confirmLeaveDirty,
+    discardUnsaved,
+    onDeactivate,
+  };
 }

@@ -5,6 +5,7 @@
 
 import { reactionApi, aiApi, moleculeApi } from './api/client.js';
 import { ensureMolViewer, getMolViewer } from './molecule-list.js';
+import { appAlert, appConfirm } from './app-dialog.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -99,7 +100,7 @@ export function initMoleculeReactions() {
 
   if (!btnToggle || !panelEl) return;
 
-  btnToggle.addEventListener('click', () => {
+  btnToggle.addEventListener('click', async () => {
     const open = panelEl.classList.toggle('is-open');
     btnToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) refreshForMolecule(currentMoleculeId, currentMoleculeMeta);
@@ -107,7 +108,7 @@ export function initMoleculeReactions() {
 
   $('#molReactionClose')?.addEventListener('click', () => closePanel());
   $('#molReactionPlayerClose')?.addEventListener('click', () => stopPlayback(true));
-  $('#molReactionReplay')?.addEventListener('click', () => {
+  $('#molReactionReplay')?.addEventListener('click', async () => {
     const src = lastPlayedReaction || activeReaction;
     if (src) startPlayback(src);
   });
@@ -121,7 +122,7 @@ export function initMoleculeReactions() {
   $('#btnImportReactions')?.addEventListener('change', onImportReactionsFile);
   $('#rxnPlayerScrub')?.addEventListener('input', onScrubInput);
   $('#rxnPlayerScrub')?.addEventListener('change', onScrubInput);
-  $('#rxnAiDiscard')?.addEventListener('click', () => {
+  $('#rxnAiDiscard')?.addEventListener('click', async () => {
     $('#rxnAiPreview')?.classList.add('is-hidden');
     const row = $('#rxnAiSaveRow');
     if (row) row.hidden = true;
@@ -249,7 +250,7 @@ function renderList(list) {
     .join('');
 
   listEl.querySelectorAll('[data-play]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const r = reactionsCache.find((x) => x.id === btn.dataset.play);
       if (r) startPlayback(r);
     });
@@ -257,12 +258,17 @@ function renderList(list) {
   listEl.querySelectorAll('[data-del]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!confirm('删除这条 AI 反应？')) return;
+      const ok = await appConfirm('删除这条 AI 反应？', {
+        title: '删除反应',
+        okText: '删除',
+        danger: true,
+      });
+      if (!ok) return;
       try {
         await reactionApi.remove(btn.dataset.del);
         await refreshForMolecule(currentMoleculeId, currentMoleculeMeta);
       } catch (err) {
-        alert(err.message || '删除失败');
+        await appAlert(err.message || '删除失败', { title: '删除失败' });
       }
     });
   });
@@ -490,7 +496,7 @@ function buildHistory(reaction) {
     .join('');
 
   el.querySelectorAll('[data-jump]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const idx = Number(btn.dataset.jump);
       if (Number.isFinite(idx)) jumpToStep(idx);
     });
@@ -692,7 +698,7 @@ async function exportReactionsPack() {
     a.click();
     URL.revokeObjectURL(a.href);
   } catch (err) {
-    alert(err.message || '导出失败');
+    await appAlert(err.message || '导出失败', { title: '导出失败' });
   }
 }
 
@@ -709,7 +715,7 @@ async function onImportReactionsFile(e) {
         ? pack.reactions
         : [];
     if (!list.length) {
-      alert('文件中没有反应数据');
+      await appAlert('文件中没有反应数据', { title: '导入失败' });
       return;
     }
     let ok = 0;
@@ -727,9 +733,9 @@ async function onImportReactionsFile(e) {
       }
     }
     await refreshForMolecule(currentMoleculeId, currentMoleculeMeta);
-    alert(`导入完成：成功 ${ok}，失败 ${fail}`);
+    await appAlert(`导入完成：成功 ${ok}，失败 ${fail}`, { title: '导入结果' });
   } catch (err) {
-    alert(err.message || '导入失败');
+    await appAlert(err.message || '导入失败', { title: '导入失败' });
   }
 }
 

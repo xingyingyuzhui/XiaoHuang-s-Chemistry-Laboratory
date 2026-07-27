@@ -73,10 +73,16 @@ export function createMoleculeViewer(container) {
   let homeView = null;
   /** @type {((info: object | null) => void) | null} */
   let bondSelectHandler = null;
+  /** @type {((info: object | null) => void) | null} */
+  let atomSelectHandler = null;
   /** @type {THREE.Mesh | null} */
   let selectedBondMesh = null;
+  /** @type {THREE.Mesh | null} */
+  let selectedAtomMesh = null;
   /** @type {THREE.Mesh[]} */
   let bondMeshes = [];
+  /** @type {THREE.Mesh[]} */
+  let atomMeshes = [];
   let currentMolecule = null;
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
@@ -147,6 +153,19 @@ export function createMoleculeViewer(container) {
     selectedBondMesh = null;
   }
 
+  function clearAtomHighlight() {
+    if (selectedAtomMesh?.material) {
+      selectedAtomMesh.scale.setScalar(1);
+      selectedAtomMesh.material.emissive?.setHex?.(0x000000);
+    }
+    selectedAtomMesh = null;
+  }
+
+  function clearSelection() {
+    clearBondHighlight();
+    clearAtomHighlight();
+  }
+
   function describeBond(i, j, order) {
     const atoms = currentMolecule?.atoms || [];
     const a = atoms[i];
@@ -176,30 +195,58 @@ export function createMoleculeViewer(container) {
   }
 
   function onPointerClick(event) {
-    if (!bondMeshes.length) return;
+    if (!atomMeshes.length && !bondMeshes.length) return;
+    // 反应播放中不响应
+    if (container.closest('.rxn-playing')) return;
+
     const rect = canvas.getBoundingClientRect();
     pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(bondMeshes, false);
-    if (!hits.length) {
-      clearBondHighlight();
-      bondSelectHandler?.(null);
+
+    // 优先原子
+    const atomHits = atomMeshes.length
+      ? raycaster.intersectObjects(atomMeshes, false)
+      : [];
+    if (atomHits.length) {
+      const mesh = atomHits[0].object;
+      const idx = mesh.userData.atomIndex;
+      clearSelection();
+      selectedAtomMesh = mesh;
+      // 高亮：略微放大 + 琥珀色 emissive
+      mesh.scale.setScalar(1.12);
+      if (mesh.material?.emissive) mesh.material.emissive.setHex(0xb45309);
+      bondSelectHandler?.(null); // 清键卡
+      atomSelectHandler?.({ atomIndex: idx });
       return;
     }
-    const mesh = hits[0].object;
-    clearBondHighlight();
-    selectedBondMesh = mesh;
-    if (mesh.material) {
-      mesh.material.color.setHex(0xe11d48);
-      if (mesh.material.emissive) mesh.material.emissive.setHex(0x4c0519);
+
+    // 其次键
+    const bondHits = bondMeshes.length
+      ? raycaster.intersectObjects(bondMeshes, false)
+      : [];
+    if (bondHits.length) {
+      const mesh = bondHits[0].object;
+      clearSelection();
+      selectedBondMesh = mesh;
+      if (mesh.material) {
+        mesh.material.color.setHex(0xe11d48);
+        if (mesh.material.emissive) mesh.material.emissive.setHex(0x4c0519);
+      }
+      const info = describeBond(
+        mesh.userData.i,
+        mesh.userData.j,
+        mesh.userData.order || 1,
+      );
+      atomSelectHandler?.(null); // 清原子卡
+      bondSelectHandler?.(info);
+      return;
     }
-    const info = describeBond(
-      mesh.userData.i,
-      mesh.userData.j,
-      mesh.userData.order || 1,
-    );
-    bondSelectHandler?.(info);
+
+    // 空白：清全部
+    clearSelection();
+    bondSelectHandler?.(null);
+    atomSelectHandler?.(null);
   }
 
   function makeAtomLabel(el, radius) {
@@ -336,12 +383,15 @@ export function createMoleculeViewer(container) {
   }
 
   function load(molecule) {
+    // 先清选中态与信息卡，再 dispose 网格（避免改已 dispose 的 material）
+    clearSelection();
+    bondSelectHandler?.(null);
+    atomSelectHandler?.(null);
     clearRoot();
-    clearBondHighlight();
     bondMeshes = [];
+    atomMeshes = [];
     currentMolecule = molecule || null;
     if (!molecule || !molecule.atoms?.length) {
-      bondSelectHandler?.(null);
       resize();
       return;
     }
@@ -366,7 +416,8 @@ export function createMoleculeViewer(container) {
       root.add(mesh);
     }
 
-    for (const atom of molecule.atoms) {
+    for (let ai = 0; ai < molecule.atoms.length; ai++) {
+      const atom = molecule.atoms[ai];
       const color = ATOM_COLORS[atom.el] ?? ATOM_COLORS.default;
       const r = ATOM_RADIUS[atom.el] ?? ATOM_RADIUS.default;
       const mesh = new THREE.Mesh(
@@ -378,12 +429,14 @@ export function createMoleculeViewer(container) {
         }),
       );
       mesh.position.set(atom.x, atom.y, atom.z);
+      mesh.userData = { isAtom: true, atomIndex: ai };
       const label = makeAtomLabel(atom.el, r);
       mesh.add(label);
       // 确保新标签遵循当前可见性状态
       if (!labelsVisible && label.element) {
         label.element.style.display = 'none';
       }
+      atomMeshes.push(mesh);
       root.add(mesh);
     }
 
@@ -437,6 +490,10 @@ export function createMoleculeViewer(container) {
     bondSelectHandler = typeof fn === 'function' ? fn : null;
   }
 
+  function setOnAtomSelect(fn) {
+    atomSelectHandler = typeof fn === 'function' ? fn : null;
+  }
+
   function start() {
     bindControls();
     syncBackground();
@@ -488,5 +545,7 @@ export function createMoleculeViewer(container) {
     toggleLabels,
     syncBackground,
     setOnBondSelect,
+    setOnAtomSelect,
+    clearSelection,
   };
 }

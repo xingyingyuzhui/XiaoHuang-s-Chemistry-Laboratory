@@ -1,0 +1,333 @@
+/* 分步配平 — 对齐实验探究布局；主公式大字 */
+
+.ai-section-balance {
+  height: 100%;
+  min-height: 0;
+}
+
+.ai-section-balance .lab-layout-drawer {
+  height: 100%;
+  min-height: 0;
+}
+
+/* 收起抽屉时隐藏工具栏/列表（同 lab） */
+.lab-layout-drawer.is-drawer-collapsed .balance-nav-extra {
+  display: none;
+}
+
+/* ── 练习主区 ── */
+
+.balance-practice {
+  padding: 0.25rem 0.15rem 1.25rem;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* 英雄级化学式 */
+.balance-equation-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: var(--card-elevated, var(--paper));
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  box-shadow: var(--shadow-print-sm);
+}
+
+.balance-eq-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.5rem;
+  font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink);
+  font-family: var(--font-serif-cjk), var(--font-sans, system-ui);
+}
+
+.balance-eq-side {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.35rem;
+}
+
+.balance-species {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.balance-species.is-focused {
+  background: var(--stamp-soft, var(--note-soft));
+  box-shadow: 0 0 0 2px var(--stamp, var(--primary));
+}
+
+.balance-coef {
+  font-weight: 800;
+  margin-right: 0.08em;
+  color: var(--stamp, var(--primary));
+}
+
+.balance-plus {
+  margin: 0 0.2em;
+  opacity: 0.55;
+  font-weight: 500;
+}
+
+.balance-eq-arrow {
+  margin: 0 0.45em;
+  font-weight: 700;
+  color: var(--stamp, var(--primary));
+  font-size: 0.95em;
+}
+
+.balance-step-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.balance-step-progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--border, #e5e5e5);
+  overflow: hidden;
+}
+
+.balance-step-progress-fill {
+  height: 100%;
+  background: var(--primary, var(--stamp));
+  border-radius: 99px;
+  transition: width 0.25s ease;
+}
+
+.balance-step-indicator {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-secondary, var(--muted));
+  white-space: nowrap;
+}
+
+.balance-step-card {
+  padding: 1.25rem 1.35rem;
+  background: var(--card-elevated, var(--paper));
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 12px;
+  box-shadow: var(--shadow-print-sm);
+}
+
+.balance-step-label {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 0.55rem;
+  font-family: var(--font-serif-cjk);
+}
+
+.balance-step-tip {
+  font-size: 1.12rem;
+  color: var(--text-secondary, var(--muted));
+  margin: 0 0 0.85rem;
+  line-height: 1.6;
+}
+
+.balance-coef-block {
+  margin-top: 0.5rem;
+}
+
+.balance-coef-input-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.balance-coef-input-row label {
+  font-size: 1.08rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.balance-coef-input {
+  width: 4.25rem;
+  padding: 0.5rem 0.45rem;
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  border-radius: 10px;
+  font-size: 1.45rem;
+  font-weight: 800;
+  text-align: center;
+  background: var(--paper);
+  color: var(--ink);
+  /* 隐藏 number 上下箭头（仍用 text+keypad） */
+  -moz-appearance: textfield;
+  appearance: textfield;
+  cursor: pointer;
+}
+
+.balance-coef-input::-webkit-outer-spin-button,
+.balance-coef-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.balance-coef-input:focus {
+  outline: none;
+  border-color: var(--stamp, var(--primary));
+  box-shadow: 0 0 0 3px var(--stamp-soft, rgba(59, 130, 246, 0.2));
+}
+
+.balance-coef-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* 系数键盘：复用 brand-tip-bubble（与左上角「课间一句话」同款浮层） */
+.balance-coef-keypad-bubble {
+  z-index: 90;
+  width: min(280px, calc(100vw - 24px));
+}
+
+.balance-coef-keypad-bubble .brand-tip-head {
+  /* 与课间一句话一致：左侧 badge，右侧收起按钮 */
+  align-items: center;
+}
+
+.balance-coef-keypad-bubble .brand-tip-btn-close {
+  flex-shrink: 0;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+.balance-coef-keypad-body {
+  padding: 0.55rem 0.85rem 0.95rem !important;
+}
+
+.balance-coef-keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.balance-num-key {
+  appearance: none;
+  min-height: 2.7rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 10px;
+  background: var(--paper);
+  font: inherit;
+  font-size: 1.22rem;
+  font-weight: 800;
+  cursor: pointer;
+  color: var(--ink);
+  box-shadow: var(--shadow-print-sm);
+}
+
+.balance-num-key:hover {
+  background: var(--diagram-soft, var(--bg-hover));
+}
+
+.balance-num-key:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.balance-num-key.is-action {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+/* AI 提示：紧挨「AI 提示」按钮右侧，独立于对错反馈 */
+.balance-ai-tip-box {
+  flex: 1 1 12rem;
+  min-width: min(100%, 10rem);
+  max-width: 28rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: var(--diagram-soft, #f0f4f8);
+  border: var(--ui-stroke) solid var(--border-ink);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.balance-ai-tip-box.is-loading {
+  opacity: 0.75;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.balance-ai-tip-box[hidden],
+.balance-ai-tip-box.is-empty[hidden] {
+  display: none !important;
+}
+
+.balance-coef-block-actions .balance-coef-input-row {
+  margin-top: 0;
+}
+
+.balance-feedback {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 0.65rem;
+}
+
+.balance-feedback.is-ok {
+  background: var(--success-bg, #ecfdf5);
+  color: var(--success, #059669);
+}
+
+.balance-feedback.is-err {
+  background: var(--error-bg, #fef2f2);
+  color: var(--error, #dc2626);
+}
+
+.balance-practice-actions {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.balance-practice-actions .btn {
+  min-height: 2.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* ── 脚本编辑：复用实验探究 .lab-script-* / .lab-step-* ── */
+.balance-script-detail {
+  padding: 0.1rem 0 0.5rem;
+}
+
+/* 列表卡片：复用 lab-nav-card 外观的补充 */
+#balanceNavList .lab-nav-progress {
+  flex-shrink: 0;
+}
+
+.balance-diff-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+@media (max-width: 900px) {
+  .balance-eq-line {
+    font-size: clamp(1.35rem, 5vw, 1.85rem);
+  }
+}

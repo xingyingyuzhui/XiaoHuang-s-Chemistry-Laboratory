@@ -119,9 +119,9 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 6;
-  min-width: 200px;
-  max-width: min(360px, 70%);
-  padding: 0.65rem 0.85rem 0.7rem;
+  min-width: 240px;
+  max-width: min(420px, 78%);
+  padding: 0.8rem 1rem 0.85rem;
   border-radius: 12px;
   background: color-mix(in srgb, var(--card-elevated) 96%, transparent);
   border: var(--ui-stroke-strong) solid var(--border-ink);
@@ -131,31 +131,40 @@
 }
 
 .mol-bond-card h3 {
-  margin: 0 0 0.25rem;
-  font-size: 0.72rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--stamp);
   font-family: var(--font-serif-cjk);
 }
 
 .mol-bond-title {
-  margin: 0 0 0.15rem;
-  font-size: 1.05rem;
-  font-weight: 700;
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+  font-weight: 800;
   color: var(--text-primary);
+  line-height: 1.25;
 }
 
 .mol-bond-kind {
-  margin: 0 0 0.25rem;
-  font-size: 0.8rem;
-  font-weight: 600;
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--diagram, var(--ink));
+  line-height: 1.35;
 }
 
 .mol-bond-tip {
-  margin: 0 0 0.45rem;
-  font-size: 0.82rem;
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.mol-bond-card .btn {
+  font-size: 0.95rem;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.85rem;
 }
 
 .mol-props-section {

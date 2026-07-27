@@ -198,6 +198,66 @@ function prettyFormula(f) {
   return String(f).replace(/\d/g, (d) => SUB[Number(d)] || d);
 }
 
+function gcdArray(arr) {
+  let g = arr[0] || 1;
+  for (let i = 1; i < arr.length; i++) {
+    g = gcd(g, arr[i] || 1);
+  }
+  return g || 1;
+}
+
+/**
+ * 比较两个方程式是否等价（系数约分到最简后一致）
+ * 输入：字符串，如 "2H2 + O2 = 2H2O"
+ */
+export function equationsEquivalent(a, b) {
+  try {
+    const pa = parseEquationSides(a);
+    const pb = parseEquationSides(b);
+    if (!pa || !pb) return false;
+    // 比较物种公式集合
+    const la = pa.left.map((s) => s.formula).join(',');
+    const lb = pb.left.map((s) => s.formula).join(',');
+    const ra = pa.right.map((s) => s.formula).join(',');
+    const rb = pb.right.map((s) => s.formula).join(',');
+    if (la !== lb || ra !== rb) return false;
+    // 约分后比较系数
+    const ca = [...pa.left, ...pa.right].map((s) => s.coef);
+    const cb = [...pb.left, ...pb.right].map((s) => s.coef);
+    const ga = gcdArray(ca);
+    const gb = gcdArray(cb);
+    const na = ca.map((c) => c / ga);
+    const nb = cb.map((c) => c / gb);
+    return na.length === nb.length && na.every((v, i) => v === nb[i]);
+  } catch {
+    return false;
+  }
+}
+
+export function parseEquationSides(input) {
+  const raw = toAscii(input);
+  if (!raw.includes('=')) return null;
+  const [ls, rs] = raw.split('=');
+  if (!ls || !rs) return null;
+  const left = ls.split('+').filter(Boolean).map(parseSpecies);
+  const right = rs.split('+').filter(Boolean).map(parseSpecies);
+  if (!left.length || !right.length) return null;
+  return { left, right };
+}
+
+/**
+ * 起式 → 练习用 species（各物种系数置 1）
+ * @returns {{ left: {formula:string,coef:number}[], right: {formula:string,coef:number}[] } | null}
+ */
+export function speciesFromEquation(input) {
+  const sides = parseEquationSides(input);
+  if (!sides) return null;
+  return {
+    left: sides.left.map((s) => ({ formula: s.formula, coef: 1 })),
+    right: sides.right.map((s) => ({ formula: s.formula, coef: 1 })),
+  };
+}
+
 /** 校验任意式子是否守恒 */
 export function checkConservation(input) {
   try {

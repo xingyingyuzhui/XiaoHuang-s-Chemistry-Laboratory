@@ -7,6 +7,8 @@ import { moleculeApi } from './api/client.js';
 import { createMoleculeViewer } from './molecule3d.js';
 import { refreshMolarPresets } from './molar-ui.js';
 import { getSubstanceCard } from './data/substance-cards.js';
+import { inferHybridization } from './chem/hybridization.js';
+import { appAlert, appConfirm } from './app-dialog.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -43,6 +45,8 @@ let currentMolId = null;
 let dragSrcId = null;
 let molViewer = null;
 let molStarted = false;
+/** @type {object | null} 当前加载到 viewer 的完整分子数据 */
+let currentMolData = null;
 /** @type {null | ((mol: object | null) => void)} */
 let onMoleculeChange = null;
 
@@ -60,12 +64,20 @@ export function getCurrentMolId() {
 }
 
 /**
+ * 获取当前 viewer 中的分子数据（供杂化推断用）
+ */
+function currentMolViewerMolecule() {
+  return currentMolData;
+}
+
+/**
  * 确保 3D 查看器已初始化
  */
 export function ensureMolViewer() {
   if (molViewer) return molViewer;
   molViewer = createMoleculeViewer($('#mol-root'));
   molViewer.setOnBondSelect?.(onBondSelected);
+  molViewer.setOnAtomSelect?.(onAtomSelected);
   return molViewer;
 }
 
@@ -77,12 +89,36 @@ function onBondSelected(info) {
     return;
   }
   card.hidden = false;
+  const h = document.getElementById('molSelectHeading');
   const t = document.getElementById('molBondTitle');
   const k = document.getElementById('molBondKind');
   const tip = document.getElementById('molBondTip');
+  if (h) h.textContent = '化学键';
   if (t) t.textContent = info.label || '—';
   if (k) k.textContent = info.kind || '';
   if (tip) tip.textContent = info.tip || '';
+}
+
+function onAtomSelected(info) {
+  const card = document.getElementById('molBondCard');
+  if (!card) return;
+  if (!info) {
+    card.hidden = true;
+    return;
+  }
+  // 推断杂化
+  const result = inferHybridization(currentMolViewerMolecule(), info.atomIndex);
+  card.hidden = false;
+  const h = document.getElementById('molSelectHeading');
+  const t = document.getElementById('molBondTitle');
+  const k = document.getElementById('molBondKind');
+  const tip = document.getElementById('molBondTip');
+  if (h) h.textContent = '原子杂化';
+  if (t) t.textContent = result.label || '—';
+  if (k) k.textContent = result.geometry !== '—'
+    ? `${result.geometry} · ${result.sigmaDirs} 个 σ 方向`
+    : result.reason || '';
+  if (tip) tip.textContent = result.tip || '';
 }
 
 /**
@@ -120,7 +156,7 @@ export async function renderMolList() {
 
     // 绑定点击事件
     molList.querySelectorAll('.mol-card-main').forEach((btn) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         if (molEditMode) return;
         loadMolecule(btn.dataset.id);
       });
@@ -133,7 +169,12 @@ export async function renderMolList() {
         if (!molEditMode) return;
         const id = btn.dataset.del;
         if (!id) return;
-        if (!window.confirm('确定删除该分子卡片？')) return;
+        const ok = await appConfirm('确定删除该分子卡片？', {
+          title: '删除分子',
+          okText: '删除',
+          danger: true,
+        });
+        if (!ok) return;
 
         try {
           await moleculeApi.delete(id);
@@ -151,7 +192,7 @@ export async function renderMolList() {
           await renderMolList();
         } catch (err) {
           console.error('删除分子失败:', err);
-          alert('删除失败: ' + err.message);
+          await appAlert('删除失败: ' + err.message, { title: '删除失败' });
         }
       });
     });
@@ -268,6 +309,7 @@ export async function loadMolecule(id) {
     if (!m) return;
 
     currentMolId = id;
+    currentMolData = m;
     molViewer.load(m);
     if (molTitle) molTitle.textContent = `${m.name}（${formulaToSubscript(m.formula)}）`;
     // 简介 = 原 desc + 课标信息（融合进左上角当前分子卡）
@@ -338,10 +380,10 @@ export async function loadMolecule(id) {
  * 初始化分子列表
  */
 export function initMoleculeList() {
-  document.getElementById('molBondClose')?.addEventListener('click', () => {
+  document.getElementById('molBondClose')?.addEventListener('click', async () => {
     const card = document.getElementById('molBondCard');
     if (card) card.hidden = true;
-    molViewer?.setOnBondSelect?.(onBondSelected);
+    molViewer?.clearSelection?.();
   });
 
   // 绑定编辑按钮
@@ -355,7 +397,7 @@ export function initMoleculeList() {
 
   // 绑定标签切换按钮
   if (btnLabelToggle) {
-    btnLabelToggle.addEventListener('click', () => {
+    btnLabelToggle.addEventListener('click', async () => {
       if (molViewer) {
         molViewer.toggleLabels();
         btnLabelToggle.setAttribute(

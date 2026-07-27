@@ -288,6 +288,42 @@
         </div>
       </div>
 
+      <!-- AI 生成配平脚本弹层（对齐实验探究 genLab） -->
+      <div class="modal-backdrop" id="genBalanceBackdrop" aria-hidden="true"></div>
+      <div
+        class="modal-panel"
+        id="genBalanceModal"
+        role="dialog"
+        aria-labelledby="genBalanceTitle"
+        aria-hidden="true"
+      >
+        <div class="modal-head">
+          <h2 id="genBalanceTitle">AI 生成配平脚本</h2>
+          <button type="button" class="settings-close" id="btnGenBalanceClose" aria-label="关闭">
+            ×
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-hint">
+            输入<strong>未配平</strong>的化学方程式，将生成可编辑的配平脚本草稿（起式、目标式与步骤）。
+            生成后请在脚本页检查，再点「保存脚本」写入本地。
+          </p>
+          <label class="field lab-equation-field" id="genBalanceEqField">
+            <span>未配平方程式</span>
+            <textarea
+              id="genBalancePrompt"
+              rows="3"
+              placeholder="例如：Fe + O2 = Fe2O3、C2H5OH + O2 = CO2 + H2O……"
+            ></textarea>
+          </label>
+          <p class="settings-status" id="genBalanceStatus" aria-live="polite"></p>
+          <div class="settings-actions">
+            <button type="button" class="btn primary" id="btnGenBalanceSubmit">生成草稿</button>
+            <button type="button" class="btn ghost" id="btnGenBalanceCancel">取消</button>
+          </div>
+        </div>
+      </div>
+
       <main>
         <!-- Periodic table：左详情（可收窄条）+ 右周期表 -->
         <section id="panel-table" class="panel active" role="tabpanel">
@@ -366,10 +402,10 @@
             </div>
             <!-- 点选化学键说明 -->
             <div class="mol-bond-card" id="molBondCard" hidden>
-              <h3>化学键</h3>
+              <h3 id="molSelectHeading">化学键</h3>
               <p class="mol-bond-title" id="molBondTitle">—</p>
               <p class="mol-bond-kind" id="molBondKind"></p>
-              <p class="mol-bond-tip" id="molBondTip">点击 3D 中的一根键查看说明</p>
+              <p class="mol-bond-tip" id="molBondTip">点击 3D 中的原子或化学键查看说明</p>
               <button type="button" class="btn ghost btn-sm" id="molBondClose">关闭</button>
             </div>
 
@@ -733,6 +769,16 @@
                   <div id="lessonPackDetail"></div>
                   <div id="lessonPackEditor" hidden></div>
                 </div>
+              </div>
+            </div>
+
+            <!-- 分步配平：同实验探究 — 左列表抽屉 / 右详情（练习|脚本） -->
+            <div id="aiSectionBalance" class="ai-section ai-section-balance" hidden>
+              <div class="lab-layout lab-layout-drawer" id="balanceLayout">
+                <aside class="lab-nav-rail" id="balanceNavRail" aria-label="配平脚本目录"></aside>
+                <article id="balanceDetail" class="lab-drawer" aria-live="polite">
+                  <div class="molar-empty">加载中…</div>
+                </article>
               </div>
             </div>
 

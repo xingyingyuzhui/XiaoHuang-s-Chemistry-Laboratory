@@ -5,6 +5,7 @@
  */
 
 import { formatChemOption, formatChemPreview, formatChemStem } from './chem-text.js';
+import { appAlert, appConfirm } from '../app-dialog.js';
 
 export function createOfflineQuizController({
   select,
@@ -248,7 +249,7 @@ export function createOfflineQuizController({
         }
       }
     } catch (err) {
-      window.alert(`提交失败：${err.message || err}`);
+      await appAlert(`提交失败：${err.message || err}`, { title: '提交失败' });
       submitted = false;
       if (btnSubmit) btnSubmit.disabled = false;
     } finally {
@@ -352,9 +353,14 @@ export function createOfflineQuizController({
       if (!paper.length) return;
       submitPaper();
     });
-    select('#btnOfflineQuizBackConfig')?.addEventListener('click', () => {
+    select('#btnOfflineQuizBackConfig')?.addEventListener('click', async () => {
       if (paper.length && !submitted) {
-        if (!window.confirm('当前练习尚未交卷，确定放弃？')) return;
+        const ok = await appConfirm('当前练习尚未交卷，确定放弃？', {
+          title: '放弃练习',
+          okText: '放弃',
+          danger: true,
+        });
+        if (!ok) return;
       }
       backToConfig();
     });

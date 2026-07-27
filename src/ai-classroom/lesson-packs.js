@@ -5,6 +5,7 @@
 
 import { CHEM_TOPICS } from '../data/chem-topics.js';
 import { formatLabsImportSummary, downloadJsonFile } from './lab-model.js';
+import { appAlert, appConfirm } from '../app-dialog.js';
 
 export function createLessonPacksController({ select, escapeHtml, lessonPackApi, labsApi }) {
   let packs = [];
@@ -53,7 +54,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
       </div>`).join('');
 
     el.querySelectorAll('[data-pack-view]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         viewingId = btn.dataset.packView;
         renderDetail();
@@ -61,20 +62,20 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
       });
     });
     el.querySelectorAll('[data-pack-export]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         exportPack(btn.dataset.packExport);
       });
     });
     el.querySelectorAll('[data-pack-delete]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         deletePack(btn.dataset.packDelete);
       });
     });
     // 点卡片空白处也可查看
     el.querySelectorAll('.lesson-pack-card').forEach((card) => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', async () => {
         viewingId = card.dataset.packId;
         renderDetail();
         renderList();
@@ -117,7 +118,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
 
     const editBtn = el.querySelector('#btnPackEdit');
     if (editBtn) {
-      editBtn.addEventListener('click', () => { editingId = viewingId; renderEditor(); });
+      editBtn.addEventListener('click', async () => { editingId = viewingId; renderEditor(); });
     }
   }
 
@@ -151,7 +152,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
 
     renderEditorChips();
     el.querySelector('#btnLpSave').addEventListener('click', savePack);
-    el.querySelector('#btnLpCancel').addEventListener('click', () => { el.hidden = true; editingId = null; });
+    el.querySelector('#btnLpCancel').addEventListener('click', async () => { el.hidden = true; editingId = null; });
   }
 
   function renderEditorChips() {
@@ -161,7 +162,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
         `<button type="button" class="quiz-topic${editSelectedTopics.includes(t.label) ? ' is-on' : ''}" data-lp-topic="${escapeHtml(t.label)}">${escapeHtml(t.label)}</button>`,
       ).join('');
       topicBox.querySelectorAll('[data-lp-topic]').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const label = btn.dataset.lpTopic;
           editSelectedTopics = editSelectedTopics.includes(label)
             ? editSelectedTopics.filter((x) => x !== label)
@@ -180,7 +181,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
           `<button type="button" class="quiz-chip${editSelectedLabs.includes(lab.id) ? ' is-on' : ''}" data-lp-lab="${escapeHtml(lab.id)}">${escapeHtml(lab.title)}</button>`,
         ).join('');
         labBox.querySelectorAll('[data-lp-lab]').forEach((btn) => {
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             const id = btn.dataset.lpLab;
             editSelectedLabs = editSelectedLabs.includes(id)
               ? editSelectedLabs.filter((x) => x !== id)
@@ -194,7 +195,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
 
   async function savePack() {
     const name = select('#lpEditName')?.value?.trim();
-    if (!name) { window.alert('名称不能为空'); return; }
+    if (!name) { await appAlert('名称不能为空'); return; }
     const payload = {
       name,
       grade: select('#lpEditGrade')?.value?.trim() || '',
@@ -216,20 +217,20 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
       select('#lessonPackEditor').hidden = true;
       editingId = null;
     } catch (err) {
-      window.alert(`保存失败：${err.message || ''}`);
+      await appAlert(`保存失败：${err.message || ''}`);
     }
   }
 
   async function deletePack(id) {
     const pack = packs.find((p) => p.id === id);
     if (!pack) return;
-    if (!window.confirm(`确定删除备课包"${pack.name}"？此操作不可撤销。`)) return;
+    if (!(await appConfirm(`确定删除备课包"${pack.name}"？此操作不可撤销。`))) return;
     try {
       await lessonPackApi.remove(id);
       if (viewingId === id) viewingId = null;
       await loadPacks();
     } catch (err) {
-      window.alert(`删除失败：${err.message || ''}`);
+      await appAlert(`删除失败：${err.message || ''}`);
     }
   }
 
@@ -238,7 +239,7 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
       const data = await lessonPackApi.exportData(id);
       downloadJsonFile(`备课包-${data.metadata?.name || id}.json`, data);
     } catch (err) {
-      window.alert(`导出失败：${err.message || ''}`);
+      await appAlert(`导出失败：${err.message || ''}`);
     }
   }
 
@@ -259,35 +260,35 @@ export function createLessonPacksController({ select, escapeHtml, lessonPackApi,
       await loadPacks();
       await refreshLabOptions();
       if (result.kind === 'lab-pack') {
-        window.alert(formatLabsImportSummary(result.labsResult || result));
+        await appAlert(formatLabsImportSummary(result.labsResult || result));
       } else if (result.nameChanged) {
         const lr = result.labsResult;
         const labMsg = lr && (lr.created || lr.skipped || lr.renamed)
           ? `\n\n${formatLabsImportSummary(lr)}`
           : '';
-        window.alert(`备课包已导入，名称改为「${result.pack.name}」以避免冲突。${labMsg}`);
+        await appAlert(`备课包已导入，名称改为「${result.pack.name}」以避免冲突。${labMsg}`);
       } else {
         const lr = result.labsResult;
         const labMsg = lr && (lr.created || lr.skipped || lr.renamed || lr.updated)
           ? `\n\n${formatLabsImportSummary(lr)}`
           : '';
-        window.alert(`备课包导入成功。${labMsg}`);
+        await appAlert(`备课包导入成功。${labMsg}`);
       }
     } catch (err) {
-      window.alert(`导入失败：${err.message || ''}`);
+      await appAlert(`导入失败：${err.message || ''}`);
     }
   }
 
   async function exportLabPackBranch() {
     if (!labsApi?.exportPack) {
-      window.alert('实验包导出不可用');
+      await appAlert('实验包导出不可用');
       return;
     }
     try {
       const data = await labsApi.exportPack();
       downloadJsonFile(`实验包-${new Date().toISOString().slice(0, 10)}.json`, data);
     } catch (err) {
-      window.alert(`导出实验包失败：${err.message || ''}`);
+      await appAlert(`导出实验包失败：${err.message || ''}`);
     }
   }
 
