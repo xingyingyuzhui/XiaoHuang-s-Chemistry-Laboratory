@@ -299,3 +299,79 @@ export const quizApi = {
     });
   },
 };
+
+/**
+ * 离线题库 API
+ */
+export const offlineQuizApi = {
+  /** 获取可用年份 */
+  async years() {
+    return request('/offline-quiz/years');
+  },
+  /** 获取题库列表（不含答案） */
+  async list(year) {
+    const q = year ? `?year=${encodeURIComponent(year)}` : '';
+    return request(`/offline-quiz/list${q}`);
+  },
+  /** 生成离线练习（不含答案） */
+  async generate(payload) {
+    return request('/offline-quiz/generate', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  /** 提交离线练习答案 */
+  async submit(payload) {
+    return request('/offline-quiz/submit', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
+/**
+ * 知识掌握地图 API
+ */
+export const masteryApi = {
+  async summary() {
+    return request('/mastery');
+  },
+};
+
+/**
+ * 备课包 API
+ */
+export const lessonPackApi = {
+  async list() {
+    return request('/lesson-packs');
+  },
+  async get(id) {
+    return request(`/lesson-packs/${encodeURIComponent(id)}`);
+  },
+  async create(payload) {
+    return request('/lesson-packs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  async update(id, payload) {
+    return request(`/lesson-packs/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+  async remove(id) {
+    return request(`/lesson-packs/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
+  async exportData(id) {
+    return request(`/lesson-packs/${encodeURIComponent(id)}/export`);
+  },
+  async importData(data) {
+    return request('/lesson-packs/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};

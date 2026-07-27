@@ -2,12 +2,16 @@
  * 课堂：侧栏二级导航 + 出题 / 错题 / 点名 / 实验
  */
 
-import { aiApi, quizApi } from './api/client.js';
+import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi } from './api/client.js';
 import { showAppBubble, hideBrandTip } from './brand-tip.js';
 import { initRollcall, onRollcallSectionEnter } from './classroom-rollcall.js';
 import { createQuizConfigController } from './ai-classroom/quiz-config.js';
 import { createLabScriptsRenderer } from './ai-classroom/lab-scripts.js';
 import { createWrongBookController } from './ai-classroom/wrong-book.js';
+import { createOfflineQuizController } from './ai-classroom/offline-quiz.js';
+import { createMasteryMapController } from './ai-classroom/mastery-map.js';
+import { createLabPrestudyController } from './ai-classroom/lab-prestudy.js';
+import { createLessonPacksController } from './ai-classroom/lesson-packs.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -18,9 +22,19 @@ const AI_SECTIONS = [
     desc: '单选练习 · 提示与解析 · 交卷报告',
   },
   {
+    id: 'offline',
+    title: '离线题库',
+    desc: '历年高考题源 · 不需 AI Key',
+  },
+  {
     id: 'wrong',
     title: '错题本',
     desc: '重练做对后自动移出',
+  },
+  {
+    id: 'mastery',
+    title: '知识地图',
+    desc: '知识点掌握度 · 薄弱分析',
   },
   {
     id: 'rollcall',
@@ -30,7 +44,12 @@ const AI_SECTIONS = [
   {
     id: 'lab',
     title: '实验探究',
-    desc: '实验脚本',
+    desc: '实验脚本 · 交互式预习',
+  },
+  {
+    id: 'lessonpack',
+    title: '备课包',
+    desc: '教学材料打包 · 导入导出',
   },
 ];
 
@@ -87,6 +106,30 @@ const wrongBook = createWrongBookController({
   onRefreshStats: refreshStatsAndWrongBook,
 });
 
+let offlineInited = false;
+const offlineQuiz = createOfflineQuizController({
+  select: $,
+  escapeHtml,
+  offlineQuizApi,
+  onRefreshStats: refreshStatsAndWrongBook,
+});
+
+let masteryInited = false;
+const masteryMap = createMasteryMapController({
+  select: $,
+  escapeHtml,
+  masteryApi,
+});
+
+const labPrestudy = createLabPrestudyController({ select: $, escapeHtml });
+
+let lessonPackInited = false;
+const lessonPacks = createLessonPacksController({
+  select: $,
+  escapeHtml,
+  lessonPackApi,
+});
+
 function setStatus(el, text, ok) {
   if (!el) return;
   el.textContent = text || '';
@@ -120,13 +163,25 @@ function selectSection(id) {
   currentSection = id;
   renderNav();
   const quiz = $('#aiSectionQuiz');
+  const offline = $('#aiSectionOffline');
   const wrong = $('#aiSectionWrong');
+  const mastery = $('#aiSectionMastery');
   const roll = $('#aiSectionRollcall');
   const lab = $('#aiSectionLab');
+  const lessonpack = $('#aiSectionLessonPack');
   if (quiz) quiz.hidden = id !== 'quiz';
+  if (offline) offline.hidden = id !== 'offline';
   if (wrong) wrong.hidden = id !== 'wrong';
+  if (mastery) mastery.hidden = id !== 'mastery';
   if (roll) roll.hidden = id !== 'rollcall';
   if (lab) lab.hidden = id !== 'lab';
+  if (lessonpack) lessonpack.hidden = id !== 'lessonpack';
+  if (id === 'offline') {
+    if (!offlineInited) {
+      offlineInited = true;
+      offlineQuiz.init();
+    }
+  }
   if (id === 'wrong') {
     wrongBook.reset();
     wrongBook.load();
@@ -134,11 +189,26 @@ function selectSection(id) {
   if (id === 'quiz') {
     refreshStatsAndWrongBook();
   }
+  if (id === 'mastery') {
+    if (!masteryInited) {
+      masteryInited = true;
+      masteryMap.init();
+    } else {
+      masteryMap.load();
+    }
+  }
   if (id === 'rollcall') {
     onRollcallSectionEnter();
   }
   if (id === 'lab') {
-    labScripts.render();
+    // Default to script mode
+    switchLabMode('script');
+  }
+  if (id === 'lessonpack') {
+    if (!lessonPackInited) {
+      lessonPackInited = true;
+      lessonPacks.init();
+    }
   }
 }
 
@@ -223,8 +293,8 @@ async function refreshStatsAndWrongBook() {
   try {
     const stats = await quizApi.stats();
     wrongBookBadgeCount = Number(stats.wrongBookCount || 0);
-    // 角标只在左侧「错题本」导航上展示
-    if (currentSection === 'quiz') renderNav();
+    // 任意入口刷新后都更新错题本角标（离线题库交卷也会回调这里）
+    renderNav();
 
     if (statsBody) {
       if (!stats.totalSessions) {
@@ -723,6 +793,21 @@ function backToConfig() {
   if (report) report.hidden = true;
 }
 
+let currentLabMode = 'script';
+
+function switchLabMode(mode) {
+  currentLabMode = mode;
+  const scriptPanel = $('#labModeScript');
+  const prestudyPanel = $('#labModePrestudy');
+  if (scriptPanel) scriptPanel.hidden = mode !== 'script';
+  if (prestudyPanel) prestudyPanel.hidden = mode !== 'prestudy';
+  document.querySelectorAll('.lab-mode-tab').forEach((tab) => {
+    tab.classList.toggle('is-active', tab.dataset.labMode === mode);
+  });
+  if (mode === 'script') labScripts.render();
+  if (mode === 'prestudy') labPrestudy.render();
+}
+
 export function initAiClassroom() {
   renderNav();
   selectSection('quiz');
@@ -761,5 +846,10 @@ export function initAiClassroom() {
   });
   document.querySelectorAll('.btn-quiz-export').forEach((btn) => {
     btn.addEventListener('click', exportQuizMarkdown);
+  });
+
+  // Lab mode tabs
+  document.querySelectorAll('.lab-mode-tab').forEach((tab) => {
+    tab.addEventListener('click', () => switchLabMode(tab.dataset.labMode));
   });
 }

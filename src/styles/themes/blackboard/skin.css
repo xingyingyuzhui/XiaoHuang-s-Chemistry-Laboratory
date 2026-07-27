@@ -283,8 +283,11 @@ html[data-theme='blackboard'] .ai-nav-card {
 
 html[data-theme='blackboard'] .ai-nav-card.is-active,
 html[data-theme='blackboard'] .quiz-opt.is-selected {
-  background: var(--stamp-soft);
-  border-color: var(--stamp);
+  background: #5a2920;
+  color: #fff6cf;
+  border-color: #ffd166;
+  outline-color: #ffd166;
+  box-shadow: 3px 3px 0 #120b08;
 }
 
 html[data-theme='blackboard'] .molar-total {

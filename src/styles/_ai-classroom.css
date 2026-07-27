@@ -530,6 +530,24 @@
   color: var(--text-primary);
 }
 
+.quiz-stem .quiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.quiz-stem .quiz-table th,
+.quiz-stem .quiz-table td {
+  border: 1px solid var(--border, #ccc);
+  padding: 0.3rem 0.5rem;
+  vertical-align: top;
+}
+.quiz-stem .quiz-table th {
+  background: var(--bg-secondary, #f5f5f5);
+  font-weight: 600;
+}
+
 .quiz-options {
   display: grid;
   gap: 0.4rem;
@@ -560,8 +578,52 @@
 }
 
 .quiz-opt.is-selected {
-  border-color: var(--border-ink);
-  background: var(--note-soft);
+  border-color: #8a3d00;
+  background: #fff0a8;
+  color: #432000;
+  outline: 2px solid #f0a100;
+  outline-offset: 1px;
+  box-shadow: 3px 3px 0 #8a3d00;
+}
+
+.quiz-opt.is-selected strong {
+  color: #9a3500;
+}
+
+.chem-math {
+  white-space: nowrap;
+  font-family: 'Times New Roman', 'Noto Serif', serif;
+  letter-spacing: 0.01em;
+}
+
+.chem-math sub,
+.chem-math sup {
+  font-size: 0.75em;
+  line-height: 0;
+}
+
+.chem-isotope {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: 0.62em 0.62em;
+  margin-right: 0.06em;
+  vertical-align: -0.04em;
+}
+
+.chem-isotope sup,
+.chem-isotope sub {
+  grid-column: 1;
+  font-size: 0.62em;
+  line-height: 1;
+  text-align: right;
+}
+
+.chem-isotope sup { grid-row: 1; }
+.chem-isotope sub { grid-row: 2; }
+.chem-isotope-symbol {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
 }
 
 .quiz-opt.is-correct {
@@ -666,6 +728,26 @@
   transform: rotate(90deg);
 }
 
+/* 题库预览是只读索引，使用更紧凑的列表节奏，避免卡片阴影形成过大间隔。 */
+.offline-quiz-bank-list {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.offline-quiz-bank-list .quiz-result-item {
+  box-shadow: none;
+}
+
+.offline-quiz-bank-list .quiz-result-item-summary {
+  gap: 0.35rem 0.65rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.offline-quiz-bank-list .quiz-result-brief {
+  margin-top: 0.08rem;
+  line-height: 1.3;
+}
+
 .quiz-result-detail {
   padding: 0 0.9rem 0.9rem;
   border-top: 1.5px dashed color-mix(in srgb, var(--ink) 18%, transparent);
@@ -732,4 +814,336 @@
   margin: 0 0 0.45rem;
   font-family: var(--font-serif-cjk);
   color: var(--ink);
+}
+
+/* ── 实验模式切换 ── */
+.lab-mode-tabs {
+  display: flex;
+  gap: 0.3rem;
+}
+.lab-mode-tab {
+  appearance: none;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  background: var(--card-elevated);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+.lab-mode-tab:hover { background: var(--diagram-soft); }
+.lab-mode-tab.is-active {
+  background: var(--stamp-soft);
+  color: var(--ink);
+  border-color: var(--border-ink);
+}
+
+/* ── 交互式预习 ── */
+.prestudy-notice {
+  padding: 0.6rem 0.8rem;
+  border: var(--ui-stroke) dashed var(--border-ink);
+  border-radius: 8px;
+  background: var(--note-soft);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.7rem;
+}
+.prestudy-info {
+  font-size: 0.82rem;
+  margin-bottom: 0.3rem;
+  color: var(--text-secondary);
+}
+.prestudy-info strong { color: var(--ink); }
+.prestudy-progress-bar {
+  height: 4px;
+  background: var(--border-light, #e0e0e0);
+  border-radius: 2px;
+  margin: 0.6rem 0;
+  overflow: hidden;
+}
+.prestudy-progress-fill {
+  height: 100%;
+  background: var(--stamp);
+  transition: width 0.3s ease;
+}
+.prestudy-steps {
+  display: grid;
+  gap: 0.5rem;
+}
+.prestudy-step {
+  border: var(--ui-stroke) solid var(--border-light, #e0e0e0);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  background: var(--card-elevated);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease;
+}
+.prestudy-step:hover { border-color: var(--border-ink); }
+.prestudy-step.is-current {
+  border-color: var(--border-ink);
+  background: var(--diagram-soft);
+  cursor: default;
+}
+.prestudy-step.is-done {
+  opacity: 0.7;
+}
+.prestudy-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.prestudy-step-n {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--stamp-soft);
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.prestudy-step.is-done .prestudy-step-n {
+  background: var(--success-soft, #e8f5e9);
+  color: var(--success, #4caf50);
+}
+.prestudy-step-label {
+  font-size: 0.88rem;
+  font-family: var(--font-serif-cjk);
+}
+.prestudy-step-tip {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.3rem 0 0.5rem;
+}
+.prestudy-predict {
+  margin-top: 0.4rem;
+}
+.prestudy-predict-q {
+  font-size: 0.84rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--ink);
+}
+.prestudy-explain {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--note-soft);
+  border-radius: 6px;
+}
+.prestudy-risk {
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--warning-soft, #fff3e0);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+.prestudy-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: var(--stamp-soft);
+  color: var(--ink);
+  margin-left: auto;
+}
+.prestudy-tag-read {
+  background: var(--note-soft);
+  color: var(--text-secondary);
+}
+.prestudy-summary {
+  margin-top: 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  background: var(--note-soft);
+  font-size: 0.84rem;
+}
+
+/* ── 知识地图 ── */
+.mastery-section {
+  margin-top: 1rem;
+}
+.mastery-section h4 {
+  font-family: var(--font-serif-cjk);
+  font-size: 0.92rem;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.mastery-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border-light, #e0e0e0);
+}
+.mastery-topic-row:last-child { border-bottom: none; }
+.mastery-topic-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 1.2rem;
+  text-align: center;
+}
+.mastery-topic-info {
+  flex: 1;
+  min-width: 0;
+}
+.mastery-topic-name {
+  font-size: 0.85rem;
+  font-family: var(--font-serif-cjk);
+  color: var(--ink);
+}
+.mastery-topic-detail {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+.mastery-wrong-count {
+  color: var(--stamp);
+  font-weight: 600;
+}
+.mastery-topic-level {
+  font-size: 0.74rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.mastery-weak-list,
+.mastery-suggestion-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+.mastery-weak-list li,
+.mastery-suggestion-list li {
+  margin-bottom: 0.2rem;
+}
+
+/* ── 备课包 ── */
+.lesson-pack-toolbar {
+  display: flex;
+  gap: 0.4rem;
+}
+.lesson-pack-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0.7rem;
+  min-height: 200px;
+}
+.lesson-pack-list {
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+}
+.lesson-pack-card {
+  border: var(--ui-stroke) solid var(--border-light, #e0e0e0);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  background: var(--card-elevated);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease;
+}
+.lesson-pack-card:hover { border-color: var(--border-ink); }
+.lesson-pack-card.is-active {
+  border-color: var(--border-ink);
+  background: var(--stamp-soft);
+}
+.lesson-pack-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.3rem;
+}
+.lesson-pack-card-head strong {
+  font-size: 0.85rem;
+  font-family: var(--font-serif-cjk);
+  color: var(--ink);
+}
+.lesson-pack-date {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+.lesson-pack-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: var(--diagram-soft);
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+.lesson-pack-topics {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  margin: 0.2rem 0 0;
+}
+.lesson-pack-actions {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+.lesson-pack-right {
+  min-width: 0;
+}
+.lesson-pack-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.lesson-pack-detail-head h3 {
+  font-family: var(--font-serif-cjk);
+  color: var(--ink);
+  margin: 0;
+}
+.lesson-pack-contents {
+  margin-top: 0.7rem;
+  padding: 0.5rem 0.7rem;
+  border: var(--ui-stroke) solid var(--border-light, #e0e0e0);
+  border-radius: 8px;
+}
+.lesson-pack-contents h4 {
+  font-family: var(--font-serif-cjk);
+  font-size: 0.88rem;
+  margin: 0 0 0.3rem;
+}
+.lesson-pack-editor-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+.lesson-pack-card .btn-sm {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+}
+.lesson-pack-pick {
+  margin: 0.65rem 0;
+}
+.lesson-pack-pick .quiz-label {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.lesson-pack-topic-chips {
+  max-height: 10rem;
+  overflow-y: auto;
+  padding: 0.15rem 0;
+}
+.lesson-pack-lab-chips {
+  flex-wrap: wrap;
+}
+.prestudy-step-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0.55rem 0 0.2rem;
+}
+@media (max-width: 720px) {
+  .lesson-pack-layout {
+    grid-template-columns: 1fr;
+  }
 }

@@ -25,8 +25,11 @@ const moleculesRouter = require('./routes/molecules');
 const settingsRouter = require('./routes/settings');
 const aiRouter = require('./routes/ai');
 const quizRouter = require('./routes/quiz');
+const offlineQuizRouter = require('./routes/offline-quiz');
 const reactionsRouter = require('./routes/reactions');
 const studentsRouter = require('./routes/students');
+const masteryRouter = require('./routes/mastery');
+const lessonPacksRouter = require('./routes/lesson-packs');
 
 const app = express();
 const PREFERRED_PORT = Number(process.env.PORT) || 3000;
@@ -73,8 +76,11 @@ app.use('/api/molecules', moleculesRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/quiz', quizRouter);
+app.use('/api/offline-quiz', offlineQuizRouter);
 app.use('/api/reactions', reactionsRouter);
 app.use('/api/students', studentsRouter);
+app.use('/api/mastery', masteryRouter);
+app.use('/api/lesson-packs', lessonPacksRouter);
 
 app.get('/api/health', (req, res) => {
   const payload = {

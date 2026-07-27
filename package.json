@@ -13,6 +13,7 @@
     "preview": "vite preview",
     "build:frontend": "npm --prefix server run build:frontend",
     "build:exe": "npm --prefix server run build:exe",
+    "sync:offline-bank": "node scripts/sync-offline-quiz-bank.mjs",
     "electron:dev": "npm run build:frontend && electron .",
     "electron:dev:skip-build": "electron .",
     "stage:electron": "node scripts/stage-electron-server.js",

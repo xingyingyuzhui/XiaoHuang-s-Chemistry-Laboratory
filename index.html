@@ -629,12 +629,60 @@
             <div id="aiSectionLab" class="ai-section" hidden>
               <header class="quiz-section-head">
                 <h3>实验探究</h3>
+                <div class="lab-mode-tabs">
+                  <button type="button" class="lab-mode-tab is-active" data-lab-mode="script">阅读脚本</button>
+                  <button type="button" class="lab-mode-tab" data-lab-mode="prestudy">交互式预习</button>
+                </div>
               </header>
-              <div class="lab-layout">
+              <div id="labModeScript" class="lab-layout">
                 <nav id="labNavList" class="lab-nav-list" role="list" aria-label="实验列表"></nav>
                 <article id="labScriptDetail" class="lab-script-detail">
                   <div class="molar-empty">请选择左侧实验</div>
                 </article>
+              </div>
+              <div id="labModePrestudy" class="lab-layout" hidden>
+                <nav id="prestudyNavList" class="lab-nav-list" role="list" aria-label="实验列表"></nav>
+                <article id="prestudyDetail" class="lab-script-detail">
+                  <div class="molar-empty">请选择左侧实验</div>
+                </article>
+              </div>
+            </div>
+
+            <div id="aiSectionMastery" class="ai-section" hidden>
+              <header class="quiz-section-head">
+                <h3>知识掌握地图</h3>
+              </header>
+              <div id="masteryStatus" class="quiz-status"></div>
+              <div id="masterySummary"></div>
+              <div class="mastery-section">
+                <h4>薄弱知识点</h4>
+                <div id="masteryWeak"></div>
+              </div>
+              <div class="mastery-section">
+                <h4>复习建议</h4>
+                <div id="masterySuggestions"></div>
+              </div>
+              <div class="mastery-section">
+                <h4>全部知识点</h4>
+                <div id="masteryTopics"></div>
+              </div>
+            </div>
+
+            <div id="aiSectionLessonPack" class="ai-section" hidden>
+              <header class="quiz-section-head">
+                <h3>备课包</h3>
+                <div class="lesson-pack-toolbar">
+                  <button type="button" class="btn btn-sm" id="btnLessonPackNew">新建备课包</button>
+                  <button type="button" class="btn btn-sm ghost" id="btnLessonPackImport">导入</button>
+                  <input type="file" id="lessonPackImportInput" accept=".json" hidden />
+                </div>
+              </header>
+              <div class="lesson-pack-layout">
+                <div id="lessonPackList" class="lesson-pack-list"></div>
+                <div class="lesson-pack-right">
+                  <div id="lessonPackDetail"></div>
+                  <div id="lessonPackEditor" hidden></div>
+                </div>
               </div>
             </div>
 
@@ -724,6 +772,64 @@
                   <h4>AI 分析报告</h4>
                   <div id="quizReportBody" class="quiz-report-body"></div>
                 </div>
+              </div>
+            </div>
+
+            <!-- 离线题库 -->
+            <div id="aiSectionOffline" class="ai-section" hidden>
+              <div id="offlineQuizConfig" class="quiz-config">
+                <header class="quiz-section-head">
+                  <h3>离线题库</h3>
+                </header>
+                <p class="quiz-muted">历年高考化学选择题（AGIEval）</p>
+                <div class="quiz-field">
+                  <span class="quiz-label">年份筛选</span>
+                  <div class="quiz-chips" id="offlineQuizYears" role="group" aria-label="年份"></div>
+                </div>
+                <div class="quiz-field">
+                  <span class="quiz-label">题量</span>
+                  <div class="quiz-count-row quiz-count-row-compact">
+                    <input type="range" id="offlineQuizCount" min="1" max="20" value="5" />
+                    <strong id="offlineQuizCountLabel">5</strong>
+                  </div>
+                </div>
+                <div class="quiz-actions">
+                  <button type="button" class="btn primary" id="btnOfflineQuizStart">开始练习</button>
+                  <p class="quiz-status" id="offlineQuizStatus" aria-live="polite"></p>
+                </div>
+                <div class="quiz-history-panel quiz-history-panel-single">
+                  <div class="quiz-history-card quiz-history-card-wide">
+                    <div class="quiz-history-card-head">
+                      <h4>题库预览</h4>
+                    </div>
+                    <div id="offlineQuizBankBody" class="quiz-stats-body offline-quiz-bank-list">加载中…</div>
+                  </div>
+                </div>
+              </div>
+              <div id="offlineQuizPaper" class="quiz-paper" hidden>
+                <header class="quiz-paper-head">
+                  <div>
+                    <h3>离线练习</h3>
+                    <p id="offlinePaperMeta" class="quiz-paper-meta"></p>
+                  </div>
+                  <div class="quiz-paper-actions">
+                    <button type="button" class="btn ghost" id="btnOfflineQuizBackConfig">重新选题</button>
+                    <button type="button" class="btn primary" id="btnOfflineQuizSubmit">交卷</button>
+                  </div>
+                </header>
+                <div id="offlineQuizQuestions" class="quiz-questions"></div>
+              </div>
+              <div id="offlineQuizResult" class="quiz-result" hidden>
+                <header class="quiz-paper-head">
+                  <div>
+                    <h3>本场结果</h3>
+                    <p id="offlineScoreLine" class="quiz-paper-meta"></p>
+                  </div>
+                  <div class="quiz-paper-actions">
+                    <button type="button" class="btn ghost" id="btnOfflineQuizAgain">再练一套</button>
+                  </div>
+                </header>
+                <div id="offlineResultList" class="quiz-result-list"></div>
               </div>
             </div>
 
