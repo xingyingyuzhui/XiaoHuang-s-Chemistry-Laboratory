@@ -145,6 +145,114 @@ function getScript(id) {
   return rowToScript(queryOne('SELECT * FROM balance_scripts WHERE id = ?', [id]));
 }
 
+/**
+ * 导出用：去掉内部字段，保留可校验的内容
+ * @param {object[]} scripts
+ */
+function toPackScripts(scripts) {
+  return (scripts || []).map((s) => ({
+    id: s.id,
+    title: s.title,
+    grade: s.grade || '',
+    difficulty: s.difficulty || '',
+    startEquation: s.startEquation,
+    targetEquation: s.targetEquation,
+    species: s.species,
+    steps: s.steps,
+  }));
+}
+
+/**
+ * 安全导入：永不覆盖已有 id；冲突时新 id + 标题「（导入）」；强制 source=custom
+ * @param {unknown[]} scriptsIn
+ */
+function importBalanceScriptsSafe(scriptsIn) {
+  ensureBalanceScriptsSeeded();
+  if (!Array.isArray(scriptsIn) || !scriptsIn.length) {
+    return { created: 0, renamed: 0, skipped: 0, errors: ['没有可导入的脚本'] };
+  }
+
+  const maxRow = queryOne('SELECT MAX(sort_order) AS m FROM balance_scripts');
+  let nextOrder = (Number(maxRow?.m) || 0) + 1;
+  let created = 0;
+  let renamed = 0;
+  let skipped = 0;
+  /** @type {string[]} */
+  const errors = [];
+  /** @type {object[]} */
+  const toInsert = [];
+
+  for (let i = 0; i < scriptsIn.length; i++) {
+    const raw = scriptsIn[i];
+    if (!raw || typeof raw !== 'object') {
+      skipped += 1;
+      errors.push(`第 ${i + 1} 条：不是对象`);
+      continue;
+    }
+    const checked = validateBalanceScript({
+      title: raw.title,
+      grade: raw.grade,
+      difficulty: raw.difficulty,
+      startEquation: raw.startEquation,
+      targetEquation: raw.targetEquation,
+      species: raw.species,
+      steps: raw.steps,
+    });
+    if (!checked.ok) {
+      skipped += 1;
+      errors.push(`第 ${i + 1} 条「${String(raw.title || '').slice(0, 20)}」：${checked.reason}`);
+      continue;
+    }
+
+    let id = String(raw.id || '').trim() || uid('bs');
+    let title = checked.script.title;
+    let idChanged = false;
+    if (queryOne('SELECT id FROM balance_scripts WHERE id = ?', [id])) {
+      id = uid('bs');
+      idChanged = true;
+      if (!title.includes('（导入）')) title = `${title}（导入）`;
+    }
+
+    while (
+      toInsert.some((x) => x.id === id) ||
+      queryOne('SELECT id FROM balance_scripts WHERE id = ?', [id])
+    ) {
+      id = uid('bs');
+      idChanged = true;
+      if (!title.includes('（导入）')) title = `${title}（导入）`;
+    }
+
+    if (idChanged) renamed += 1;
+
+    toInsert.push({
+      id,
+      title,
+      grade: checked.script.grade || '',
+      difficulty: checked.script.difficulty || '',
+      startEquation: checked.script.startEquation,
+      targetEquation: checked.script.targetEquation,
+      species: checked.script.species,
+      steps: checked.script.steps,
+      sortOrder: nextOrder++,
+      source: 'custom',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  }
+
+  if (toInsert.length) {
+    runBatch(() => {
+      const now = Date.now();
+      for (const script of toInsert) {
+        insertScript({ ...script, createdAt: now, updatedAt: now }, now);
+        created += 1;
+      }
+    });
+  }
+
+  return { created, renamed, skipped, errors, scripts: listScripts() };
+}
+
 module.exports = {
   ensureBalanceTable,
   ensureBalanceScriptsSeeded,
@@ -155,5 +263,7 @@ module.exports = {
   rowToScript,
   insertScript,
   updateScriptRow,
+  toPackScripts,
+  importBalanceScriptsSafe,
   BALANCE_BUILTIN,
 };

@@ -176,7 +176,7 @@ export function formatFormula(f) {
 }
 
 /**
- * 格式化脚本导入摘要
+ * 格式化脚本导入摘要（对齐实验包）
  */
 export function formatBalanceImportSummary(result) {
   if (!result) return '导入失败';
@@ -184,7 +184,23 @@ export function formatBalanceImportSummary(result) {
   if (result.created) parts.push(`新增 ${result.created} 条`);
   if (result.renamed) parts.push(`${result.renamed} 条改名避免冲突`);
   if (result.skipped) parts.push(`跳过 ${result.skipped} 条`);
-  return parts.join('；') || '无变更';
+  let text = parts.join('；') || '无变更';
+  const errs = Array.isArray(result.errors) ? result.errors.filter(Boolean) : [];
+  if (errs.length) {
+    text += `\n\n详情：\n${errs.slice(0, 8).join('\n')}`;
+    if (errs.length > 8) text += `\n…共 ${errs.length} 条问题`;
+  }
+  return text;
+}
+
+/** 下载 JSON（与 lab-model.downloadJsonFile 行为一致） */
+export function downloadJsonFile(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 /**

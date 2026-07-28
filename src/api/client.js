@@ -475,4 +475,15 @@ export const balanceScriptsApi = {
       body: '{}',
     });
   },
+  /** 导出全部配平脚本为 JSON 包 */
+  async exportPack() {
+    return request('/balance-scripts/export');
+  },
+  /** 导入配平包（不覆盖已有 id） */
+  async importPack(data) {
+    return request('/balance-scripts/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
 };

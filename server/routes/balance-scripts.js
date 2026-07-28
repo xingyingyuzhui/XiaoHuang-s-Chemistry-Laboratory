@@ -12,8 +12,13 @@ const {
   getScript,
   insertScript,
   updateScriptRow,
+  toPackScripts,
+  importBalanceScriptsSafe,
   BALANCE_BUILTIN,
 } = require('../seed/import-balance-scripts');
+
+const BALANCE_PACK_FORMAT = 'xiaohuang-balance-pack';
+const BALANCE_PACK_VERSION = 1;
 
 function uid(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -27,6 +32,62 @@ router.get('/', (_req, res) => {
   } catch (err) {
     console.error('balance-scripts list', err);
     error(res, err.message || '加载配平脚本失败');
+  }
+});
+
+// GET /api/balance-scripts/export — 必须在 /:id 之前
+router.get('/export', (_req, res) => {
+  try {
+    const scripts = listScripts();
+    success(res, {
+      format: BALANCE_PACK_FORMAT,
+      version: BALANCE_PACK_VERSION,
+      exportedAt: new Date().toISOString(),
+      scripts: toPackScripts(scripts),
+    });
+  } catch (err) {
+    console.error('balance-scripts export', err);
+    error(res, err.message || '导出失败');
+  }
+});
+
+// POST /api/balance-scripts/import — 永不覆盖；冲突新 id +「（导入）」
+router.post('/import', (req, res) => {
+  try {
+    ensureBalanceScriptsSeeded();
+    const data = req.body;
+    let scriptsIn = null;
+    if (data?.format === BALANCE_PACK_FORMAT) {
+      if (data.version !== BALANCE_PACK_VERSION) {
+        return badRequest(res, `不支持的配平包版本：${data.version}`);
+      }
+      scriptsIn = data.scripts;
+    } else if (Array.isArray(data?.scripts)) {
+      scriptsIn = data.scripts;
+    } else if (Array.isArray(data)) {
+      scriptsIn = data;
+    }
+    if (!Array.isArray(scriptsIn) || !scriptsIn.length) {
+      return badRequest(res, '配平包中没有 scripts 数组');
+    }
+
+    const result = importBalanceScriptsSafe(scriptsIn);
+    if (!result.created && result.skipped) {
+      return badRequest(
+        res,
+        result.errors?.[0] || '没有成功导入任何脚本（数据未通过校验）',
+      );
+    }
+    success(res, {
+      created: result.created,
+      renamed: result.renamed,
+      skipped: result.skipped,
+      errors: result.errors,
+      scripts: result.scripts,
+    });
+  } catch (err) {
+    console.error('balance-scripts import', err);
+    error(res, err.message || '导入失败');
   }
 });
 
@@ -174,3 +235,5 @@ router.delete('/:id', (req, res) => {
 });
 
 module.exports = router;
+module.exports.BALANCE_PACK_FORMAT = BALANCE_PACK_FORMAT;
+module.exports.BALANCE_PACK_VERSION = BALANCE_PACK_VERSION;

@@ -33,6 +33,16 @@ const AI_SECTIONS = [
     desc: '重练做对后自动移出',
   },
   {
+    id: 'lab',
+    title: '实验探究',
+    desc: '实验脚本 · 交互式预习',
+  },
+  {
+    id: 'balance',
+    title: '分步配平',
+    desc: '脚本演示 · 逐步学配平',
+  },
+  {
     id: 'mastery',
     title: '知识地图',
     desc: '知识点掌握度 · 薄弱分析',
@@ -43,19 +53,9 @@ const AI_SECTIONS = [
     desc: '名单与点名',
   },
   {
-    id: 'lab',
-    title: '实验探究',
-    desc: '实验脚本 · 交互式预习',
-  },
-  {
     id: 'lessonpack',
     title: '备课包',
     desc: '教学材料打包 · 导入导出',
-  },
-  {
-    id: 'balance',
-    title: '分步配平',
-    desc: '脚本演示 · 逐步学配平',
   },
 ];
 

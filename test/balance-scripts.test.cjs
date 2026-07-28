@@ -202,6 +202,97 @@ test('balance scripts create rejects bad data', async () => {
   });
 });
 
+test('balance scripts export pack has format version and scripts', async () => {
+  await withApiServer(async (baseUrl) => {
+    const res = await fetch(`${baseUrl}/api/balance-scripts/export`);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.data.format, 'xiaohuang-balance-pack');
+    assert.equal(body.data.version, 1);
+    assert.ok(Array.isArray(body.data.scripts));
+    assert.ok(body.data.scripts.length >= BALANCE_BUILTIN.length);
+    const s0 = body.data.scripts[0];
+    assert.ok(s0.title);
+    assert.ok(s0.startEquation);
+    assert.ok(s0.targetEquation);
+    assert.ok(Array.isArray(s0.steps));
+  });
+});
+
+test('balance scripts import never overwrites; renames on id conflict', async () => {
+  await withApiServer(async (baseUrl) => {
+    const pack = {
+      format: 'xiaohuang-balance-pack',
+      version: 1,
+      scripts: [
+        {
+          id: 'bal-h2o', // 与内置冲突
+          title: '导入的水',
+          startEquation: 'H2 + O2 = H2O',
+          targetEquation: '2H2 + O2 = 2H2O',
+          species: {
+            left: [{ formula: 'H2', coef: 1 }, { formula: 'O2', coef: 1 }],
+            right: [{ formula: 'H2O', coef: 1 }],
+          },
+          steps: [
+            { label: '观察', tip: '数原子', action: 'explain' },
+            { label: '检查', tip: '守恒', action: 'check' },
+          ],
+        },
+        {
+          id: 'bs_unique_import_test',
+          title: '全新导入项',
+          startEquation: 'C + O2 = CO2',
+          targetEquation: 'C + O2 = CO2',
+          species: {
+            left: [{ formula: 'C', coef: 1 }, { formula: 'O2', coef: 1 }],
+            right: [{ formula: 'CO2', coef: 1 }],
+          },
+          steps: [{ label: '已配平', tip: '核对', action: 'explain' }],
+        },
+      ],
+    };
+    const imp = await fetch(`${baseUrl}/api/balance-scripts/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pack),
+    });
+    const body = await imp.json();
+    assert.equal(body.success, true);
+    assert.equal(body.data.created, 2);
+    assert.equal(body.data.renamed, 1);
+    assert.ok(body.data.scripts.some((s) => s.title.includes('（导入）')));
+    assert.ok(body.data.scripts.some((s) => s.title === '全新导入项' && s.source === 'custom'));
+    // 内置 bal-h2o 未被覆盖（标题不应变成「导入的水」）
+    const h2o = body.data.scripts.find((s) => s.id === 'bal-h2o');
+    assert.ok(h2o);
+    assert.notEqual(h2o.title, '导入的水');
+  });
+});
+
+test('balance scripts import skips invalid target (not conserved)', async () => {
+  await withApiServer(async (baseUrl) => {
+    const imp = await fetch(`${baseUrl}/api/balance-scripts/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        format: 'xiaohuang-balance-pack',
+        version: 1,
+        scripts: [
+          {
+            title: '坏目标式',
+            startEquation: 'H2 + O2 = H2O',
+            targetEquation: 'H2 + O2 = H2O',
+            steps: [{ label: 'x', tip: 'x', action: 'explain' }],
+          },
+        ],
+      }),
+    });
+    const body = await imp.json();
+    assert.equal(body.success, false);
+  });
+});
+
 test('balance scripts seed fills missing builtins without overwriting custom', async () => {
   await withApiServer(async (baseUrl) => {
     await fetch(`${baseUrl}/api/balance-scripts/bal-h2o`, {

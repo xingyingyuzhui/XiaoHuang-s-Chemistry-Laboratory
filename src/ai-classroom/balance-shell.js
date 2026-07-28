@@ -14,6 +14,8 @@ import {
   isPracticeFinished,
   buildEquation,
   buildPracticeStepsFromEquations,
+  formatBalanceImportSummary,
+  downloadJsonFile,
 } from './balance-model.js';
 import { bindChemKeypad, mountChemKeypads } from '../chem-keypad.js';
 import { appAlert, appConfirm } from '../app-dialog.js';
@@ -40,6 +42,8 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
   let progress = {};
   let listEditMode = false;
   let drawerCollapsed = localStorage.getItem(DRAWER_KEY) === '1';
+  /** 左侧导入/导出状态文案（与实验探究 statusMsg 一致） */
+  let statusMsg = '';
 
   let draft = null;
   let selectedStep = 0;
@@ -239,9 +243,12 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
       <div class="lab-nav-toolbar">
         <button type="button" class="lab-tool-btn lab-tool-add" id="btnBalanceAdd" title="新建脚本">＋</button>
         <button type="button" class="lab-tool-btn lab-tool-edit${listEditMode ? ' is-active' : ''}" id="btnBalanceListEdit">${listEditMode ? '保存' : '编辑'}</button>
+        <button type="button" class="lab-tool-btn" id="btnBalanceExport" title="导出全部配平脚本为 JSON">导出</button>
+        <button type="button" class="lab-tool-btn" id="btnBalanceImport" title="导入配平包（不覆盖已有）">导入</button>
       </div>
       <button type="button" class="lab-tool-btn lab-tool-ai" id="btnBalanceAiGen" title="用 AI 生成配平脚本草稿">AI 生成</button>
-      <nav id="balanceNavList" class="lab-nav-list${listEditMode ? ' is-edit-mode' : ''}" role="list" aria-label="配平脚本列表"></nav>`;
+      <nav id="balanceNavList" class="lab-nav-list${listEditMode ? ' is-edit-mode' : ''}" role="list" aria-label="配平脚本列表"></nav>
+      ${statusMsg ? `<p class="lab-nav-status">${escapeHtml(statusMsg)}</p>` : ''}`;
 
     select('#btnBalanceDrawerToggle')?.addEventListener('click', async () => {
       setDrawerCollapsed(!drawerCollapsed);
@@ -254,6 +261,14 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
       // 与实验探究相同：点「保存」仅退出编辑态（排序已在拖拽时写入）
       listEditMode = !listEditMode;
       render();
+    });
+    select('#btnBalanceExport')?.addEventListener('click', async () => {
+      if (listEditMode) listEditMode = false;
+      exportBalancePack();
+    });
+    select('#btnBalanceImport')?.addEventListener('click', async () => {
+      if (listEditMode) listEditMode = false;
+      pickImportFile();
     });
     select('#btnBalanceAiGen')?.addEventListener('click', async () => {
       if (listEditMode) listEditMode = false;
@@ -413,6 +428,56 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
     listEditMode = false;
     stepEditMode = false;
     render();
+  }
+
+  async function exportBalancePack() {
+    if (!balanceScriptsApi?.exportPack) {
+      await appAlert('配平包导出不可用');
+      return;
+    }
+    try {
+      const data = await balanceScriptsApi.exportPack();
+      downloadJsonFile(`配平脚本包-${new Date().toISOString().slice(0, 10)}.json`, data);
+      statusMsg = '已导出配平脚本包';
+      renderRail();
+    } catch (err) {
+      await appAlert(`导出失败：${err.message || ''}`);
+    }
+  }
+
+  function pickImportFile() {
+    let input = select('#balancePackImportInput');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json,.json';
+      input.id = 'balancePackImportInput';
+      input.hidden = true;
+      document.body.appendChild(input);
+      input.addEventListener('change', onImportFile);
+    }
+    input.value = '';
+    input.click();
+  }
+
+  async function onImportFile(e) {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    if (!(await confirmLeaveDirty())) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const result = await balanceScriptsApi.importPack(data);
+      const summary = formatBalanceImportSummary(result);
+      statusMsg = summary.split('\n')[0];
+      dirty = false;
+      draft = null;
+      await loadScripts({ keepSelection: false });
+      render();
+      await appAlert(summary, { title: '导入完成' });
+    } catch (err) {
+      await appAlert(`导入失败：${err.message || ''}`, { title: '导入失败' });
+    }
   }
 
   // ── 练习 ──
