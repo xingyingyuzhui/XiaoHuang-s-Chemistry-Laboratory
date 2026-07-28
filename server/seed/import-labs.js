@@ -92,21 +92,35 @@ function updateLabRow(lab, now = Date.now()) {
 }
 
 /**
- * 补齐缺失的内置实验：只 insert 不存在的 id，绝不覆盖已有（含用户改过的 custom / 仍标 builtin 的行）
+ * 补齐 / 同步内置实验（与配平脚本策略一致）：
+ * - 不存在 → insert
+ * - 仍为 source=builtin → 用 seed 覆盖内容（升级后预习题/步骤修复能落到用户机）
+ * - source=custom → 不覆盖（用户改过的保留）
+ *
+ * 说明：旧逻辑「有 id 就永不写」会导致 seed 修 bug 后装包升级仍跑旧数据。
  */
 function ensureLabsSeeded() {
   ensureLabTable();
   const now = Date.now();
   let inserted = 0;
+  let updated = 0;
   for (const lab of LABS_BUILTIN) {
-    const existing = queryOne('SELECT id FROM lab_experiments WHERE id = ?', [lab.id]);
+    const existing = queryOne('SELECT id, source FROM lab_experiments WHERE id = ?', [lab.id]);
     if (!existing) {
       insertLab({ ...lab, source: 'builtin', createdAt: now, updatedAt: now }, now);
       inserted += 1;
+    } else if (String(existing.source || '') === 'builtin') {
+      const row = queryOne('SELECT sort_order FROM lab_experiments WHERE id = ?', [lab.id]);
+      updateLabRow({
+        ...lab,
+        sortOrder: Number(row?.sort_order) || lab.sortOrder || 0,
+        source: 'builtin',
+      }, now);
+      updated += 1;
     }
   }
   const count = queryOne('SELECT COUNT(*) AS c FROM lab_experiments');
-  return { seeded: inserted > 0, inserted, count: Number(count?.c) || 0 };
+  return { seeded: inserted > 0 || updated > 0, inserted, updated, count: Number(count?.c) || 0 };
 }
 
 /** 强制恢复全部内置 id 的 seed 内容（会覆盖同 id 的用户修改） */

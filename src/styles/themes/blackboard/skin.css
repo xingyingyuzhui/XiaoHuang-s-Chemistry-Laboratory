@@ -451,3 +451,29 @@ html[data-theme='blackboard'] .battle-card {
 html[data-theme='blackboard'] .battle-status {
   color: var(--note);
 }
+
+/* 回合横幅 / 中央 toast：黑板下 ink-lab 为粉笔白，作底会导致白底浅字 */
+html[data-theme='blackboard'] .battle-turn-banner {
+  background: color-mix(in srgb, #0a1613 92%, #000);
+  color: #f7faf8;
+  border: 1px solid color-mix(in srgb, var(--stamp) 55%, var(--border));
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme='blackboard'] .battle-turn-banner span {
+  /* 取消白→强调色渐变字（在浅底上几乎看不见） */
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: var(--stamp);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme='blackboard'] .battle-toast {
+  background: color-mix(in srgb, #0a1613 92%, #000);
+  color: #f7faf8;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5);
+}

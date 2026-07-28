@@ -66,7 +66,37 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
   function persistProgress() {
     if (!scriptId) return;
     progress[scriptId] = { stepsDone: stepIdx, finished };
+    savePracticeState();
     saveProgress(progress);
+  }
+
+  /** 保存练习态到本地 */
+  function savePracticeState() {
+    if (!scriptId) return;
+    const state = {
+      stepsDone: stepIdx,
+      finished,
+      stepResult,
+      coefs: JSON.stringify(coefs),
+    };
+    localStorage.setItem(`balance-script-practice-${scriptId}`, JSON.stringify(state));
+  }
+
+  /** 加载练习态 */
+  function loadPracticeState() {
+    if (!scriptId) return;
+    const saved = localStorage.getItem(`balance-script-practice-${scriptId}`);
+    if (saved) {
+      try {
+        const state = JSON.parse(saved);
+        stepIdx = state.stepsDone || 0;
+        finished = state.finished || false;
+        stepResult = state.stepResult || null;
+        if (state.coefs) coefs = JSON.parse(state.coefs);
+      } catch (e) {
+        /* ignore */
+      }
+    }
   }
 
   function setDrawerCollapsed(v) {
@@ -91,8 +121,41 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
     if (scriptId) {
       progress[scriptId] = { stepsDone: 0, finished: false };
       saveProgress(progress);
-      // 重新开始不强制清 AI 缓存；换脚本时再清
+      try {
+        localStorage.removeItem(`balance-script-practice-${scriptId}`);
+      } catch {
+        /* ignore */
+      }
     }
+  }
+
+  /** 选中脚本后：恢复练习进度，并钳制 stepIdx / coefs 合法性 */
+  function restoreOrResetPractice() {
+    const script = currentScript();
+    if (!script) {
+      resetPractice();
+      return;
+    }
+    loadPracticeState();
+    const n = script.steps?.length || 0;
+    if (n <= 0) {
+      stepIdx = 0;
+    } else if (stepIdx >= n) {
+      stepIdx = n - 1;
+    } else if (stepIdx < 0) {
+      stepIdx = 0;
+    }
+    const init = initCoefs(script.species);
+    coefs = {
+      left: init.left.map((c, i) => {
+        const v = Number(coefs?.left?.[i]);
+        return Number.isFinite(v) && v >= 1 ? Math.min(12, Math.round(v)) : c;
+      }),
+      right: init.right.map((c, i) => {
+        const v = Number(coefs?.right?.[i]);
+        return Number.isFinite(v) && v >= 1 ? Math.min(12, Math.round(v)) : c;
+      }),
+    };
   }
 
   function currentAiTip() {
@@ -220,7 +283,7 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
     draft = null;
     stepEditMode = false;
     aiTipLoading = false;
-    resetPractice();
+    restoreOrResetPractice();
     if (mode === 'script') {
       draft = scriptToDraft(currentScript());
       selectedStep = 0;

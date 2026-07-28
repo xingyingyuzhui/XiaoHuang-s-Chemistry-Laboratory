@@ -92,21 +92,34 @@ function updateScriptRow(script, now = Date.now()) {
 }
 
 /**
- * 补齐缺失的内置配平脚本：只 insert 不存在的 id
+ * 补齐 / 同步内置配平脚本：
+ * - 不存在 → insert
+ * - 仍为 source=builtin → 用 seed 覆盖内容（保证升级后步骤/focus 正确）
+ * - source=custom → 不覆盖（用户改过的保留）
  */
 function ensureBalanceScriptsSeeded() {
   ensureBalanceTable();
   const now = Date.now();
   let inserted = 0;
+  let updated = 0;
   for (const script of BALANCE_BUILTIN) {
-    const existing = queryOne('SELECT id FROM balance_scripts WHERE id = ?', [script.id]);
+    const existing = queryOne('SELECT id, source FROM balance_scripts WHERE id = ?', [script.id]);
     if (!existing) {
       insertScript({ ...script, source: 'builtin', createdAt: now, updatedAt: now }, now);
       inserted += 1;
+    } else if (String(existing.source || '') === 'builtin') {
+      // 保留原 sort_order
+      const row = queryOne('SELECT sort_order FROM balance_scripts WHERE id = ?', [script.id]);
+      updateScriptRow({
+        ...script,
+        sortOrder: Number(row?.sort_order) || script.sortOrder || 0,
+        source: 'builtin',
+      }, now);
+      updated += 1;
     }
   }
   const count = queryOne('SELECT COUNT(*) AS c FROM balance_scripts');
-  return { seeded: inserted > 0, inserted, count: Number(count?.c) || 0 };
+  return { seeded: inserted > 0 || updated > 0, inserted, updated, count: Number(count?.c) || 0 };
 }
 
 /** 强制恢复全部内置 id 的 seed 内容 */

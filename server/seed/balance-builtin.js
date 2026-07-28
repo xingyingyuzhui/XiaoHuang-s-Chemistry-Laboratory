@@ -118,28 +118,21 @@ const BALANCE_BUILTIN = [
     steps: [
       {
         label: '观察未配平式',
-        tip: '燃烧反应常按 C → H → O 的顺序想。先数碳、氢、氧各在左右有多少。',
-        action: 'explain',
-        focus: null,
-        expectedCoef: null,
-      },
-      {
-        label: '碳是否已齐',
-        tip: '左边 CH₄ 与右边 CO₂ 的碳原子个数是否已经相等？若已相等，可先不动它们。',
+        tip: '燃烧反应常按 C → H → O 的顺序想。先数碳、氢、氧：碳在左右已各 1 个，可先不动 CH₄ 与 CO₂；氢、氧还不齐。',
         action: 'explain',
         focus: null,
         expectedCoef: null,
       },
       {
         label: '调整水的系数',
-        tip: '看氢：左边甲烷里的氢与右边水中的氢是否相等？改水的系数使氢守恒。',
+        tip: '看氢：左边 CH₄ 有 4 个 H，右边每个 H₂O 有 2 个 H。改水的系数，使氢守恒。',
         action: 'set_coef',
         focus: { side: 'right', index: 1 },
         expectedCoef: 2,
       },
       {
         label: '调整氧气系数',
-        tip: 'C、H 对齐后，数右边氧原子总数（来自 CO₂ 和水），再改 O₂ 的系数使氧守恒。',
+        tip: 'C、H 对齐后，数右边氧原子总数（CO₂ 与水），再改 O₂ 的系数使氧守恒。',
         action: 'set_coef',
         focus: { side: 'left', index: 1 },
         expectedCoef: 2,
