@@ -1,7 +1,7 @@
 {
   "name": "xiaohuang-chem-lab",
   "private": true,
-  "version": "3.0.5",
+  "version": "3.0.6",
   "description": "小黄的化学实验室",
   "author": "小黄的化学实验室",
   "main": "electron/main.cjs",
