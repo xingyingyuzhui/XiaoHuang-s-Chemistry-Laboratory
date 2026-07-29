@@ -6,6 +6,7 @@ import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi, labsApi, bal
 import { showAppBubble, hideBrandTip } from './brand-tip.js';
 import { initRollcall, onRollcallSectionEnter } from './classroom-rollcall.js';
 import { createQuizConfigController } from './ai-classroom/quiz-config.js';
+import { createQuizModel, isRateLimitedError } from './ai-classroom/quiz-model.js';
 import { createWrongBookController } from './ai-classroom/wrong-book.js';
 import { createOfflineQuizController } from './ai-classroom/offline-quiz.js';
 import { createMasteryMapController } from './ai-classroom/mastery-map.js';
@@ -72,17 +73,7 @@ let config = {
   reveal: 'immediate',
 };
 
-/** @type {Array<any>} */
-let paper = [];
-let submitted = false;
-/** 交卷请求进行中，防连点 */
-let submitting = false;
 let currentSection = 'quiz';
-let lastSessionId = null;
-/** 出题快照 id：交卷时交给服务端按标准答案判分 */
-let currentPaperId = null;
-let expandedResultIdx = null;
-
 let wrongBookBadgeCount = 0;
 
 const quizConfig = createQuizConfigController({
@@ -92,6 +83,14 @@ const quizConfig = createQuizConfigController({
   setConfig: (next) => {
     config = next;
   },
+});
+const quizModel = createQuizModel({
+  aiApi,
+  quizApi,
+  getConfig: () => config,
+  getGradeLabels: () => quizConfig.gradeLabels(),
+  getTopicLabels: () => quizConfig.topicLabels(),
+  getDiffLabel: () => quizConfig.diffLabel(),
 });
 const labShell = createLabShellController({ select: $, escapeHtml, labsApi, aiApi });
 const wrongBook = createWrongBookController({
@@ -270,30 +269,12 @@ async function selectSection(id) {
 
 /** 导出本场测验为 Markdown 文本并下载 */
 export async function exportQuizMarkdown() {
+  const paper = quizModel.getPaper();
   if (!paper.length) {
     await appAlert('当前没有可导出的题目（请先生成并进入练习或交卷结果）');
     return;
   }
-  const lines = [
-    '# 课堂练习导出',
-    '',
-    `导出时间：${new Date().toLocaleString()}`,
-    `题量：${paper.length}`,
-    '',
-  ];
-  paper.forEach((q, i) => {
-    lines.push(`## ${i + 1}. ${q.stem || q.question || ''}`);
-    (q.options || []).forEach((opt, j) => {
-      const mark = String.fromCharCode(65 + j);
-      lines.push(`- ${mark}. ${opt}`);
-    });
-    if (submitted || q.answer != null) {
-      const ans = typeof q.answer === 'number' ? String.fromCharCode(65 + q.answer) : q.answer;
-      lines.push(`- **答案**：${ans ?? ''}`);
-    }
-    if (q.explain) lines.push(`- **解析**：${q.explain}`);
-    lines.push('');
-  });
+  const lines = quizModel.buildExportMarkdownLines();
   const blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -409,43 +390,7 @@ async function generateQuiz() {
   if (btn) btn.disabled = true;
 
   try {
-    const data = await aiApi.quizGenerate({
-      grades: quizConfig.gradeLabels(),
-      difficulty: config.difficulty,
-      topics: quizConfig.topicLabels(),
-      count: config.count,
-    });
-
-    const list = data?.questions || [];
-    if (!list.length) throw new Error('未生成题目');
-
-    paper = list
-      .map((q, i) => {
-        const ans = Number(q.answer);
-        if (!Number.isInteger(ans) || ans < 0 || ans > 3) return null;
-        const options = (q.options || []).slice(0, 4);
-        if (options.length < 4) return null;
-        return {
-          id: q.id || `q${i + 1}`,
-          stem: q.stem,
-          options,
-          answer: ans,
-          knowledge: q.knowledge || '',
-          hint: q.hint || '',
-          explain: q.explain || '',
-          chosen: null,
-          usedHint: false,
-          usedExplain: false,
-        };
-      })
-      .filter(Boolean);
-    if (!paper.length) throw new Error('生成的题目无效，请重试');
-    currentPaperId = data?.paperId || null;
-    submitted = false;
-    submitting = false;
-    lastSessionId = null;
-    expandedResultIdx = null;
-
+    const { paper } = await quizModel.generate();
     const meta = $('#quizPaperMeta');
     if (meta) {
       meta.textContent = `${quizConfig.gradeLabels().join('、')} · ${quizConfig.diffLabel()} · ${paper.length} 题 · ${
@@ -465,17 +410,18 @@ async function generateQuiz() {
 function renderPaper() {
   const root = $('#quizQuestions');
   if (!root) return;
+  const paper = quizModel.getPaper();
 
   root.innerHTML = buildPaperHtml({
     paper,
-    submitted,
+    submitted: quizModel.getSubmitted(),
     reveal: config.reveal,
     escapeHtml,
   });
 
   root.querySelectorAll('.quiz-opt').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      if (submitted) return;
+      if (quizModel.getSubmitted()) return;
       paper[Number(btn.dataset.q)].chosen = Number(btn.dataset.opt);
       renderPaper();
     });
@@ -489,43 +435,8 @@ function renderPaper() {
   });
 }
 
-async function fetchHintText(q, forceRemote = false) {
-  if (!forceRemote && (q.hint || '').trim()) return q.hint.trim();
-  const data = await aiApi.quizHint({
-    stem: q.stem,
-    options: q.options,
-    knowledge: q.knowledge,
-  });
-  const text = (data?.text || '').trim();
-  if (text) q.hint = text;
-  return text || '先找出题干关键词，再联系对应概念，排除明显不合理的选项。';
-}
-
-async function fetchExplainText(q, forceRemote = false) {
-  if (!forceRemote && false) {
-    /* always can use remote for regenerate */
-  }
-  const data = await aiApi.quizExplain({
-    stem: q.stem,
-    options: q.options,
-    answer: q.answer,
-    knowledge: q.knowledge,
-    explain: q.explain,
-  });
-  const text =
-    (data?.text || '').trim() ||
-    q.explain ||
-    `正确答案是 ${String.fromCharCode(65 + q.answer)}。`;
-  q.explain = text;
-  return text;
-}
-
-function isRateLimitedError(err) {
-  return err?.status === 429 || err?.payload?.limited === true;
-}
-
 async function onHint(qi) {
-  const q = paper[qi];
+  const q = quizModel.getPaper()[qi];
   if (!q) return;
 
   const run = async (force = false) => {
@@ -536,7 +447,7 @@ async function onHint(qi) {
       persistent: true,
     });
     try {
-      const text = await fetchHintText(q, force);
+      const text = await quizModel.fetchHint(q, force);
       q.usedHint = true;
       showAppBubble({
         title: 'AI 提示',
@@ -560,7 +471,7 @@ async function onHint(qi) {
 }
 
 async function onExplain(qi) {
-  const q = paper[qi];
+  const q = quizModel.getPaper()[qi];
   if (!q) return;
 
   const run = async (force = false) => {
@@ -571,7 +482,7 @@ async function onExplain(qi) {
       persistent: true,
     });
     try {
-      const text = await fetchExplainText(q, force);
+      const text = await quizModel.fetchExplain(q, force);
       q.usedExplain = true;
       showAppBubble({
         title: 'AI 解答',
@@ -610,60 +521,26 @@ async function onExplain(qi) {
 }
 
 async function submitPaper() {
-  if (!paper.length || submitting) return;
-  submitting = true;
-  submitted = true;
+  if (!quizModel.getPaper().length || quizModel.isSubmitting()) return;
   const btnSubmit = $('#btnQuizSubmit');
   if (btnSubmit) btnSubmit.disabled = true;
   hideBrandTip();
-  expandedResultIdx = null;
 
-  let correct = 0;
-  let answered = 0;
-  paper.forEach((q) => {
-    if (q.chosen !== null) {
-      answered += 1;
-      if (q.chosen === q.answer) correct += 1;
-    }
-  });
+  const { correct, answered, total, saveOk, error, skipped } = await quizModel.submitSession();
+  if (skipped) {
+    if (btnSubmit) btnSubmit.disabled = false;
+    return;
+  }
 
   const scoreLine = $('#quizScoreLine');
   if (scoreLine) {
-    scoreLine.textContent = `得分 ${correct} / ${paper.length}（已作答 ${answered} 题）· ${quizConfig.diffLabel()}`;
+    scoreLine.textContent = `得分 ${correct} / ${total}（已作答 ${answered} 题）· ${quizConfig.diffLabel()}`;
   }
 
-  // 入库（错题本在服务端按：答错 或 用过 AI 解答）
-  let saveOk = false;
-  try {
-    const payloadItems = paper.map((q, i) => ({
-      id: q.id || `q${i + 1}`,
-      stem: q.stem,
-      options: q.options,
-      answer: Number(q.answer),
-      knowledge: q.knowledge,
-      hint: q.hint,
-      explain: q.explain,
-      chosen: q.chosen === null || q.chosen === undefined ? null : Number(q.chosen),
-      usedHint: Boolean(q.usedHint),
-      usedExplain: Boolean(q.usedExplain),
-    }));
-    const saved = await quizApi.saveSession({
-      paperId: currentPaperId,
-      grades: quizConfig.gradeLabels(),
-      difficulty: quizConfig.diffLabel(),
-      topics: quizConfig.topicLabels(),
-      reveal: config.reveal,
-      items: payloadItems,
-    });
-    lastSessionId = saved?.id || null;
-    saveOk = true;
-  } catch (err) {
-    console.error('保存练习场次失败', err);
+  if (!saveOk && error) {
     await appAlert(
-      `练习记录保存失败：${err.message || err}\n仍可查看本场结果，但错题本/历史可能未更新。`,
+      `练习记录保存失败：${error.message || error}\n仍可查看本场结果，但错题本/历史可能未更新。`,
     );
-  } finally {
-    submitting = false;
   }
 
   renderResultList();
@@ -682,18 +559,20 @@ function renderResultList() {
   if (!list) return;
 
   list.innerHTML = buildResultListHtml({
-    paper,
-    expandedResultIdx,
+    paper: quizModel.getPaper(),
+    expandedResultIdx: quizModel.getExpandedResultIdx(),
     escapeHtml,
   });
 
   list.querySelectorAll('[data-result-i]').forEach((el) => {
     const toggle = () => {
       const i = Number(el.dataset.resultI);
-      expandedResultIdx = expandedResultIdx === i ? null : i;
+      const cur = quizModel.getExpandedResultIdx();
+      quizModel.setExpandedResultIdx(cur === i ? null : i);
       renderResultList();
-      if (expandedResultIdx !== null) {
-        const card = list.querySelector(`[data-result-i="${expandedResultIdx}"]`);
+      const expanded = quizModel.getExpandedResultIdx();
+      if (expanded !== null) {
+        const card = list.querySelector(`[data-result-i="${expanded}"]`);
         card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     };
@@ -721,28 +600,10 @@ async function runSummary() {
   body.textContent = '正在生成本场分析报告…';
   if (btn) btn.disabled = true;
 
-  const letters = ['A', 'B', 'C', 'D'];
-  const results = paper.map((q) => ({
-    answered: q.chosen !== null,
-    correct: q.chosen !== null && q.chosen === q.answer,
-    knowledge: q.knowledge,
-    chosenLabel: q.chosen === null ? null : letters[q.chosen],
-    answerLabel: letters[q.answer],
-    usedHint: q.usedHint,
-    usedExplain: q.usedExplain,
-  }));
-
   try {
-    const data = await aiApi.quizSummary({
-      difficulty: quizConfig.diffLabel(),
-      topics: quizConfig.topicLabels(),
-      results,
-    });
+    const { text } = await quizModel.summary();
     body.className = 'quiz-report-body';
-    body.textContent = data?.text || '暂无报告内容';
-    if (lastSessionId && data?.text) {
-      quizApi.saveSummary(lastSessionId, data.text).catch(() => {});
-    }
+    body.textContent = text;
   } catch (err) {
     body.className = 'quiz-report-body';
     body.textContent = err.message || '报告生成失败';
@@ -752,11 +613,7 @@ async function runSummary() {
 }
 
 function backToConfig() {
-  submitted = false;
-  submitting = false;
-  paper = [];
-  lastSessionId = null;
-  expandedResultIdx = null;
+  quizModel.resetSession();
   hideBrandTip();
   const btnSubmit = $('#btnQuizSubmit');
   if (btnSubmit) btnSubmit.disabled = false;
@@ -784,12 +641,12 @@ export function initAiClassroom() {
 
   $('#btnQuizGenerate')?.addEventListener('click', generateQuiz);
   $('#btnQuizSubmit')?.addEventListener('click', async () => {
-    if (!paper.length) return;
+    if (!quizModel.getPaper().length) return;
     if (!(await appConfirm('确定交卷？交卷后将显示本场结果并写入练习记录。', { title: '交卷确认', okText: '交卷' }))) return;
     submitPaper();
   });
   $('#btnQuizBackConfig')?.addEventListener('click', async () => {
-    if (paper.length && !submitted) {
+    if (quizModel.getPaper().length && !quizModel.getSubmitted()) {
       if (!(await appConfirm('当前练习尚未交卷，确定放弃并重新出题？', { title: '放弃练习', okText: '放弃', danger: true }))) return;
     }
     backToConfig();
