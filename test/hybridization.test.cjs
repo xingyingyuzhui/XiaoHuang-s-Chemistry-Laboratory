@@ -239,7 +239,7 @@ test('ethylene tip mentions actual sigma dirs and pi', () => {
 test('molecule3d load clears selection handlers (source contract)', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const src = fs.readFileSync(path.join(__dirname, '../src/molecule3d.js'), 'utf8');
+  const src = fs.readFileSync(path.join(__dirname, '../src/molecule/viewer3d.js'), 'utf8');
   // load 中应在 clearRoot 之前 clearSelection，并始终通知 handler null
   const loadFn = src.match(/function load\(molecule\)\s*\{[\s\S]*?\n  function resize/);
   assert.ok(loadFn, 'load function body');

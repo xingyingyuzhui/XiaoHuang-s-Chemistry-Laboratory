@@ -97,3 +97,9 @@ test('panel-loading module exists and is used for lazy tab overlay', () => {
   assert.match(loading, /export function showPanelError/);
   assert.match(loading, /\.hidden\s*=\s*true/);
 });
+
+test('molecule feature is packaged under src/molecule/', () => {
+  const entry = source('src/main.js');
+  assert.match(entry, /import\(['"]\.\/molecule\//);
+  assert.ok(fs.existsSync(path.join(root, 'src/molecule/index.js')));
+});

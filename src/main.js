@@ -37,9 +37,9 @@ const panels = {
 const loader = createFeatureLoader();
 
 // ── 已加载模块引用（首次加载后填充）──
-let molModule = null;    // molecule-list.js
-let molAIModule = null;  // molecule-ai.js
-let molRxnModule = null; // molecule-reactions.js
+let molModule = null;    // molecule/list
+let molAIModule = null;  // molecule/ai
+let molRxnModule = null; // molecule/reactions
 let elecListModule = null; // electron-list.js
 let elecRendererModule = null; // electron-renderer.js
 let aiClassroomModule = null;  // ai-classroom.js
@@ -110,16 +110,12 @@ async function runFeatureLoad(panelName, mySeq, ensureReady) {
 
 async function ensureMoleculeModules() {
   const { mod } = await loader.load('molecule', () =>
-    Promise.all([
-      import('./molecule-list.js'),
-      import('./molecule-ai.js'),
-      import('./molecule-reactions.js'),
-    ]).then(([list, ai, rxn]) => ({ list, ai, rxn })),
+    import('./molecule/index.js'),
   );
   if (!molModule) {
     molModule = mod.list;
     molAIModule = mod.ai;
-    molRxnModule = mod.rxn;
+    molRxnModule = mod.reactions;
     molModule.setOnMoleculeChange(molRxnModule.onMoleculeChanged);
     molModule.initMoleculeList();
     molAIModule.initMoleculeAI();
