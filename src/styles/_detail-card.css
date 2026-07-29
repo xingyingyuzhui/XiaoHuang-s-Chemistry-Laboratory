@@ -142,3 +142,27 @@
   color: var(--text-secondary);
   font-weight: 500;
 }
+
+/* Teaching callout on detail card (moved from classroom-extra; owner: periodic detail) */
+.detail-teach {
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--stamp) 40%, transparent);
+  background: color-mix(in srgb, var(--stamp) 6%, var(--paper));
+}
+
+.detail-teach h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  color: var(--stamp);
+  font-family: var(--font-serif-cjk), inherit;
+}
+
+.detail-teach p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+

@@ -531,6 +531,7 @@
 }
 
 .rxn-player-bar-track {
+  position: relative;
   height: 4px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--border-ink) 18%, transparent);
@@ -795,4 +796,47 @@
     min-width: 4.8rem;
     max-width: 6rem;
   }
+}
+
+/* Player scrub / export / eq pop (moved from classroom-extra; owner: molecule/reactions) */
+.rxn-player-scrub {
+  position: absolute;
+  inset: -6px 0 -6px;
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.rxn-export-row {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.rxn-export-row .btn,
+.rxn-import-label {
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.rxn-eq-pop {
+  animation: rxn-eq-pop 0.35s ease;
+}
+
+@keyframes rxn-eq-pop {
+  from {
+    transform: scale(0.97);
+    opacity: 0.65;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.stage-3d.rxn-playing .mol-bond-card {
+  display: none;
 }

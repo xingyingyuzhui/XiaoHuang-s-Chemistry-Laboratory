@@ -1,4 +1,14 @@
-/* 课堂：点名 + 实验脚本 */
+/*
+ * Classroom extras — sections that left the main hub stylesheet
+ *
+ * Ownership map (feature module → selectors here):
+ *   classroom-rollcall.js → .rollcall-*, #aiSectionRollcall
+ *   lab-shell             → .lab-layout*, .lab-nav-rail*, .lab-drawer*, .lab-nav-*,
+ *                           .lab-script-*, .lab-step-*, #labMode* (drawer shell / list / detail)
+ *
+ * Content-heavy lab chrome (.lab-title-*, .lab-tool-*, .prestudy-*) remains in _ai-classroom.css.
+ * Non-classroom guests (molar / rxn / electron / detail-teach) were moved to their owner partials.
+ */
 
 .rollcall-layout {
   display: grid;
@@ -226,7 +236,7 @@
   padding: 0.5rem 0;
 }
 
-/* 实验探究：窄轨列表 + 右侧大详情抽屉 */
+/* ── lab-shell：窄轨列表 + 右侧大详情抽屉 ── */
 .lab-layout {
   display: grid;
   grid-template-columns: minmax(148px, 176px) minmax(0, 1fr);
@@ -643,185 +653,4 @@
 #labModeScript[hidden],
 #labModePrestudy[hidden] {
   display: none !important;
-}
-
-/* 计算页二级分区 */
-.molar-stage.stage-ai {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: auto;
-  padding: 0.85rem 1rem 1.1rem;
-}
-
-.molar-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 0;
-}
-
-.molar-section[hidden] {
-  display: none !important;
-}
-
-.molar-section-body {
-  display: grid;
-  grid-template-columns: minmax(220px, 340px) minmax(0, 1fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .molar-section-body {
-    grid-template-columns: 1fr;
-  }
-}
-
-.molar-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.molar-form .field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.molar-form .field span {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.molar-form input,
-.molar-form textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
-  padding: 0.5rem 0.6rem;
-  font: inherit;
-  font-size: 0.9rem;
-  background: var(--paper);
-  color: var(--ink);
-}
-
-.molar-form textarea {
-  resize: vertical;
-  min-height: 96px;
-}
-
-.molar-tool-panel {
-  padding: 0.85rem 1rem;
-  border-radius: 12px;
-  border: var(--ui-stroke) solid var(--border-ink);
-  background: var(--card-elevated);
-  box-shadow: var(--shadow-print-sm);
-  min-height: 120px;
-}
-
-.molar-tool-panel h4 {
-  margin: 0 0 0.45rem;
-  font-family: var(--font-serif-cjk), inherit;
-}
-
-.molar-balance-eq {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0.25rem 0 0.5rem;
-  color: var(--diagram, var(--ink));
-}
-
-.molar-balance-steps {
-  margin: 0.35rem 0 0;
-  padding-left: 1.15rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.molar-empty {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  padding: 0.5rem 0;
-}
-
-/* 反应 scrub / 导出 */
-.rxn-player-bar-track {
-  position: relative;
-}
-
-.rxn-player-scrub {
-  position: absolute;
-  inset: -6px 0 -6px;
-  width: 100%;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.rxn-export-row {
-  display: flex;
-  gap: 0.35rem;
-  margin-top: 0.4rem;
-}
-
-.rxn-export-row .btn,
-.rxn-import-label {
-  flex: 1;
-  text-align: center;
-  cursor: pointer;
-}
-
-.rxn-eq-pop {
-  animation: rxn-eq-pop 0.35s ease;
-}
-
-@keyframes rxn-eq-pop {
-  from {
-    transform: scale(0.97);
-    opacity: 0.65;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.stage-3d.rxn-playing .mol-bond-card {
-  display: none;
-}
-
-.electron-explain {
-  margin: 0.4rem 0 0;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
-
-.detail-teach {
-  margin-top: 0.75rem;
-  padding: 0.55rem 0.65rem;
-  border-radius: 10px;
-  border: 1px dashed color-mix(in srgb, var(--stamp) 40%, transparent);
-  background: color-mix(in srgb, var(--stamp) 6%, var(--paper));
-}
-
-.detail-teach h4 {
-  margin: 0 0 0.3rem;
-  font-size: 0.78rem;
-  color: var(--stamp);
-  font-family: var(--font-serif-cjk), inherit;
-}
-
-.detail-teach p {
-  margin: 0;
-  font-size: 0.84rem;
-  line-height: 1.5;
-  color: var(--text-muted);
 }

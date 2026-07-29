@@ -153,7 +153,107 @@
 }
 
 .molar-empty {
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-weight: 500;
-  padding: 0.5rem;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
 }
+
+/* Classroom-stage molar layout (moved from classroom-extra; owner: molar-ui) */
+.molar-stage.stage-ai {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.85rem 1rem 1.1rem;
+}
+
+.molar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.molar-section[hidden] {
+  display: none !important;
+}
+
+.molar-section-body {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .molar-section-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.molar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.molar-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.molar-form .field span {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.molar-form input,
+.molar-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.molar-form textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.molar-tool-panel {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-print-sm);
+  min-height: 120px;
+}
+
+.molar-tool-panel h4 {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-serif-cjk), inherit;
+}
+
+.molar-balance-eq {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0.5rem;
+  color: var(--diagram, var(--ink));
+}
+
+.molar-balance-steps {
+  margin: 0.35rem 0 0;
+  padding-left: 1.15rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+

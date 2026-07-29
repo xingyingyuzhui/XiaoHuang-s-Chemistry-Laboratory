@@ -1,4 +1,13 @@
-/* 分步配平 — 对齐实验探究布局；主公式大字 */
+/*
+ * Balance practice styles — owner: ai-classroom/balance-shell (+ balance-views / balance-model)
+ *
+ * Selectors:
+ *   .ai-section-balance, .balance-*  → balance-shell practice / editor chrome
+ *   .lab-layout-drawer…balance-*     → drawer collapse hooks shared with lab-shell layout
+ *
+ * Lab script editor primitives (.lab-script-*, .lab-step-*) stay in _ai-classroom / _classroom-extra;
+ * this file only adds balance-specific list card tweaks that reuse lab-nav-card look.
+ */
 
 .ai-section-balance {
   height: 100%;
