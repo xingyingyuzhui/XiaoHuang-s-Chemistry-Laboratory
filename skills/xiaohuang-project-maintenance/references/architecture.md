@@ -41,7 +41,16 @@
 
 ## Backend Boundaries
 
-`server/index.js` mounts `/api/molecules`, `/api/settings`, `/api/ai`, `/api/quiz`, `/api/reactions`, and `/api/students`. Route modules use `server/db/sqlite.js` and domain utilities. Built-in data enters through `seed/import-builtin.js` and `seed/import-reactions.js` during startup.
+`server/index.js` mounts `/api/molecules`, `/api/settings`, `/api/ai`, `/api/quiz`, `/api/offline-quiz`, `/api/reactions`, `/api/students`, `/api/mastery`, `/api/lesson-packs`, `/api/labs`, and `/api/balance-scripts`. Route modules use `server/db/sqlite.js` and domain utilities. Built-in data enters through `seed/import-builtin.js` and `seed/import-reactions.js` during startup.
+
+Services live under `server/services/`:
+
+| Area | Path | Role |
+| --- | --- | --- |
+| AI | `server/services/ai/*` | Chat, quiz generation, chemistry helpers (`chat-service`, `quiz-service`, `chemistry-service`, …) |
+| Quiz | `server/services/quiz/*` | Session lifecycle and wrong-book (`sessions`, `wrong-book`) |
+
+Quiz table DDL is owned by `server/db/ensure-quiz-schema.js`.
 
 `server/public/` is a generated copy of root `dist/`, made by `server/scripts/copy-frontend.js`. It is served by Express and packaged for Electron, but it is not the source frontend.
 
