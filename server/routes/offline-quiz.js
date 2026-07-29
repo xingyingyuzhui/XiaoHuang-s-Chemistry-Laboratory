@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { success, error, badRequest } = require('../utils/response');
 const { query, queryOne, run, runBatch } = require('../db/sqlite');
+const { ensureQuizSchema } = require('../db/ensure-quiz-schema');
 const { OFFLINE_QUESTIONS } = require('../seed/offline-quiz-bank');
 
 function uid(prefix) {
@@ -11,42 +12,6 @@ function uid(prefix) {
 }
 
 const offlinePapers = new Map();
-
-function ensureQuizTables() {
-  try {
-    run(`CREATE TABLE IF NOT EXISTS quiz_sessions (
-      id TEXT PRIMARY KEY,
-      created_at INTEGER NOT NULL,
-      grades TEXT DEFAULT '[]',
-      difficulty TEXT DEFAULT '',
-      topics TEXT DEFAULT '[]',
-      reveal TEXT DEFAULT 'immediate',
-      total INTEGER DEFAULT 0,
-      correct INTEGER DEFAULT 0,
-      answered INTEGER DEFAULT 0,
-      summary TEXT DEFAULT '',
-      source_type TEXT DEFAULT ''
-    )`);
-    run(`CREATE TABLE IF NOT EXISTS quiz_items (
-      id TEXT PRIMARY KEY,
-      session_id TEXT NOT NULL,
-      idx INTEGER NOT NULL,
-      stem TEXT NOT NULL,
-      options TEXT NOT NULL,
-      answer INTEGER NOT NULL,
-      knowledge TEXT DEFAULT '',
-      hint TEXT DEFAULT '',
-      explain_bank TEXT DEFAULT '',
-      chosen INTEGER,
-      used_hint INTEGER DEFAULT 0,
-      used_explain INTEGER DEFAULT 0,
-      is_correct INTEGER DEFAULT 0
-    )`);
-    try { run(`ALTER TABLE quiz_sessions ADD COLUMN source_type TEXT DEFAULT ''`); } catch {}
-  } catch (e) {
-    console.warn('ensureQuizTables (offline)', e.message);
-  }
-}
 
 function stripAnswer(q) {
   return {
@@ -130,7 +95,7 @@ router.post('/generate', (req, res) => {
 
 router.post('/submit', (req, res) => {
   try {
-    ensureQuizTables();
+    ensureQuizSchema();
     const { paperId, answers } = req.body || {};
     if (!paperId || !Array.isArray(answers) || !answers.length) {
       return badRequest(res, '缺少 paperId 或 answers');

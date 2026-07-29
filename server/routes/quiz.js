@@ -5,54 +5,8 @@
 const express = require('express');
 const router = express.Router();
 const { query, queryOne, run, runBatch } = require('../db/sqlite');
+const { ensureQuizSchema } = require('../db/ensure-quiz-schema');
 const { success, error, badRequest, notFound } = require('../utils/response');
-
-function ensureQuizTables() {
-  try {
-    run(`CREATE TABLE IF NOT EXISTS quiz_sessions (
-      id TEXT PRIMARY KEY,
-      created_at INTEGER NOT NULL,
-      grades TEXT DEFAULT '[]',
-      difficulty TEXT DEFAULT '',
-      topics TEXT DEFAULT '[]',
-      reveal TEXT DEFAULT 'immediate',
-      total INTEGER DEFAULT 0,
-      correct INTEGER DEFAULT 0,
-      answered INTEGER DEFAULT 0,
-      summary TEXT DEFAULT ''
-    )`);
-    run(`CREATE TABLE IF NOT EXISTS quiz_items (
-      id TEXT PRIMARY KEY,
-      session_id TEXT NOT NULL,
-      idx INTEGER NOT NULL,
-      stem TEXT NOT NULL,
-      options TEXT NOT NULL,
-      answer INTEGER NOT NULL,
-      knowledge TEXT DEFAULT '',
-      hint TEXT DEFAULT '',
-      explain_bank TEXT DEFAULT '',
-      chosen INTEGER,
-      used_hint INTEGER DEFAULT 0,
-      used_explain INTEGER DEFAULT 0,
-      is_correct INTEGER DEFAULT 0
-    )`);
-    run(`CREATE TABLE IF NOT EXISTS quiz_wrong_book (
-      id TEXT PRIMARY KEY,
-      created_at INTEGER NOT NULL,
-      stem TEXT NOT NULL,
-      options TEXT NOT NULL,
-      answer INTEGER NOT NULL,
-      knowledge TEXT DEFAULT '',
-      hint TEXT DEFAULT '',
-      explain_bank TEXT DEFAULT '',
-      last_chosen INTEGER,
-      last_session_id TEXT,
-      dismissed INTEGER DEFAULT 0
-    )`);
-  } catch (e) {
-    console.warn('ensureQuizTables', e.message);
-  }
-}
 
 function uid(prefix) {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -85,7 +39,7 @@ function parseAnswer(v) {
  * 规则 A：已选且答错 或 used_explain=1
  */
 function backfillWrongBookFromItems() {
-  ensureQuizTables();
+  ensureQuizSchema();
   const items = query(
     `SELECT * FROM quiz_items
      WHERE used_explain = 1
@@ -141,7 +95,7 @@ function backfillWrongBookFromItems() {
  */
 router.get('/stats', (req, res) => {
   try {
-    ensureQuizTables();
+    ensureQuizSchema();
     backfillWrongBookFromItems();
     const sessions = query(
       `SELECT id, created_at, grades, difficulty, topics, total, correct, answered
@@ -216,7 +170,7 @@ router.get('/stats', (req, res) => {
  */
 router.post('/sessions', (req, res) => {
   try {
-    ensureQuizTables();
+    ensureQuizSchema();
     const body = req.body || {};
     let items = Array.isArray(body.items) ? body.items : [];
     if (!items.length) return badRequest(res, '缺少题目');
@@ -428,7 +382,7 @@ router.post('/sessions', (req, res) => {
  */
 router.get('/wrong-book', (req, res) => {
   try {
-    ensureQuizTables();
+    ensureQuizSchema();
     backfillWrongBookFromItems();
     const rows = query(
       `SELECT * FROM quiz_wrong_book WHERE dismissed = 0 ORDER BY created_at DESC LIMIT 200`,
@@ -459,7 +413,7 @@ router.get('/wrong-book', (req, res) => {
  */
 router.post('/wrong-book/:id/attempt', (req, res) => {
   try {
-    ensureQuizTables();
+    ensureQuizSchema();
     const id = req.params.id;
     const row = queryOne(
       `SELECT * FROM quiz_wrong_book WHERE id = ? AND dismissed = 0`,
@@ -511,7 +465,7 @@ router.post('/wrong-book/:id/attempt', (req, res) => {
  */
 router.patch('/sessions/:id/summary', (req, res) => {
   try {
-    ensureQuizTables();
+    ensureQuizSchema();
     const id = req.params.id;
     const text = String(req.body?.summary || '');
     const row = queryOne(`SELECT id FROM quiz_sessions WHERE id = ?`, [id]);

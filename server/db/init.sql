@@ -59,7 +59,8 @@ CREATE TABLE IF NOT EXISTS quiz_sessions (
   total INTEGER DEFAULT 0,
   correct INTEGER DEFAULT 0,
   answered INTEGER DEFAULT 0,
-  summary TEXT DEFAULT ''
+  summary TEXT DEFAULT '',
+  source_type TEXT DEFAULT ''
 );
 
 -- 场次内题目快照

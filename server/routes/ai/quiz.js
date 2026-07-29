@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { query, queryOne, run } = require('../../db/sqlite');
+const { ensureQuizSchema } = require('../../db/ensure-quiz-schema');
 const { success, error, badRequest } = require('../../utils/response');
 const { storeQuizPaper } = require('../../utils/quiz-paper-store');
 const { callDeepSeekChat } = require('../../services/ai/chat-service');
@@ -246,53 +247,24 @@ const SCORE_CACHE_KEY = 'quiz_ai_score';
  * 根据库内练习/错题数据生成指纹；数据不变则不应重新调模型
  */
 function buildQuizScoreFingerprint() {
-  const { query: q, queryOne: q1, run: r } = require('../../db/sqlite');
-  try {
-    r(`CREATE TABLE IF NOT EXISTS quiz_sessions (
-      id TEXT PRIMARY KEY,
-      created_at INTEGER NOT NULL,
-      grades TEXT DEFAULT '[]',
-      difficulty TEXT DEFAULT '',
-      topics TEXT DEFAULT '[]',
-      reveal TEXT DEFAULT 'immediate',
-      total INTEGER DEFAULT 0,
-      correct INTEGER DEFAULT 0,
-      answered INTEGER DEFAULT 0,
-      summary TEXT DEFAULT ''
-    )`);
-    r(`CREATE TABLE IF NOT EXISTS quiz_wrong_book (
-      id TEXT PRIMARY KEY,
-      created_at INTEGER NOT NULL,
-      stem TEXT NOT NULL,
-      options TEXT NOT NULL,
-      answer INTEGER NOT NULL,
-      knowledge TEXT DEFAULT '',
-      hint TEXT DEFAULT '',
-      explain_bank TEXT DEFAULT '',
-      last_chosen INTEGER,
-      last_session_id TEXT,
-      dismissed INTEGER DEFAULT 0
-    )`);
-  } catch {
-    /* ignore */
-  }
+  ensureQuizSchema();
 
-  const agg = q1(
+  const agg = queryOne(
     `SELECT COUNT(*) AS n,
             COALESCE(SUM(total), 0) AS tq,
             COALESCE(SUM(correct), 0) AS tc,
             COALESCE(MAX(created_at), 0) AS last_at
      FROM quiz_sessions`,
   );
-  const wrongOpen = q1(
+  const wrongOpen = queryOne(
     `SELECT COUNT(*) AS c, COALESCE(MAX(created_at), 0) AS last_at
      FROM quiz_wrong_book WHERE dismissed = 0`,
   );
-  const wrongDismissed = q1(
+  const wrongDismissed = queryOne(
     `SELECT COUNT(*) AS c FROM quiz_wrong_book WHERE dismissed = 1`,
   );
   // 近 5 场明细也进指纹，避免「总数相同但场次不同」漏更新
-  const recent = q(
+  const recent = query(
     `SELECT id, total, correct, difficulty FROM quiz_sessions
      ORDER BY created_at DESC LIMIT 5`,
   );
