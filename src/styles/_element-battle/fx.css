@@ -1,0 +1,487 @@
+/* FLIP */
+.bc-flip {
+  border-color: color-mix(in srgb, var(--flame) 60%, var(--border-ink));
+  background: linear-gradient(
+    155deg,
+    var(--flame-soft),
+    color-mix(in srgb, var(--flame-soft) 25%, var(--card-elevated))
+  );
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.bc-foil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 28%,
+    color-mix(in srgb, var(--flame) 40%, transparent) 48%,
+    transparent 68%
+  );
+  background-size: 220% 100%;
+  animation: battle-foil 2.2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes battle-foil {
+  to {
+    background-position: 220% 0;
+  }
+}
+
+.bc-flip-tag {
+  position: relative;
+  z-index: 1;
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  color: var(--flame);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--flame) 50%, transparent);
+}
+
+.bc-flip-sub {
+  position: relative;
+  z-index: 1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.bc-fly-clone {
+  border-radius: 14px !important;
+}
+
+.bc-fly-ghost {
+  border-radius: 14px !important;
+  filter: blur(1px) !important;
+}
+
+.bc.is-deny {
+  outline: 2px solid color-mix(in srgb, #ef4444 70%, transparent);
+}
+
+/* VFX 层元素 · 色随 --b-dim-current */
+.battle-impact-ring {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  border: 3px solid var(--b-dim-current, var(--accent));
+  box-shadow: 0 0 20px var(--b-dim-current, var(--accent));
+  pointer-events: none;
+}
+
+.battle-spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--b-dim-current, var(--note));
+  box-shadow: 0 0 8px var(--b-dim-current, var(--note));
+  pointer-events: none;
+}
+
+.battle-vfx-orb {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--b-dim-current, var(--accent));
+  box-shadow: 0 0 12px var(--b-dim-current, var(--accent));
+  margin: -5px 0 0 -5px;
+}
+
+.battle-dim-flash-text {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  translate: -50% -50%;
+  font-size: var(--b-fs-hero);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--b-dim-current, var(--accent));
+  text-shadow:
+    0 0 24px color-mix(in srgb, var(--b-dim-current, var(--accent)) 60%, transparent),
+    0 4px 0 color-mix(in srgb, var(--ink) 15%, transparent);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.battle-turn-banner {
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  translate: -50% 0;
+  padding: 0.55rem 1.4rem;
+  border-radius: var(--b-r-pill);
+  background: color-mix(in srgb, var(--ink-lab) 88%, transparent);
+  color: #fff;
+  font-weight: 900;
+  font-size: var(--b-fs-title);
+  letter-spacing: 0.12em;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.battle-turn-banner span {
+  background: linear-gradient(
+    90deg,
+    #fff,
+    var(--b-dim-current, var(--note)),
+    #fff
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* FLIP 色闪层：替代整 stage filter，少掉帧 */
+.battle-dim-flash-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(
+    circle at 50% 42%,
+    color-mix(in srgb, var(--b-dim-current, var(--accent)) 28%, transparent),
+    transparent 65%
+  );
+  opacity: 0;
+}
+
+.battle-float-dmg {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  translate: -50% 0;
+  font-weight: 900;
+  font-size: 1.05rem;
+  pointer-events: none;
+  white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.battle-float-dmg--good {
+  color: var(--accent);
+}
+
+.battle-float-dmg--bad {
+  color: #ef4444;
+}
+
+.battle-float-dmg--info {
+  color: var(--note);
+}
+
+/* Toast / 结算 */
+.battle-toast {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%) translateY(8px);
+  z-index: 9;
+  max-width: min(92%, 360px);
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-lab) 92%, transparent);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.battle-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(0);
+}
+
+.battle-end-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ink-lab) 55%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.battle-end-rays {
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    color-mix(in srgb, var(--note) 18%, transparent),
+    transparent 20%,
+    color-mix(in srgb, var(--accent) 15%, transparent),
+    transparent 40%
+  );
+  animation: battle-rays 8s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes battle-rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.battle-end-box {
+  position: relative;
+  z-index: 1;
+  width: min(92%, 360px);
+  padding: 1.55rem 1.4rem 1.35rem;
+  border-radius: var(--b-r-lg);
+  background: var(--card-elevated);
+  border: var(--b-stroke-strong) solid var(--border-ink);
+  box-shadow: var(--b-shadow-float), 0 0 48px color-mix(in srgb, var(--accent) 20%, transparent);
+  text-align: center;
+  animation: battle-end-in 0.45s var(--b-ease-spring) both;
+  pointer-events: auto;
+}
+
+@keyframes battle-end-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.9);
+  }
+}
+
+.battle-end-medal {
+  font-size: 2.6rem;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  animation: battle-medal 0.6s ease both;
+}
+
+@keyframes battle-medal {
+  0% {
+    transform: scale(0.4) rotate(-20deg);
+  }
+  70% {
+    transform: scale(1.15) rotate(6deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+.battle-end-box h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  color: var(--ink-lab);
+}
+
+.battle-end-box p {
+  margin: 0 0 0.95rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.battle-end-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1100px) {
+  .battle-board {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(220px, 1fr) auto;
+    overflow: auto;
+  }
+
+  .battle-col-left {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .battle-col-left .battle-side-card {
+    flex: 1 1 160px;
+  }
+
+  .battle-log-card {
+    flex: 1 1 200px;
+    height: 140px;
+    max-height: 140px;
+    min-height: 140px;
+  }
+
+  .battle-ai-wall {
+    height: 6.4rem;
+    min-height: 6.4rem;
+    max-height: 6.4rem;
+  }
+
+  .battle-col-right {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .battle-col-right .battle-side-card {
+    flex: 1 1 180px;
+  }
+
+  .battle-hand-wrap {
+    --battle-hand-h: 12.25rem;
+  }
+
+  .battle-hand .bc {
+    width: 102px;
+    height: 146px !important;
+    min-height: 146px !important;
+    max-height: 146px !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .battle-hand-wrap {
+    --battle-hand-h: 13.25rem;
+  }
+
+  .battle-hand .bc {
+    width: 116px;
+    height: 158px !important;
+    min-height: 158px !important;
+    max-height: 158px !important;
+    margin-left: clamp(-6px, -0.2vw, 2px);
+  }
+
+  .battle-hand {
+    gap: 0.1rem;
+  }
+
+  .bc.is-large {
+    width: 148px;
+    min-height: 196px;
+  }
+}
+
+@media (max-width: 900px) {
+  .battle-mode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .battle-hand .bc {
+    margin-left: -18px;
+    width: 82px;
+    min-height: 112px;
+  }
+
+  .bc-symbol {
+    font-size: 1.4rem;
+  }
+
+  .battle-score-pills {
+    order: 5;
+    width: 100%;
+  }
+}
+
+@media (max-height: 720px) {
+  .battle-log {
+    display: none;
+  }
+
+  .bc.is-large {
+    width: 110px;
+    min-height: 142px;
+  }
+
+  .battle-hand-wrap {
+    --battle-hand-h: 11rem;
+  }
+
+  .battle-hub-ring {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-hub-orb,
+  .battle-hub-ring,
+  .battle-float-chip,
+  .battle-mode-shine,
+  .battle-foil,
+  .battle-felt-glow,
+  .battle-ambient-dot,
+  .battle-card-glow,
+  .battle-end-rays,
+  .bc-foil {
+    animation: none !important;
+  }
+
+  /* 轨道电子：减弱为很慢一圈，不完全关掉（否则“小球没了”） */
+  .bc-orbit {
+    animation: battle-orbit-spin 28s linear infinite !important;
+  }
+
+  .battle-hand .bc,
+  .battle-dim-slider {
+    transition: none;
+  }
+}
+
+/* 主题 */
+html[data-theme='pixel'] #panel-battle.active {
+  border-width: 3px;
+  border-radius: 0;
+  box-shadow: 5px 5px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .bc,
+html[data-theme='pixel'] .battle-mode-card,
+html[data-theme='pixel'] .battle-end-box,
+html[data-theme='pixel'] .battle-flip-pop,
+html[data-theme='pixel'] .battle-row {
+  border-radius: 0;
+  box-shadow: 3px 3px 0 var(--border-ink);
+}
+
+html[data-theme='pixel'] .bc-sheen,
+html[data-theme='pixel'] .bc-foil,
+html[data-theme='pixel'] .battle-mode-shine {
+  display: none;
+}
+
+html[data-theme='pixel'] .bc-frame {
+  box-shadow: inset 0 0 0 2px var(--border-ink);
+}
+
+/* 像素主题：保留电子绕转（可略快一点更“电子感”） */
+html[data-theme='pixel'] .bc-orbit {
+  animation: battle-orbit-spin 8s linear infinite !important;
+  border-style: solid;
+  opacity: 0.85;
+}
+
+html[data-theme='pixel'] .bc-orbit::after {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 0 1px var(--border-ink);
+}
+
+html[data-theme='blackboard'] .battle-felt {
+  filter: brightness(0.9);
+}
+
+html[data-theme='stationery'] .battle-mode-card.is-featured {
+  box-shadow: var(--shadow-print);
+}

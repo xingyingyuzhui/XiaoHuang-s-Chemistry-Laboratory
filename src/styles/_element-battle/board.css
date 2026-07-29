@@ -1,0 +1,1397 @@
+/* ========== 对局：三栏 + 底手牌 ========== */
+.battle-play {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 0.4rem 0.7rem 0.4rem;
+  gap: 0.35rem;
+  /* 锁死整页高度，中栏才能吃满 flex；手牌悬停用负 margin 探出 */
+  overflow: hidden;
+  contain: layout;
+}
+
+/* 三栏：高度只吃 flex 分到的空间；z-index 低于手牌，悬停牌可盖住桌沿 */
+.battle-board {
+  position: relative;
+  z-index: 1;
+  /* height:0 + flex-grow：经典锁高，避免内容 min-size 把板面撑高 */
+  flex: 1 1 0%;
+  height: 0;
+  min-height: 0;
+  max-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(200px, 0.9fr) minmax(0, 2.4fr) minmax(230px, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: stretch;
+  overflow: hidden;
+  contain: layout;
+}
+
+.battle-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 0;
+  min-width: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.battle-col-center {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.battle-col-left,
+.battle-col-right {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* 左栏：对手固定块 + 战报吃剩余；战报增高只进滚动，不改行高 */
+.battle-col-left {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  align-content: stretch;
+}
+
+.battle-col-right {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  height: 100%;
+  max-height: 100%;
+}
+
+.battle-side-card {
+  background: color-mix(in srgb, var(--card-elevated) 94%, transparent);
+  border: var(--b-stroke) solid var(--border);
+  border-radius: var(--b-r-md);
+  padding: 0.55rem 0.65rem;
+  box-shadow: var(--b-shadow-rest);
+  backdrop-filter: blur(6px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 对手区：牌墙高度锁死，避免少一张牌就挤战报 */
+.battle-ai-panel {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.battle-you-panel {
+  flex: 0 0 auto;
+}
+
+.battle-tip-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 牌墙：固定两行高度，多牌时内部滚动，不挤战报 */
+.battle-ai-wall {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.5rem;
+  align-content: start;
+  justify-items: center;
+  /* ~2 行卡背：不因 0/4/8 张上下跳 */
+  height: 7.6rem;
+  min-height: 7.6rem;
+  max-height: 7.6rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 70%
+    );
+  border-radius: var(--b-r-sm);
+  border: 1px solid color-mix(in srgb, var(--border-ink) 40%, transparent);
+}
+
+.battle-card-back-lg {
+  width: 100% !important;
+  max-width: 48px;
+  height: auto !important;
+  aspect-ratio: 42 / 58;
+  margin-left: 0 !important;
+  transform: rotate(calc((var(--i, 0) % 4 - 1.5) * 3deg)) !important;
+}
+
+/* 维度键：横排三等分，r 永不被裁 */
+.battle-dim-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  margin-bottom: 0.35rem;
+}
+
+.battle-dim-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--b-r-sm);
+  border: var(--b-stroke) solid var(--border);
+  background: var(--paper);
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  min-height: 4.2rem;
+}
+
+.battle-dim-key.is-on {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+    0 6px 16px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.battle-dim-key-ico {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--accent);
+  text-align: center;
+  grid-row: auto;
+}
+
+.battle-dim-key-name {
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--ink-lab);
+}
+
+.battle-dim-key-desc {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.battle-pile-lg .battle-deck-visual,
+.battle-pile-lg .battle-discard-stack {
+  width: 72px;
+  height: 98px;
+}
+
+.battle-pile-lg {
+  width: 72px;
+}
+
+.battle-side-card.is-active-side {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 8px 24px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.battle-side-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.battle-side-count {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+.battle-log-card {
+  /* 占满左栏第二行：外框高度=格子高度，与日志条数无关 */
+  min-height: 0 !important;
+  height: auto;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card-elevated) 100%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 40%, var(--card-elevated)) 100%
+    );
+}
+
+.battle-log-card h4,
+.battle-tip-card h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink-lab);
+  letter-spacing: 0.04em;
+  flex: 0 0 auto;
+}
+
+/* 战报列表：唯一可滚动区域；新增一行只在这里滚 */
+.battle-log-card .battle-log {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 0 !important; /* 同 board：高度只来自 flex，不来自内容 */
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  text-align: left;
+  width: 100%;
+}
+
+.battle-log-card .battle-log p {
+  margin: 0;
+  padding: 0.28rem 0 0.28rem 0.45rem;
+  border-bottom: 1px solid var(--border-soft);
+  border-left: 2px solid transparent;
+  font-size: var(--b-fs-caption);
+  line-height: 1.35;
+  height: 1.9rem;
+  max-height: 1.9rem;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.battle-log-card .battle-log p:first-child {
+  border-left-color: var(--b-dim-current, var(--accent));
+  color: var(--ink-lab);
+  font-weight: 700;
+  animation: battle-log-in 0.22s var(--b-ease) both;
+}
+
+@keyframes battle-log-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+.battle-tip-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.battle-tip-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+
+.battle-tip-fill .battle-dim-keys {
+  overflow: auto;
+  min-height: 0;
+}
+
+.battle-toolbar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-left: 0;
+  width: 100%;
+}
+
+.battle-toolbar-stack .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.battle-nudge-flip {
+  margin: 0.5rem 0 0;
+  font-size: var(--b-fs-caption);
+  color: var(--flame);
+  font-weight: 700;
+  line-height: 1.35;
+  padding: 0.4rem 0.5rem 0.4rem 0.65rem;
+  border-radius: var(--b-r-xs);
+  background: color-mix(in srgb, var(--flame-soft) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--flame) 28%, var(--border));
+  border-left: 3px solid var(--flame);
+  animation: none;
+  min-height: 2.55rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.battle-nudge-flip:not(.is-idle) {
+  animation: battle-nudge-pulse 1.6s ease-in-out infinite;
+}
+
+.battle-nudge-flip.is-idle {
+  color: var(--text-muted);
+  background: transparent;
+  border-color: transparent;
+  border-left-color: transparent;
+  animation: none;
+  font-weight: 600;
+}
+
+@keyframes battle-nudge-pulse {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--flame) 18%, transparent);
+  }
+}
+
+.battle-flip-cta.is-urgent {
+  animation: battle-flip-ready 1.1s ease-in-out infinite;
+}
+
+.battle-dim-dock {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0.15rem 0 0.25rem;
+  z-index: 3;
+}
+
+.battle-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.55rem 0.6rem;
+  border-radius: var(--b-r-lg);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 42%,
+      color-mix(in srgb, var(--card-elevated) 55%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--card-bg) 35%, transparent);
+  overflow: hidden;
+  perspective: 900px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--b-dim-current, var(--accent)) 12%, transparent);
+}
+
+.battle-play[data-dim='z'] {
+  --b-dim-current: var(--b-dim-z);
+}
+.battle-play[data-dim='en'] {
+  --b-dim-current: var(--b-dim-en);
+}
+.battle-play[data-dim='radius'] {
+  --b-dim-current: var(--b-dim-radius);
+}
+
+.battle-stage-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.battle-stage > *:not(.battle-stage-ambient) {
+  position: relative;
+  z-index: 1;
+}
+
+.battle-discard-n {
+  font-size: 1.1rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+}
+
+.battle-play-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.battle-felt {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 90% 70% at 50% 42%,
+      color-mix(in srgb, var(--accent) 18%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--paper) 75%, var(--accent) 8%),
+      var(--paper-deep) 55%,
+      color-mix(in srgb, var(--paper-deep) 80%, var(--ink) 6%)
+    );
+}
+
+.battle-felt-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.09;
+  background-image:
+    linear-gradient(var(--border-ink) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-ink) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 48%, #000 10%, transparent 72%);
+}
+
+.battle-felt-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: min(80%, 520px);
+  height: 220px;
+  translate: -50% -50%;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--accent) 22%, transparent),
+    transparent 70%
+  );
+  filter: blur(8px);
+  animation: battle-arena-breathe 4s ease-in-out infinite;
+}
+
+@keyframes battle-arena-breathe {
+  50% {
+    opacity: 0.65;
+    transform: scale(1.06);
+  }
+}
+
+.battle-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.battle-ambient-dot {
+  position: absolute;
+  width: var(--sz, 5px);
+  height: var(--sz, 5px);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 80%, var(--ink) 10%);
+  opacity: var(--op, 0.55);
+  animation: battle-ambient-float var(--d, 12s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  box-shadow:
+    0 0 12px var(--accent),
+    0 0 22px color-mix(in srgb, var(--note) 45%, transparent);
+}
+
+@keyframes battle-ambient-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: calc(var(--op, 0.5) * 0.55);
+  }
+  50% {
+    transform: translate(16px, -36px) scale(1.35);
+    opacity: var(--op, 0.7);
+  }
+}
+
+.battle-ambient-glyph {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+  color: var(--accent);
+  opacity: 0.06;
+  pointer-events: none;
+  animation: battle-ambient-float var(--d, 14s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  user-select: none;
+}
+
+.battle-play-bg .battle-ambient-glyph {
+  display: none;
+}
+
+.battle-stage-ambient .battle-ambient-glyph {
+  display: block;
+  opacity: 0.07;
+}
+
+.battle-vfx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.battle-play > *:not(.battle-play-bg):not(.battle-vfx-layer):not(.battle-flip-mask):not(.battle-end-mask):not(.battle-help-mask) {
+  position: relative;
+  z-index: 2;
+}
+
+.battle-play > .battle-flip-mask {
+  position: absolute;
+  z-index: 80;
+}
+
+.battle-play > .battle-help-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 85;
+}
+
+/* 胜/负结算：全屏遮罩 + 居中弹窗（勿被上面 relative 覆盖） */
+.battle-play > .battle-end-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.battle-play-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.battle-play-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.battle-play-title strong {
+  font-size: 1rem;
+  color: var(--ink-lab);
+  letter-spacing: 0.02em;
+}
+
+.battle-dim-pill {
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent);
+  animation: battle-pill-pulse 2s ease-in-out infinite;
+}
+
+@keyframes battle-pill-pulse {
+  50% {
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
+
+.battle-score-pills {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.battle-score-pill {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-elevated);
+  color: var(--ink-soft);
+}
+
+.battle-score-pill.is-you {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--accent);
+}
+
+.battle-score-pill.is-ai {
+  border-color: color-mix(in srgb, var(--note) 35%, var(--border));
+  color: var(--note);
+}
+
+/* 规则弹窗 */
+.battle-help-mask {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink-lab) 48%, transparent);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  pointer-events: auto;
+}
+
+.battle-help-pop {
+  position: relative;
+  z-index: 1;
+  width: min(92%, 440px);
+  max-height: min(78vh, 560px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--b-r-lg, 18px);
+  background: var(--card-elevated);
+  border: var(--b-stroke-strong, 2px) solid var(--border-ink);
+  box-shadow: var(--b-shadow-float, var(--shadow-float));
+  animation: battle-end-in 0.35s var(--b-ease-spring, ease) both;
+  overflow: hidden;
+}
+
+.battle-help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+
+.battle-help-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ink-lab);
+}
+
+.battle-help-body {
+  padding: 0.75rem 1.05rem 1.1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.battle-help-body section {
+  margin-bottom: 0.85rem;
+}
+
+.battle-help-body section:last-child {
+  margin-bottom: 0;
+}
+
+.battle-help-body h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.82rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.battle-help-body p {
+  margin: 0.2rem 0;
+}
+
+.battle-help-body ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.15rem;
+}
+
+.battle-help-body li {
+  margin: 0.15rem 0;
+}
+
+.battle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card-elevated) 88%, transparent);
+  border: 1.5px solid var(--border-soft);
+  flex-shrink: 0;
+  backdrop-filter: blur(6px);
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.battle-row.is-active-side {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--card-elevated));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+    0 8px 28px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.battle-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border: 2px solid var(--border);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.battle-row.is-active-side .battle-avatar-pulse {
+  border-color: var(--accent);
+  animation: battle-avatar-ring 1.4s ease-in-out infinite;
+}
+
+@keyframes battle-avatar-ring {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+}
+
+.battle-row-meta {
+  min-width: 72px;
+}
+
+.battle-row-meta h3 {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-lab);
+}
+
+.battle-row-meta p {
+  margin: 0.05rem 0 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.battle-hp {
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+  overflow: hidden;
+  width: 72px;
+}
+
+.battle-hp i {
+  display: block;
+  height: 100%;
+  width: var(--w, 50%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--note), color-mix(in srgb, var(--note) 60%, #fff));
+  transition: width 0.35s ease;
+}
+
+.battle-hp.is-you i {
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 50%, #fff));
+}
+
+.battle-ai-backs {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 52px;
+}
+
+.battle-card-back {
+  width: 34px;
+  height: 48px;
+  margin-left: -12px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-ink);
+  background: linear-gradient(
+    145deg,
+    var(--accent) 0%,
+    color-mix(in srgb, var(--accent) 55%, var(--ink)) 100%
+  );
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transform: rotate(calc((var(--i, 0) - 4) * 2.5deg));
+  transition: transform 0.2s ease;
+}
+
+.battle-row-ai.is-active-side .battle-card-back {
+  animation: battle-back-bob 1.1s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.05s);
+}
+
+@keyframes battle-back-bob {
+  50% {
+    transform: rotate(calc((var(--i, 0) - 4) * 2.5deg)) translateY(-4px);
+  }
+}
+
+.battle-card-back::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid color-mix(in srgb, #fff 35%, transparent);
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    -22deg,
+    transparent,
+    transparent 3px,
+    color-mix(in srgb, #fff 14%, transparent) 3px,
+    color-mix(in srgb, #fff 14%, transparent) 4px
+  );
+}
+
+.battle-more {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.battle-toolbar {
+  margin-left: auto;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.battle-toolbar .btn {
+  min-height: 2.25rem;
+  font-weight: 700;
+}
+
+.battle-flip-remain {
+  font-weight: 900;
+  margin-left: 0.2rem;
+}
+
+/* 仅 is-urgent 跳动；is-ready 只做静态可点态 */
+.battle-flip-cta.is-ready:not(:disabled) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.battle-flip-cta.is-urgent:not(:disabled) {
+  animation: battle-flip-ready 1.4s ease-in-out infinite;
+}
+
+@keyframes battle-flip-ready {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--b-dim-current, var(--accent)) 28%, transparent);
+    transform: scale(1.02);
+  }
+}
+
+/* 提示模式切换 */
+.battle-hint-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--b-r-pill);
+  border: var(--b-stroke) solid var(--border);
+  background: color-mix(in srgb, var(--paper) 80%, var(--card-elevated));
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.battle-hint-btn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0.28rem 0.65rem;
+  font: inherit;
+  font-size: var(--b-fs-caption);
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.battle-hint-btn.is-on {
+  color: var(--ink-lab);
+  background: color-mix(in srgb, var(--accent-soft) 90%, var(--card-elevated));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.battle-hint-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.battle-sfx-btn {
+  min-width: 3.2rem;
+  font-weight: 700;
+}
+
+.battle-sfx-btn.is-muted {
+  opacity: 0.72;
+  color: var(--text-muted);
+}
+
+/* 普通模式：关闭可出高亮/脉冲 */
+.battle-play[data-hint='normal'] .battle-hand .bc.is-playable,
+.battle-play[data-hint='normal'] .battle-hand .bc.is-glow {
+  animation: none;
+  box-shadow: var(--b-shadow-raise), inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+}
+
+.battle-play[data-hint='normal'] .battle-hand .bc.is-playable::after {
+  display: none;
+}
+
+/* 旧 arena 类名兼容（已迁到 battle-stage） */
+.battle-arena {
+  display: none;
+}
+
+.battle-status {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 9.5rem;
+  font-size: var(--b-fs-title);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  padding: 0.35rem 1rem;
+  border-radius: var(--b-r-pill);
+  background: var(--card-elevated);
+  border: var(--b-stroke) solid var(--border);
+  box-shadow: var(--b-shadow-rest);
+  box-sizing: border-box;
+}
+
+.battle-status-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.battle-status.is-yours {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.battle-status.is-yours .battle-status-pulse,
+.battle-status.is-thinking .battle-status-pulse {
+  animation: battle-dot 0.9s step-end infinite;
+}
+
+@keyframes battle-dot {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.battle-status.is-thinking {
+  color: var(--note);
+}
+
+.battle-status.is-end {
+  color: var(--flame);
+}
+
+.battle-table-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  width: min(100%, 640px);
+  position: relative;
+}
+
+/* 顶牌 + 底下散落弃牌 */
+.battle-top-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 148px;
+  min-height: 0;
+  z-index: 2;
+}
+
+.battle-top-zone .battle-top-slot {
+  position: relative;
+  z-index: 3;
+}
+
+/* 散落弃牌：完整牌面缩小后乱放，像打出去的扑克 */
+.battle-scatter-pile {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 220px;
+  height: 160px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.battle-scatter-item {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 88px;
+  height: 118px;
+  margin: -59px 0 0 -44px;
+  transform: translate(var(--x, 0), var(--y, 0)) rotate(var(--r, 0deg));
+  z-index: calc(var(--z, 0) + 1);
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--ink) 18%, transparent));
+  opacity: 0.94;
+}
+
+.battle-scatter-item .bc.is-scatter {
+  width: 88px !important;
+  height: 118px !important;
+  min-height: 118px !important;
+  max-height: 118px !important;
+  max-width: none !important;
+  padding: 0.28rem 0.22rem 0.3rem;
+  border-width: 2px;
+  border-radius: var(--b-r-md, 12px);
+  overflow: hidden;
+  box-shadow:
+    var(--b-shadow-raise, var(--shadow-md)),
+    inset 0 1px 0 color-mix(in srgb, #fff 50%, transparent);
+}
+
+.battle-scatter-item .bc.is-scatter .bc-symbol {
+  font-size: 1.35rem;
+  margin-top: 0.12rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-name {
+  font-size: 0.62rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-z {
+  font-size: 0.52rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-meters {
+  margin: 0.12rem 0 0.06rem;
+  gap: 2px;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-meters i {
+  height: 3px;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-stats {
+  font-size: 0.52rem;
+  gap: 0.2rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-power {
+  margin-top: 0.05rem;
+  padding-bottom: 0;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-power em {
+  font-size: 0.48rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-power b {
+  font-size: 0.82rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-orbit {
+  width: 48px;
+  height: 48px;
+  margin-left: -24px;
+  top: 12%;
+  opacity: 0.55;
+  animation: none; /* 桌上弃牌不转，减噪 */
+}
+
+.battle-scatter-item .bc.is-scatter .bc-hint {
+  display: none;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-block {
+  top: calc(12% + 2px);
+  font-size: 0.48rem;
+  padding: 0.04rem 0.22rem;
+}
+
+.battle-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 64px;
+}
+
+.battle-pile-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.battle-deck-visual {
+  width: 54px;
+  height: 74px;
+  margin-left: 0;
+  transform: none;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+.battle-discard-stack {
+  width: 54px;
+  height: 74px;
+  border-radius: 8px;
+  border: 2px dashed var(--border-ink);
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  background: color-mix(in srgb, var(--card-bg) 45%, transparent);
+}
+
+.battle-top-slot {
+  position: relative;
+  min-height: 210px;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-top-halo {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 40%, transparent),
+    transparent 68%
+  );
+  animation: battle-halo 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.battle-top-slot .bc.is-large {
+  animation: battle-top-float 3.2s ease-in-out infinite;
+}
+
+@keyframes battle-top-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes battle-halo {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.7;
+  }
+}
+
+.battle-top-slot .bc {
+  position: relative;
+  z-index: 1;
+}
+
+.battle-compare-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  background: var(--card-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+
+.battle-compare-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: battle-dot 1s step-end infinite;
+}
+
+.battle-compare-chip b {
+  color: var(--accent);
+}
+
+.battle-dim-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(100%, 380px);
+  padding: 0.28rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper-deep) 80%, var(--card-bg));
+  border: 1.5px solid var(--border);
+  box-shadow: inset 0 1px 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.battle-dim-seg {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.42rem 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.battle-dim-seg.is-on {
+  color: var(--ink-lab);
+  font-weight: 900;
+}
+
+.battle-dim-ico {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.battle-dim-slider {
+  position: absolute;
+  z-index: 0;
+  top: 0.28rem;
+  bottom: 0.28rem;
+  left: 0.28rem;
+  width: calc((100% - 0.56rem) / 3);
+  border-radius: 999px;
+  background: var(--card-elevated);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 20%, transparent);
+  transform: translateX(calc(var(--dim-i, 0) * 100%));
+  transition: transform 0.35s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+
+/* 兼容旧用法；局内战报以 .battle-log-card .battle-log 为准 */
+.battle-log {
+  width: 100%;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.battle-log p {
+  margin: 0.1rem 0;
+}
+
+/* FLIP 弹层 */
+/* FLIP 全屏遮罩：盖过手牌，避免点不到 */
+.battle-flip-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 80 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink-lab) 45%, transparent);
+  backdrop-filter: blur(3px);
+  pointer-events: auto;
+}
+
+.battle-flip-pop {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  z-index: 81;
+  width: min(94%, 380px);
+  padding: 1.15rem 1.1rem 1rem;
+  border-radius: 16px;
+  background: var(--card-elevated);
+  border: 2px solid var(--border-ink);
+  box-shadow: var(--shadow-float), 0 0 40px color-mix(in srgb, var(--flame) 20%, transparent);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.battle-flip-opt small {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.battle-flip-pop-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--ink-lab);
+  letter-spacing: 0.06em;
+}
+
+.battle-flip-pop-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.battle-flip-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.7rem 0.3rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--paper);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--ink);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.battle-flip-opt:hover {
+  transform: translateY(-3px) scale(1.03);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.battle-flip-opt-ico {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 1.35rem;
+  color: var(--accent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+

@@ -1,0 +1,727 @@
+/* 手牌：固定底栏高度；卡面略放大但仍锁高防跳变 */
+.battle-hand-wrap {
+  --battle-hand-h: 12.75rem;
+  flex: 0 0 var(--battle-hand-h) !important;
+  flex-grow: 0 !important;
+  flex-shrink: 0 !important;
+  height: var(--battle-hand-h) !important;
+  min-height: var(--battle-hand-h) !important;
+  max-height: var(--battle-hand-h) !important;
+  position: relative;
+  z-index: 40;
+  padding: 0.2rem 0.45rem 0.2rem;
+  margin: 0;
+  margin-top: -0.2rem;
+  border-radius: var(--b-r-lg) var(--b-r-lg) var(--b-r-md) var(--b-r-md);
+  background: color-mix(in srgb, var(--card-elevated) 92%, var(--paper));
+  border: var(--b-stroke) solid var(--border);
+  box-shadow: 0 -6px 28px color-mix(in srgb, var(--ink) 8%, transparent);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 底栏本身不跟着内容长高；悬停靠 transform 在牌面内抬 */
+  box-sizing: border-box;
+}
+
+.battle-hand {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0.55rem 0.5rem 0.2rem;
+  perspective: 900px;
+  gap: 0;
+  width: 100%;
+  overflow: visible;
+}
+
+/* 占位 hint 已废弃：不占高度 */
+.battle-hand-hint {
+  display: none !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.battle-hand .bc {
+  margin-left: clamp(-8px, -0.45vw, 2px);
+  flex: 0 0 auto;
+  width: min(112px, 13.5vw);
+  max-width: 118px;
+  /* 锁死高度：差值徽章进出时绝不能把牌撑高 */
+  height: 152px;
+  min-height: 152px;
+  max-height: 152px;
+  box-sizing: border-box;
+  overflow: hidden;
+  transform-origin: 50% 100%;
+  --fan: calc((var(--i, 0) - (var(--n, 7) - 1) / 2) * 2.4deg);
+  --lift: min(var(--arc, 5px), 7px);
+  --zoom: 1;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  transform:
+    translateY(calc(-1 * var(--lift)))
+    rotate(var(--fan))
+    rotateX(var(--tilt-x))
+    rotateY(var(--tilt-y))
+    scale(var(--zoom));
+  transition:
+    transform 0.22s var(--b-ease-spring),
+    box-shadow 0.2s ease,
+    opacity 0.15s ease,
+    filter 0.15s ease;
+  z-index: calc(var(--i, 0) + 1);
+}
+
+.battle-hand .bc.bc-flip {
+  height: 152px;
+  min-height: 152px;
+  max-height: 152px;
+}
+
+/* 手牌内装饰层裁切；轨道电子略缩进避免被切感 */
+.battle-hand .bc .bc-bg,
+.battle-hand .bc .bc-sheen,
+.battle-hand .bc .bc-frame {
+  border-radius: inherit;
+}
+
+.battle-hand .bc:first-child {
+  margin-left: 0;
+}
+
+/* 可出（新手）：克制描边，减弱多层光晕叠色 */
+.battle-hand .bc.is-playable {
+  z-index: calc(var(--i, 0) + 15);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--b-dim-current, var(--accent)) 75%, var(--border)),
+    0 6px 14px color-mix(in srgb, var(--ink) 10%, transparent);
+  animation: battle-card-glow 2.2s ease-in-out infinite;
+}
+
+.battle-hand .bc.is-playable::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 26%;
+  height: 3px;
+  border-radius: var(--b-r-pill);
+  background: color-mix(in srgb, var(--b-dim-current, var(--accent)) 85%, transparent);
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+
+
+@keyframes battle-card-glow {
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--b-dim-current, var(--accent)) 90%, var(--border)),
+      0 8px 16px color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+}
+
+/* 悬停：只 transform，不改 height/min-height */
+.battle-hand .bc:hover {
+  --lift: 14px;
+  --zoom: 1.08;
+  --fan: calc((var(--i, 0) - (var(--n, 7) - 1) / 2) * 0.4deg);
+  z-index: 60;
+  box-shadow:
+    var(--b-shadow-float),
+    0 0 0 2px color-mix(in srgb, var(--border-ink) 35%, transparent);
+  filter: brightness(1.04);
+}
+
+.battle-hand .bc.is-playable:hover {
+  --lift: 16px;
+  --zoom: 1.1;
+}
+
+/* 压不过：变暗但仍可悬停 */
+.battle-hand .bc.is-locked {
+  opacity: 0.72;
+  filter: saturate(0.75);
+}
+
+.battle-hand .bc.is-locked:hover {
+  opacity: 1;
+  filter: brightness(1.04) saturate(0.9);
+}
+
+/* 非己回合 */
+.battle-hand .bc.is-blocked {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.battle-hand .bc-flip.is-urgent {
+  animation: battle-card-glow 1.1s ease-in-out infinite;
+  box-shadow: 0 0 0 2px var(--flame), 0 0 20px color-mix(in srgb, var(--flame) 40%, transparent);
+}
+
+/* ========== 卡牌 ========== */
+.bc {
+  position: relative;
+  width: 96px;
+  min-height: 128px;
+  border-radius: var(--b-r-md);
+  border: var(--b-stroke-card) solid color-mix(in srgb, var(--border-ink) 70%, var(--accent) 30%);
+  background: var(--card-elevated);
+  box-shadow:
+    var(--b-shadow-raise),
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+  /* 默认裁切装饰层；手牌单独放开，避免轨道电子被切 */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.35rem 0.32rem 0.4rem;
+  color: var(--ink);
+  isolation: isolate;
+  font-family: var(--font-main);
+  /* 区色轨 */
+  --b-zone: var(--zone-p);
+}
+
+.bc.block-s {
+  --b-zone: var(--zone-s);
+}
+.bc.block-p {
+  --b-zone: var(--zone-p);
+}
+.bc.block-d {
+  --b-zone: var(--zone-d);
+}
+.bc.block-ds {
+  --b-zone: var(--zone-ds);
+}
+.bc.block-f {
+  --b-zone: var(--zone-f);
+}
+.bc.block-noble {
+  --b-zone: var(--zone-noble);
+}
+
+.bc.bc-el::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  z-index: 4;
+  background: var(--b-zone);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--b-zone) 50%, transparent);
+  pointer-events: none;
+}
+
+button.bc {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+}
+
+button.bc:disabled {
+  cursor: not-allowed;
+}
+
+.bc.is-large {
+  width: min(136px, 18vw);
+  min-height: 180px;
+  border-radius: var(--b-r-lg);
+  padding: 0.45rem 0.4rem 0.48rem;
+  border-width: var(--b-stroke-strong);
+  box-shadow:
+    var(--b-shadow-float),
+    0 0 36px color-mix(in srgb, var(--b-dim-current, var(--accent)) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 60%, transparent);
+}
+
+.bc.is-large .bc-symbol {
+  font-size: 2.65rem;
+}
+
+.bc.is-large .bc-power b {
+  font-size: 1.35rem;
+}
+
+.bc.is-large .bc-name {
+  font-size: 0.9rem;
+}
+
+.bc-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.bc.block-s .bc-bg {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--zone-s) 75%, #fff) 0%,
+    var(--card-elevated) 70%
+  );
+}
+.bc.block-p .bc-bg {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--zone-p) 75%, #fff) 0%,
+    var(--card-elevated) 70%
+  );
+}
+.bc.block-d .bc-bg {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--zone-d) 75%, #fff) 0%,
+    var(--card-elevated) 70%
+  );
+}
+.bc.block-ds .bc-bg {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--zone-ds) 75%, #fff) 0%,
+    var(--card-elevated) 70%
+  );
+}
+.bc.block-f .bc-bg {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--zone-f) 75%, #fff) 0%,
+    var(--card-elevated) 70%
+  );
+}
+.bc.block-noble .bc-bg {
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--zone-noble) 75%, #fff) 0%,
+    var(--card-elevated) 70%
+  );
+}
+
+.bc-orbit {
+  position: absolute;
+  width: 86px;
+  height: 86px;
+  top: 18%;
+  left: 50%;
+  /* 不用 translate 属性，避免与 animation transform 合成异常 */
+  margin-left: -43px;
+  z-index: 0;
+  border: 1.5px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 50%;
+  opacity: 0.75;
+  pointer-events: none;
+  animation: battle-orbit-spin 10s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* 手牌：稍小的电子云圆 */
+.battle-hand .bc .bc-orbit,
+.bc:not(.is-large) .bc-orbit {
+  width: 58px;
+  height: 58px;
+  margin-left: -29px;
+  top: 14%;
+  opacity: 0.7;
+}
+
+.bc-orbit::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 1px dashed color-mix(in srgb, var(--note) 45%, transparent);
+  border-radius: 50%;
+}
+
+.bc:not(.is-large) .bc-orbit::before {
+  inset: 9px;
+}
+
+/* 轨道上的电子球：更明显，跟着父级旋转 */
+.bc-orbit::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  top: -4px;
+  left: 50%;
+  margin-left: -4px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 40%, transparent),
+    0 0 10px var(--accent),
+    0 0 16px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.bc:not(.is-large) .bc-orbit::after {
+  width: 6px;
+  height: 6px;
+  top: -3px;
+  margin-left: -3px;
+}
+
+@keyframes battle-orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bc-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    118deg,
+    color-mix(in srgb, #fff 55%, transparent) 0%,
+    transparent 36%,
+    transparent 58%,
+    color-mix(in srgb, #fff 12%, transparent) 100%
+  );
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+.bc-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #fff 50%, transparent),
+    inset 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.bc > :not(.bc-bg):not(.bc-orbit):not(.bc-sheen):not(.bc-frame) {
+  position: relative;
+  z-index: 3;
+}
+
+.bc-z {
+  align-self: flex-start;
+  font-size: 0.6rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* 区块标签：压在轨道圆上方（不跟着电子转），白底胶囊 */
+.bc-block {
+  position: absolute;
+  /* 与 .bc-orbit 的 top 对齐，坐在圆环上沿中央 */
+  top: calc(18% - 0.15rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  padding: 0.12rem 0.38rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-elevated) 88%, #fff);
+  border: 1px solid color-mix(in srgb, var(--border-ink) 22%, transparent);
+  color: var(--ink-soft);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 8%, transparent);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.bc.is-large .bc-block {
+  top: calc(18% - 0.05rem);
+  font-size: 0.7rem;
+  padding: 0.14rem 0.45rem;
+}
+
+/* 手牌：轨道更靠上，标签跟着坐在圆上 */
+.battle-hand .bc .bc-block {
+  top: calc(13% - 0.08rem);
+  font-size: 0.55rem;
+  padding: 0.08rem 0.3rem;
+}
+
+.bc-symbol {
+  margin-top: 0.25rem;
+  font-size: 1.7rem;
+  font-weight: 900;
+  line-height: 1;
+  font-family: var(--font-latin);
+  letter-spacing: -0.03em;
+  color: var(--ink-lab);
+  text-shadow: 0 2px 0 color-mix(in srgb, #fff 40%, transparent);
+}
+
+.bc.is-large .bc-symbol {
+  font-size: 2.35rem;
+  margin-top: 0.45rem;
+}
+
+.bc-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.bc-meters {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+  margin: 0.32rem 0 0.15rem;
+  padding: 0 0.15rem;
+}
+
+.bc-meters i {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--border) 75%, transparent);
+  position: relative;
+  overflow: hidden;
+  font-style: normal;
+}
+
+.bc-meters i::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--p, 40%);
+  border-radius: inherit;
+  background: var(--accent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.bc-meters i[data-k='en']::after {
+  background: var(--note);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--note) 50%, transparent);
+}
+
+.bc-meters i[data-k='r']::after {
+  background: var(--stamp);
+}
+
+.bc-stats {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.bc-stats i {
+  font-style: normal;
+}
+
+.bc-stats i.on {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.bc-power {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  padding-top: 0.15rem;
+}
+
+.bc-power em {
+  font-style: normal;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.bc-power b {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.bc.is-large .bc-power b {
+  font-size: 1.15rem;
+}
+
+.bc-hint {
+  margin-top: 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 900;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+}
+
+/* 手牌差值：绝对定位贴底，不参与高度计算 */
+.battle-hand .bc .bc-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: 6;
+  max-width: calc(100% - 8px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.bc-hint.ok {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--accent);
+}
+
+.bc-hint.no {
+  background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+  color: var(--text-muted);
+}
+
+/* 手牌内部：略放大字号，仍塞进固定高度 */
+.battle-hand .bc .bc-symbol {
+  font-size: 1.65rem;
+  margin-top: 0.15rem;
+}
+
+.battle-hand .bc .bc-name {
+  font-size: 0.74rem;
+}
+
+.battle-hand .bc .bc-meters {
+  margin: 0.22rem 0 0.1rem;
+}
+
+.battle-hand .bc .bc-stats {
+  font-size: 0.62rem;
+}
+
+.battle-hand .bc .bc-power {
+  margin-top: 0.08rem;
+  padding-top: 0;
+  padding-bottom: 1.1rem; /* 给绝对定位 hint 留底 */
+}
+
+.battle-hand .bc .bc-power b {
+  font-size: 0.98rem;
+}
+
+.battle-hand .bc .bc-orbit {
+  width: 58px;
+  height: 58px;
+  margin-left: -29px;
+  top: 13%;
+}
+
+/* 手牌完整展示：三表与 χ/r 始终可见 */
+
+.battle-flip-opt {
+  position: relative;
+}
+
+.battle-flip-opt.is-hot {
+  border-color: color-mix(in srgb, var(--b-dim-current, var(--accent)) 55%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--b-dim-current, var(--accent)) 20%, transparent);
+}
+
+.battle-flip-opt.is-current {
+  opacity: 0.72;
+}
+
+.battle-flip-opt-n {
+  display: block;
+  margin-top: 0.25rem;
+  font-style: normal;
+  font-size: var(--b-fs-micro);
+  font-weight: 800;
+  color: var(--b-dim-current, var(--accent));
+}
+
+.battle-flip-opt:not(.is-hot) .battle-flip-opt-n {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.battle-end-stats {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+  list-style: none;
+  margin: 0 0 0.65rem;
+  padding: 0;
+}
+
+.battle-end-stats li {
+  min-width: 4.2rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: var(--b-r-sm);
+  background: color-mix(in srgb, var(--paper) 70%, var(--card-elevated));
+  border: 1px solid var(--border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.battle-end-stats span {
+  font-size: var(--b-fs-micro);
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.battle-end-stats b {
+  font-size: var(--b-fs-title);
+  font-family: var(--font-mono);
+  color: var(--ink-lab);
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-end-hit {
+  margin: 0 0 0.75rem;
+  font-size: var(--b-fs-caption);
+  color: var(--text-muted);
+}
+
+.battle-end-mask.is-win .battle-end-rays {
+  opacity: 0.85;
+  filter: hue-rotate(-12deg) saturate(1.15);
+}
+
+.battle-end-mask.is-lose .battle-end-rays {
+  opacity: 0.4;
+  filter: grayscale(0.55) brightness(0.9);
+}
+
+.bc.bc-empty {
+  width: 128px;
+  min-height: 168px;
+  border-style: dashed;
+  border-width: var(--b-stroke-strong);
+  border-color: color-mix(in srgb, var(--b-dim-current, var(--accent)) 35%, var(--border-ink));
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      color-mix(in srgb, var(--b-dim-current, var(--accent)) 12%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--card-bg) 50%, transparent);
+  font-size: var(--b-fs-caption);
+  letter-spacing: 0.08em;
+}
+
