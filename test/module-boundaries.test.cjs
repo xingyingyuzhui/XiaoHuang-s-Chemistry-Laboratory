@@ -31,6 +31,18 @@ test('AI classroom entry delegates focused UI concerns to feature modules', () =
   assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/wrong-book.js')));
 });
 
+test('AI classroom quiz engine lives under ai-classroom/quiz-* modules', () => {
+  const entry = source('src/ai-classroom.js');
+  assert.match(entry, /from '\.\/ai-classroom\/quiz-shell\.js'/);
+  assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/quiz-shell.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/quiz-model.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/ai-classroom/quiz-views.js')));
+  // Entry must not still define the paper renderer inline
+  assert.equal(/function renderPaper\(/.test(entry), false);
+  assert.equal(/function renderResultList\(/.test(entry), false);
+  assert.equal(/async function generateQuiz\(/.test(entry), false);
+});
+
 test('main.js does not static-import heavy modules (Three.js, battle, classroom)', () => {
   const entry = source('src/main.js');
 
