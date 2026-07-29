@@ -1,0 +1,42 @@
+/* 元素乱斗 · 大胆布局 + 纯代码特效（主题 token） */
+
+/* —— 对局尺度阶梯（主题可覆盖） —— */
+#panel-battle {
+  --b-r-xs: 6px;
+  --b-r-sm: 10px;
+  --b-r-md: 14px;
+  --b-r-lg: 18px;
+  --b-r-pill: 999px;
+  --b-stroke: var(--ui-stroke, 1.5px);
+  --b-stroke-strong: 2px;
+  --b-stroke-card: 2px;
+  --b-fs-micro: 0.62rem;
+  --b-fs-caption: 0.72rem;
+  --b-fs-body: 0.85rem;
+  --b-fs-title: 1rem;
+  --b-fs-display: 1.35rem;
+  --b-fs-hero: clamp(1.8rem, 4vw, 2.6rem);
+  --b-shadow-rest: var(--shadow-sm);
+  --b-shadow-raise: var(--shadow-md);
+  --b-shadow-float: var(--shadow-float);
+  --b-glow-accent: 0 0 16px color-mix(in srgb, var(--accent) 18%, transparent);
+  --b-glow-note: 0 0 16px color-mix(in srgb, var(--note) 18%, transparent);
+  /* 维度语义色：混入 ink 降低主题冲突时的脏色 */
+  --b-dim-z: color-mix(in srgb, var(--accent) 88%, var(--ink-lab));
+  --b-dim-en: color-mix(in srgb, var(--flame, #ef4444) 80%, var(--note));
+  --b-dim-radius: color-mix(in srgb, var(--note) 65%, var(--accent));
+  --b-ease: var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+  --b-ease-spring: var(--ease-spring, cubic-bezier(0.34, 1.35, 0.64, 1));
+}
+
+#panel-battle.active {
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  background: var(--card-bg);
+  border-radius: var(--radius-card, var(--b-r-lg));
+  border: var(--b-stroke) solid var(--border);
+  box-shadow: var(--b-shadow-rest);
+  overflow: hidden;
+}
+

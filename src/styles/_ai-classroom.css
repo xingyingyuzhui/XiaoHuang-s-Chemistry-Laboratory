@@ -1,4 +1,19 @@
-/* AI 课堂 — 校刊 / 试卷风 */
+/*
+ * AI / classroom hub styles — 校刊 / 试卷风
+ *
+ * Ownership map (feature module → selectors here):
+ *   ai-classroom.js (shell)     → .ai-nav-*, .stage-ai, .ai-section-empty
+ *   quiz-shell / quiz-views     → .quiz-* (config, paper, options, report)
+ *   wrong-book / offline-quiz   → .quiz-history-*, #aiSectionWrong, offline bits under .quiz-*
+ *   chem-text                   → .chem-math, .chem-isotope*
+ *   lab-shell / lab-views       → .lab-* (title/tools/cards/script editors; layout also in _classroom-extra)
+ *   lab-shell (prestudy)        → .prestudy-*
+ *   mastery-map                 → .mastery-*
+ *   lesson-packs                → .lesson-pack-*
+ *
+ * Balance practice lives in _balance-script.css (balance-shell).
+ * Rollcall + lab drawer layout live in _classroom-extra.css.
+ */
 
 .ai-nav-list {
   display: grid;
@@ -91,6 +106,7 @@
   font-weight: 600;
 }
 
+/* ── quiz-shell / quiz-views ── */
 .quiz-section-head {
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
@@ -475,7 +491,7 @@
   color: var(--diagram);
 }
 
-/* 试卷 */
+/* ── quiz-views：试卷 / 题目卡片 ── */
 .quiz-paper-head {
   display: flex;
   flex-wrap: wrap;
@@ -833,7 +849,7 @@
   color: var(--ink);
 }
 
-/* ── 实验探究：标题行 + 预习|脚本 + 脚本内编辑 ── */
+/* ── lab-shell / lab-views：标题行 + 预习|脚本 + 脚本内编辑 ── */
 .lab-title-row {
   display: flex;
   align-items: flex-start;
@@ -1369,7 +1385,7 @@ select.lab-input,
   color: var(--ink);
 }
 
-/* ── 交互式预习 ── */
+/* ── lab-shell：交互式预习 (.prestudy-*) ── */
 .prestudy-notice {
   padding: 0.6rem 0.8rem;
   border: var(--ui-stroke) dashed var(--border-ink);
@@ -1531,7 +1547,7 @@ select.lab-input,
   font-size: 0.84rem;
 }
 
-/* ── 知识地图 ── */
+/* ── mastery-map ── */
 .mastery-section {
   margin-top: 1rem;
 }
@@ -1589,7 +1605,7 @@ select.lab-input,
   margin-bottom: 0.2rem;
 }
 
-/* ── 备课包 ── */
+/* ── lesson-packs ── */
 .lesson-pack-toolbar {
   display: flex;
   gap: 0.4rem;

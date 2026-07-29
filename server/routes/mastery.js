@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { query, queryOne } = require('../db/sqlite');
+const { ensureQuizSchema } = require('../db/ensure-quiz-schema');
 const { success, error } = require('../utils/response');
 
 /**
@@ -108,22 +109,9 @@ const LEVEL_LABELS = {
 /** 薄弱在前：起步 → 练习中 → 未开始 → 掌握 */
 const LEVEL_ORDER = { beginner: 0, practicing: 1, unstarted: 2, mastered: 3 };
 
-function ensureTables() {
-  try {
-    // quiz_sessions, quiz_items, quiz_wrong_book 由 quiz 路由保证存在
-    // 仅确保 source_type 列
-    try {
-      const cols = query("PRAGMA table_info(quiz_sessions)");
-      if (!cols.some(c => c.name === 'source_type')) {
-        require('../db/sqlite').run("ALTER TABLE quiz_sessions ADD COLUMN source_type TEXT DEFAULT ''");
-      }
-    } catch {}
-  } catch {}
-}
-
 router.get('/', (_req, res) => {
   try {
-    ensureTables();
+    ensureQuizSchema();
 
     // 读取所有练习题项
     const items = query(

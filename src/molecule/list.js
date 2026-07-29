@@ -1,0 +1,415 @@
+/**
+ * 分子列表管理模块
+ * 负责分子卡片列表的渲染、拖拽排序、编辑模式
+ */
+
+import { moleculeApi } from '../api/client.js';
+import { createMoleculeViewer } from './viewer3d.js';
+import { refreshMolarPresets } from '../molar-ui.js';
+import { getSubstanceCard } from '../data/substance-cards.js';
+import { inferHybridization } from '../chem/hybridization.js';
+import { appAlert, appConfirm } from '../app-dialog.js';
+
+const $ = (sel) => document.querySelector(sel);
+
+/**
+ * 将化学式中的数字转为 Unicode 下标
+ */
+function formulaToSubscript(formula) {
+  if (!formula) return '';
+  const subDigits = '₀₁₂₃₄₅₆₇₈₉';
+  return formula.replace(/(\d+)/g, (match) => {
+    return match.split('').map(d => subDigits[parseInt(d)] || d).join('');
+  });
+}
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// DOM 元素
+const molList = $('#moleculeList');
+const molTitle = $('#moleculeTitle');
+const molDesc = $('#moleculeDesc');
+const btnAddMolecule = $('#btnAddMolecule');
+const btnEditMolecules = $('#btnEditMolecules');
+const btnLabelToggle = $('#molLabelToggle');
+
+// 状态
+let molEditMode = false;
+let currentMolId = null;
+let dragSrcId = null;
+let molViewer = null;
+let molStarted = false;
+/** @type {object | null} 当前加载到 viewer 的完整分子数据 */
+let currentMolData = null;
+/** @type {null | ((mol: object | null) => void)} */
+let onMoleculeChange = null;
+
+/**
+ * 注册分子切换回调（反应面板等）
+ * @param {(mol: object | null) => void} fn
+ */
+export function setOnMoleculeChange(fn) {
+  onMoleculeChange = typeof fn === 'function' ? fn : null;
+}
+
+/** 当前选中的分子 id */
+export function getCurrentMolId() {
+  return currentMolId;
+}
+
+/**
+ * 获取当前 viewer 中的分子数据（供杂化推断用）
+ */
+function currentMolViewerMolecule() {
+  return currentMolData;
+}
+
+/**
+ * 确保 3D 查看器已初始化
+ */
+export function ensureMolViewer() {
+  if (molViewer) return molViewer;
+  molViewer = createMoleculeViewer($('#mol-root'));
+  molViewer.setOnBondSelect?.(onBondSelected);
+  molViewer.setOnAtomSelect?.(onAtomSelected);
+  return molViewer;
+}
+
+function onBondSelected(info) {
+  const card = document.getElementById('molBondCard');
+  if (!card) return;
+  if (!info) {
+    card.hidden = true;
+    return;
+  }
+  card.hidden = false;
+  const h = document.getElementById('molSelectHeading');
+  const t = document.getElementById('molBondTitle');
+  const k = document.getElementById('molBondKind');
+  const tip = document.getElementById('molBondTip');
+  if (h) h.textContent = '化学键';
+  if (t) t.textContent = info.label || '—';
+  if (k) k.textContent = info.kind || '';
+  if (tip) tip.textContent = info.tip || '';
+}
+
+function onAtomSelected(info) {
+  const card = document.getElementById('molBondCard');
+  if (!card) return;
+  if (!info) {
+    card.hidden = true;
+    return;
+  }
+  // 推断杂化
+  const result = inferHybridization(currentMolViewerMolecule(), info.atomIndex);
+  card.hidden = false;
+  const h = document.getElementById('molSelectHeading');
+  const t = document.getElementById('molBondTitle');
+  const k = document.getElementById('molBondKind');
+  const tip = document.getElementById('molBondTip');
+  if (h) h.textContent = '原子杂化';
+  if (t) t.textContent = result.label || '—';
+  if (k) k.textContent = result.geometry !== '—'
+    ? `${result.geometry} · ${result.sigmaDirs} 个 σ 方向`
+    : result.reason || '';
+  if (tip) tip.textContent = result.tip || '';
+}
+
+/**
+ * 获取 3D 查看器实例
+ */
+export function getMolViewer() {
+  return molViewer;
+}
+
+/**
+ * 渲染分子卡片列表
+ */
+export async function renderMolList() {
+  if (!molList) return;
+  try {
+    const list = await moleculeApi.getList();
+
+    molList.innerHTML = list
+      .map(
+        (m) => `
+      <div
+        class="mol-card${currentMolId === m.id ? ' is-active' : ''}${molEditMode ? ' is-editing' : ''}"
+        data-id="${escapeHtml(m.id)}"
+        draggable="${molEditMode ? 'true' : 'false'}"
+      >
+        <button type="button" class="mol-card-del" data-del="${escapeHtml(m.id)}" title="删除" aria-label="删除 ${escapeHtml(m.name)}">×</button>
+        <button type="button" class="mol-btn mol-card-main" data-id="${escapeHtml(m.id)}">
+          <strong>${escapeHtml(formulaToSubscript(m.formula))}</strong>
+          <span>${escapeHtml(m.name)}</span>
+        </button>
+      </div>
+    `
+      )
+      .join('');
+
+    // 绑定点击事件
+    molList.querySelectorAll('.mol-card-main').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (molEditMode) return;
+        loadMolecule(btn.dataset.id);
+      });
+    });
+
+    // 绑定删除事件
+    molList.querySelectorAll('.mol-card-del').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!molEditMode) return;
+        const id = btn.dataset.del;
+        if (!id) return;
+        const ok = await appConfirm('确定删除该分子卡片？', {
+          title: '删除分子',
+          okText: '删除',
+          danger: true,
+        });
+        if (!ok) return;
+
+        try {
+          await moleculeApi.delete(id);
+          if (currentMolId === id) {
+            currentMolId = null;
+            const newList = await moleculeApi.getList();
+            const first = newList[0];
+            if (first) loadMolecule(first.id);
+            else {
+              molTitle.textContent = '—';
+              molDesc.textContent = '列表为空，可点击 ＋ 用 AI 生成分子';
+              molViewer?.load?.(null);
+            }
+          }
+          await renderMolList();
+        } catch (err) {
+          console.error('删除分子失败:', err);
+          await appAlert('删除失败: ' + err.message, { title: '删除失败' });
+        }
+      });
+    });
+
+    if (molEditMode) bindMolDrag();
+
+    // 摩尔质量页示例与 3D 分子库化学式同步
+    refreshMolarPresets(list).catch((e) =>
+      console.warn('同步摩尔示例如失败', e),
+    );
+  } catch (err) {
+    console.error('获取分子列表失败:', err);
+    molList.innerHTML = `<p class="hint" style="padding:0.5rem;color:#b91c1c">加载失败：${escapeHtml(err.message || '请确认后端已启动')}</p>`;
+  }
+}
+
+/**
+ * 绑定拖拽排序
+ */
+function bindMolDrag() {
+  const cards = [...molList.querySelectorAll('.mol-card')];
+  cards.forEach((card) => {
+    card.addEventListener('dragstart', (e) => {
+      dragSrcId = card.dataset.id;
+      card.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragSrcId);
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('is-dragging');
+      dragSrcId = null;
+      cards.forEach((c) => c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const from = dragSrcId || e.dataTransfer.getData('text/plain');
+      const to = card.dataset.id;
+      if (!from || !to || from === to) return;
+
+      try {
+        const list = await moleculeApi.getList();
+        const order = list.map((m) => m.id);
+        const fi = order.indexOf(from);
+        const ti = order.indexOf(to);
+        if (fi < 0 || ti < 0) return;
+
+        order.splice(fi, 1);
+        order.splice(ti, 0, from);
+        await moleculeApi.reorder(order);
+        await renderMolList();
+      } catch (err) {
+        console.error('排序失败:', err);
+      }
+    });
+  });
+}
+
+/**
+ * 设置编辑模式
+ */
+export function setMolEditMode(on) {
+  molEditMode = on;
+  if (btnEditMolecules) {
+    btnEditMolecules.textContent = on ? '保存' : '编辑';
+    btnEditMolecules.classList.toggle('is-active', on);
+  }
+  molList.classList.toggle('is-edit-mode', on);
+  renderMolList();
+}
+
+/**
+ * 若尚未选中分子，加载列表第一项（首次进入 3D 分子页）
+ * @returns {Promise<string|null>} 当前/新选中的 id
+ */
+export async function ensureDefaultMolecule() {
+  ensureMolViewer();
+  // 已有选中则只保证列表高亮，不再重复请求
+  if (currentMolId) {
+    await renderMolList();
+    return currentMolId;
+  }
+  try {
+    const list = await moleculeApi.getList();
+    const first = list?.[0];
+    if (!first) {
+      if (molTitle) molTitle.textContent = '—';
+      if (molDesc) molDesc.textContent = '列表为空，可点击 ＋ 用 AI 生成分子';
+      molViewer?.load?.(null);
+      await renderMolList();
+      return null;
+    }
+    await loadMolecule(first.id);
+    return first.id;
+  } catch (err) {
+    console.error('默认加载分子失败:', err);
+    return null;
+  }
+}
+
+/**
+ * 加载分子到 3D 查看器
+ */
+export async function loadMolecule(id) {
+  try {
+    ensureMolViewer();
+    const m = await moleculeApi.getById(id);
+    if (!m) return;
+
+    currentMolId = id;
+    currentMolData = m;
+    molViewer.load(m);
+    if (molTitle) molTitle.textContent = `${m.name}（${formulaToSubscript(m.formula)}）`;
+    // 简介 = 原 desc + 课标信息（融合进左上角当前分子卡）
+    if (molDesc) {
+      const card = getSubstanceCard(m.id);
+      const base = m.desc || '';
+      if (card) {
+        const point = card.point || card.role || '';
+        molDesc.innerHTML = `
+          <span class="mol-desc-base">${escapeHtml(base)}</span>
+          <span class="mol-desc-meta">
+            <span><em>类别</em>${escapeHtml(card.category)}</span>
+            <span><em>用途</em>${escapeHtml(card.uses)}</span>
+            ${point ? `<span><em>性质要点</em>${escapeHtml(point)}</span>` : ''}
+            <span><em>注意</em>${escapeHtml(card.caution)}</span>
+          </span>`;
+      } else {
+        molDesc.textContent = base || '暂无简介';
+      }
+    }
+
+    const molProps = document.getElementById('moleculeProps');
+    if (molProps) {
+      let propsHtml = '';
+
+      if (m.physics && Object.keys(m.physics).length > 0) {
+        propsHtml += `
+          <div class="mol-props-section">
+            <h4>物理性质</h4>
+            <ul>
+              <li>状态：${escapeHtml(m.physics.state || '未知')}</li>
+              <li>密度：${escapeHtml(m.physics.density || '未知')}</li>
+              <li>熔点：${escapeHtml(m.physics.meltingPoint || '未知')}</li>
+              <li>沸点：${escapeHtml(m.physics.boilingPoint || '未知')}</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      if (m.chemistry && Object.keys(m.chemistry).length > 0) {
+        propsHtml += `
+          <div class="mol-props-section">
+            <h4>化学性质</h4>
+            <ul>
+              <li>酸碱性：${escapeHtml(m.chemistry.acidity || '未知')}</li>
+              <li>溶解性：${escapeHtml(m.chemistry.solubility || '未知')}</li>
+              <li>化学活性：${escapeHtml(m.chemistry.reactivity || '未知')}</li>
+            </ul>
+          </div>
+        `;
+      }
+
+      molProps.innerHTML = propsHtml;
+    }
+
+    await renderMolList();
+    try {
+      onMoleculeChange?.(m);
+    } catch (e) {
+      console.warn('onMoleculeChange 回调失败:', e);
+    }
+  } catch (err) {
+    console.error('加载分子失败:', err);
+  }
+}
+
+/**
+ * 初始化分子列表
+ */
+export function initMoleculeList() {
+  document.getElementById('molBondClose')?.addEventListener('click', async () => {
+    const card = document.getElementById('molBondCard');
+    if (card) card.hidden = true;
+    molViewer?.clearSelection?.();
+  });
+
+  // 绑定编辑按钮
+  btnEditMolecules?.addEventListener('click', async () => {
+    if (molEditMode) {
+      setMolEditMode(false);
+    } else {
+      setMolEditMode(true);
+    }
+  });
+
+  // 绑定标签切换按钮
+  if (btnLabelToggle) {
+    btnLabelToggle.addEventListener('click', async () => {
+      if (molViewer) {
+        molViewer.toggleLabels();
+        btnLabelToggle.setAttribute(
+          'aria-pressed',
+          btnLabelToggle.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'
+        );
+      }
+    });
+  }
+
+  // 渲染列表；预选第一项，避免首次进页空白
+  renderMolList()
+    .then(() => ensureDefaultMolecule())
+    .catch((err) => console.error('初始化分子列表失败:', err));
+}

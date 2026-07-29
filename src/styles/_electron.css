@@ -141,3 +141,13 @@
   line-height: 1.6;
   word-break: break-all;
 }
+
+/* Explain line under electron viz (moved from classroom-extra; owner: electron-list/renderer) */
+.electron-explain {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
