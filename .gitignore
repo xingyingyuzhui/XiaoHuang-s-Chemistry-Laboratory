@@ -21,3 +21,8 @@ dist-electron/
 
 # Third-party / agent scratch (do not publish)
 .mimocode/
+
+# Agent tooling / local skills (not part of the published app)
+.grok/
+.github/workflows/
+skills/
