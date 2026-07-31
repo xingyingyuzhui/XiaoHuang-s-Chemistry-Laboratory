@@ -1,21 +1,118 @@
-MIT License
+小黄的化学实验室 · 软件许可协议
+XiaoHuang Chemistry Laboratory License
 
 Copyright (c) 2026 星影欲坠
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+================================================================================
+中文版本（正文以中文为准；英文为参考译本）
+================================================================================
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+一、定义
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. 「本软件」指「小黄的化学实验室」源代码、文档、构建脚本、品牌资源及随仓库分发的相关材料（不含第三方依赖自身的许可证约束范围）。
+2. 「二次修改」指对本软件的修改、演绎、改编、二次开发、合并、再分发的衍生版本，或基于本软件主要代码/架构/资源制作的同类产品。
+3. 「商用」指以营利为目的或直接间接获取商业利益的行为，包括但不限于：销售本软件或其衍生版本、收费 SaaS/云服务、付费教学/培训产品中的核心使用、广告盈利分发、商业机构内部大规模付费部署并以此收费等。个人学习、公益教学、非营利学校课堂自用，在遵守本协议其他条款的前提下一般不视为本条所称「商用」，但若学校/机构以此向第三方收费或作为商业产品售卖，仍属商用。
+
+二、授权范围（非商用）
+
+在遵守本协议全部条款的前提下，版权人授予您一项全球性、免版税、不可转让的许可，允许您：
+
+1. 为个人学习、研究、教学演示及非营利性使用之目的，使用、复制、修改本软件；
+2. 在非商用前提下分发本软件或二次修改版本。
+
+三、二次修改与来源标注（强制）
+
+任何二次修改、再分发或公开的衍生作品，必须同时满足：
+
+1. 显著保留本软件的版权声明与本许可协议全文（或指向本仓库 LICENSE 的有效链接）；
+2. 在 README、关于页、发行说明或同等用户可见位置，明确说明来源，至少包含：
+   - 原项目名称：「小黄的化学实验室」
+   - 版权人：星影欲坠
+   - 原项目仓库或发行地址（如 GitHub 仓库 URL）
+   - 对修改内容的简要说明（改了什么）；
+3. 不得删除、遮挡或弱化上述来源信息；
+4. 不得暗示版权人背书、担保或与衍生作品存在官方合作，除非另行取得书面授权。
+
+四、禁止非授权商用
+
+1. 未经版权人事先书面授权，任何个人或组织不得将本软件或其二次修改版本用于商用（定义见第一条）。
+2. 商用授权须单独向版权人申请；授权范围、期限、费用与附加条件以书面协议为准。
+3. 违反本条构成严重违约，版权人有权要求立即停止使用与分发、删除相关副本，并保留追究法律责任与索赔的权利。
+
+五、第三方组件
+
+本软件可能包含或依赖第三方开源组件。该等组件受其各自许可证约束；本协议不改变第三方许可证对相应代码的效力。您使用第三方组件时须遵守其原许可证。
+
+六、商标与品牌
+
+「小黄的化学实验室」及相关标识、头像、品牌文案，未经书面许可不得用于商业宣传，也不得用于容易引起混淆的衍生产品名称。
+
+七、无担保与责任限制
+
+本软件按「现状」提供，不附带任何明示或默示担保，包括适销性、特定用途适用性与不侵权。在法律允许的最大范围内，版权人对因使用或无法使用本软件而产生的任何直接、间接、附带或后果性损害不承担责任。
+
+八、终止
+
+若您违反本协议任一条款，本许可自动终止。终止后您必须停止使用与分发，并销毁持有的副本（法律要求保留的除外）。第 三、四、六、七条在终止后仍然有效。
+
+九、其他
+
+1. 本协议构成双方就本软件许可的完整约定，取代先前口头或书面谅解（另行签订的商用授权合同除外）。
+2. 若某一条款被认定无效，不影响其余条款效力。
+3. 本协议适用中华人民共和国法律（不含冲突法）。争议由版权人所在地有管辖权的人民法院管辖，另有书面约定除外。
+
+联系商用授权或许可问题，请通过原项目仓库的 Issues / 发布渠道联系版权人。
+
+================================================================================
+English (for reference; Chinese text controls in case of conflict)
+================================================================================
+
+Copyright (c) 2026 星影欲坠 (XingYingYuZhui)
+
+1. License grant (non-commercial only)
+
+Subject to this Agreement, you may use, copy, and modify this software for
+personal learning, research, teaching demonstration, and other non-commercial
+purposes, and redistribute it or derivative works for non-commercial purposes
+only.
+
+2. Attribution required for modifications and redistribution
+
+Any modified, derived, or redistributed version MUST:
+  (a) retain this copyright notice and license text (or a working link to it);
+  (b) clearly state the origin in a user-visible place (README / About / release
+      notes), including the original project name "小黄的化学实验室"
+      (XiaoHuang Chemistry Laboratory), copyright holder, original repository
+      or release URL, and a brief description of your changes;
+  (c) not remove or obscure attribution;
+  (d) not imply endorsement by the copyright holder without written permission.
+
+3. No unauthorized commercial use
+
+Commercial use of this software or any derivative is prohibited without prior
+written authorization from the copyright holder. "Commercial use" includes
+selling the software or derivatives, paid SaaS, paid training products centered
+on this software, ad-supported distribution for profit, and similar commercial
+exploitation. Non-profit classroom self-use is generally not commercial under
+this Agreement, unless the software is sold or charged to third parties as a
+product. Commercial licenses are granted only by separate written agreement.
+
+4. Third-party components
+
+Third-party libraries remain under their own licenses.
+
+5. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. TO THE MAXIMUM
+EXTENT PERMITTED BY LAW, THE COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR ANY
+DAMAGES ARISING FROM USE OF THE SOFTWARE.
+
+6. Termination
+
+Breach of this Agreement terminates your rights automatically. Sections 2, 3,
+and 5 survive termination.
+
+7. Governing law
+
+Laws of the People's Republic of China. The Chinese version of this Agreement
+prevails over this English summary.
