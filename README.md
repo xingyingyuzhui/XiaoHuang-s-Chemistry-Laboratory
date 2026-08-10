@@ -30,12 +30,12 @@
 
 ## 下载安装（推荐）
 
-发布页：[Releases · v3.0.5](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.5)
+发布页：[Releases · v3.0.6](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.6)
 
 | 文件 | 平台 | 说明 |
 |------|------|------|
-| `XiaoHuang-ChemLab-Setup-3.0.5.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
-| `XiaoHuang-ChemLab-3.0.5-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
+| `XiaoHuang-ChemLab-Setup-3.0.6.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
+| `XiaoHuang-ChemLab-3.0.6-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
 
 ### Electron 版（Win 安装包 / Mac dmg）
 
@@ -442,6 +442,7 @@ npm run build:exe
 
 | 版本 | 说明 |
 |------|------|
+| **3.0.6** | **Electron macOS**：补全「编辑」菜单标准 roles，修复输入框无法使用 ⌘V/⌘C 等系统快捷键；协议改为须注明来源且禁止非授权商用；清理仓库中与应用本体无关的 agent 工具目录。 |
 | **3.0.5** | **课堂·分步配平**：脚本列表导入/导出（`xiaohuang-balance-pack`，不覆盖冲突项）；练习与脚本编辑打磨、AI 分步提示与生成草稿、应用内确认弹窗。**课堂导航**：二级目录顺序调整（智能出题 → 离线题库 → 错题本 → 实验探究 → 分步配平 → 知识地图 → 随机点名 → 备课包）。 |
 | **3.0.4** | **修复**：Electron 打包 stage 漏拷 `server/services`，Win 安装后进程秒退；stage 增加 require 冒烟；启动失败弹出错误对话框。 |
 | **3.0.3** | **性能**：默认入口按需加载 3D/电子/课堂/乱斗（主 JS ~23KB gzip）；离线题库预览分页；resize 节流与慢写观测。**修复**：Tab 再进入误判 stale；课堂按需加载占位层 `display:flex` 盖过 `[hidden]` 导致交卷后仍显示「加载中…」并挤占布局。 |
