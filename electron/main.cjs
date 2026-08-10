@@ -105,6 +105,8 @@ function applyZoom(wc, factor, persist = true) {
 }
 
 function buildAppMenu() {
+  // macOS：必须有 Edit 菜单的 cut/copy/paste/selectAll 等 role，
+  // 否则输入框里 Cmd+C/V/X/A 不会生效（Electron 不走系统默认菜单）。
   // 隐藏菜单栏仍保留快捷键（Win: Ctrl+/-/0；Mac: Cmd+/-/0）
   const template = [
     ...(process.platform === 'darwin'
@@ -113,6 +115,8 @@ function buildAppMenu() {
             label: app.name,
             submenu: [
               { role: 'about' },
+              { type: 'separator' },
+              { role: 'services' },
               { type: 'separator' },
               { role: 'hide' },
               { role: 'hideOthers' },
@@ -123,6 +127,22 @@ function buildAppMenu() {
           },
         ]
       : []),
+    {
+      label: '编辑',
+      submenu: [
+        { role: 'undo', label: '撤销' },
+        { role: 'redo', label: '重做' },
+        { type: 'separator' },
+        { role: 'cut', label: '剪切' },
+        { role: 'copy', label: '复制' },
+        { role: 'paste', label: '粘贴' },
+        ...(process.platform === 'darwin'
+          ? [{ role: 'pasteAndMatchStyle', label: '粘贴并匹配样式' }]
+          : []),
+        { role: 'delete', label: '删除' },
+        { role: 'selectAll', label: '全选' },
+      ],
+    },
     {
       label: '查看',
       submenu: [
