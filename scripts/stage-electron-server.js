@@ -7,6 +7,9 @@ import { cpSync, mkdirSync, rmSync, readdirSync, statSync, existsSync, writeFile
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const stageRoot = join(root, '.electron-stage');
@@ -40,6 +43,19 @@ for (const d of COPY_DIRS) {
     continue;
   }
   cpSync(from, join(stageServer, d), { recursive: true });
+}
+
+const stagedPublicManifest = join(stageServer, 'public', 'build-manifest.json');
+const stagedRootManifest = join(stageServer, 'build-manifest.json');
+if (existsSync(stagedPublicManifest)) {
+  copyFile(stagedPublicManifest, stagedRootManifest);
+} else {
+  console.warn('public/build-manifest.json missing — generating for electron stage');
+  execSync(
+    `node scripts/write-build-manifest.mjs --out ${JSON.stringify(join(stageServer, 'public'))} --platform electron`,
+    { cwd: root, stdio: 'inherit' },
+  );
+  copyFile(join(stageServer, 'public', 'build-manifest.json'), stagedRootManifest);
 }
 
 // 精简 package.json：仅 production 依赖
@@ -116,18 +132,26 @@ function du(p) {
 }
 
 // 冒烟：能 require 入口（捕获漏拷 services 等导致 Electron 秒退）
+const stageEntry = join(stageServer, 'index.js');
 try {
-  const entry = join(stageServer, 'index.js');
   const smoke = [
     `process.env.CHEM_LAB_ELECTRON='1';`,
     `process.env.CHEM_LAB_DATA_DIR=require('os').tmpdir()+require('path').sep+'chem-lab-stage-smoke';`,
     `process.env.OPEN_BROWSER='0';`,
-    `require(${JSON.stringify(entry)});`,
+    `require(${JSON.stringify(stageEntry)});`,
     `console.log('stage require ok');`,
   ].join('');
   execSync(`node -e ${JSON.stringify(smoke)}`, { stdio: 'inherit', cwd: root });
 } catch (e) {
   console.error('Stage smoke require FAILED — Electron 包会启动即退出');
+  throw e;
+}
+
+try {
+  const { smokeRoutesFromEntry } = require('./stage-route-smoke.cjs');
+  await smokeRoutesFromEntry(stageEntry);
+} catch (e) {
+  console.error('Stage route smoke FAILED — 打包产物缺少关键 AI 路由');
   throw e;
 }
 

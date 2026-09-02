@@ -30,4 +30,14 @@ if (!fs.existsSync(path.join(src, 'index.html'))) {
 
 rimraf(dest);
 copyDir(src, dest);
+
+const manifestPath = path.join(dest, 'build-manifest.json');
+if (!fs.existsSync(manifestPath)) {
+  console.error('未找到 dist/build-manifest.json，请确认 Vite build 已写入 manifest');
+  process.exit(1);
+}
+
+const serverManifest = path.join(__dirname, '..', 'build-manifest.json');
+fs.copyFileSync(manifestPath, serverManifest);
 console.log(`前端已复制到 ${dest}`);
+console.log(`build-manifest 已同步到 ${serverManifest}`);

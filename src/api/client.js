@@ -41,7 +41,11 @@ async function request(url, options = {}) {
   }
 
   if (!response.ok || !data?.success) {
-    const err = new Error(data?.message || `请求失败: ${response.status}`);
+    let message = data?.message || `请求失败: ${response.status}`;
+    if (response.status === 404 && /\/ai\//.test(url)) {
+      message = `${message}。若使用桌面版，请完全退出后卸载并重新安装最新版。`;
+    }
+    const err = new Error(message);
     err.status = response.status;
     err.payload = data?.data || null;
     // 限流：拼上重置时间（后端 message 已含，此处保证前端可单独读）

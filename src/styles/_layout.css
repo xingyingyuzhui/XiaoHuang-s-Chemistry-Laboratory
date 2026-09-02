@@ -75,3 +75,20 @@
 .panel-loading[hidden] {
   display: none !important;
 }
+
+.version-mismatch-banner {
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  padding: 0.65rem 1rem;
+  background: #7f1d1d;
+  color: #fff;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  border-bottom: 1px solid #991b1b;
+}
+
+.settings-build-info {
+  margin-top: 0.5rem;
+  opacity: 0.85;
+}

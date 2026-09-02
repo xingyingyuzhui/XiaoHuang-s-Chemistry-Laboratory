@@ -6,6 +6,11 @@
 import { reactionApi, aiApi, moleculeApi } from '../api/client.js';
 import { ensureMolViewer, getMolViewer } from './list.js';
 import { appAlert, appConfirm } from '../app-dialog.js';
+import {
+  checkBundleVersion,
+  isAiReactionAvailable,
+  REINSTALL_HINT,
+} from '../boot/version-check.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -778,6 +783,11 @@ async function generateAiReaction() {
   let stepCount = Number($('#rxnAiStepCount')?.value || 5);
   if (![4, 5, 6].includes(stepCount)) stepCount = 5;
   try {
+    const version = await checkBundleVersion();
+    if (!isAiReactionAvailable(version)) {
+      if (status) status.textContent = REINSTALL_HINT;
+      return;
+    }
     const data = await aiApi.reaction({
       prompt,
       moleculeId: currentMoleculeId,

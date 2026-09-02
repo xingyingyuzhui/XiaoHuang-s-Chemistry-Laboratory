@@ -32,6 +32,8 @@ const masteryRouter = require('./routes/mastery');
 const lessonPacksRouter = require('./routes/lesson-packs');
 const labsRouter = require('./routes/labs');
 const balanceScriptsRouter = require('./routes/balance-scripts');
+const { readBuildManifest } = require('./utils/build-manifest');
+const { probeCapabilities } = require('./utils/route-probe');
 
 const app = express();
 const PREFERRED_PORT = Number(process.env.PORT) || 3000;
@@ -87,11 +89,18 @@ app.use('/api/labs', labsRouter);
 app.use('/api/balance-scripts', balanceScriptsRouter);
 
 app.get('/api/health', (req, res) => {
+  const manifest = readBuildManifest();
+  const runtimeCapabilities = probeCapabilities(app);
   const payload = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     pkg: isPkg(),
     electron: isElectron(),
+    appVersion: manifest.appVersion || null,
+    buildId: manifest.buildId || 'dev',
+    buildTime: manifest.buildTime || null,
+    gitSha: manifest.gitSha || null,
+    capabilities: runtimeCapabilities,
   };
   // 开发模式才返回路径，降低信息暴露
   if (!isPkg() && !isElectron() && process.env.NODE_ENV !== 'production') {

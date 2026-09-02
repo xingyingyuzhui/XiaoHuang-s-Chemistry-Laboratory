@@ -13,6 +13,7 @@
 const { app, BrowserWindow, shell, screen, Menu, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { assertBundleConsistency } = require('./version-lock.cjs');
 
 // 在 require server 之前固定数据目录与模式标记
 process.env.CHEM_LAB_ELECTRON = '1';
@@ -306,13 +307,17 @@ function createWindow(url) {
 
 async function bootstrap() {
   try {
-    const { url } = await startBackend();
+    const { url, port } = await startBackend();
+    if (app.isPackaged) {
+      const serverRoot = path.dirname(getServerEntry());
+      await assertBundleConsistency({ serverRoot, port });
+    }
     await createWindow(url);
   } catch (err) {
     console.error('Electron 启动失败:', err);
     const detail = err && err.stack ? String(err.stack) : String(err?.message || err);
     try {
-      // 打包后无控制台时，至少弹出原因（如缺 services 模块）
+      // 打包后无控制台时，至少弹出原因（如缺 services 模块 / 版本不一致）
       await dialog.showMessageBox({
         type: 'error',
         title: '小黄的化学实验室 · 启动失败',

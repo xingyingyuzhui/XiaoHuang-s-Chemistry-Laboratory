@@ -20,6 +20,7 @@ import {
   hidePanelLoading as hideLoadingOn,
   showPanelError as showErrorOn,
 } from './panel-loading.js';
+import { checkBundleVersion, showVersionMismatchBanner } from './boot/version-check.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -267,6 +268,7 @@ async function init() {
   initPeriodicTable();
   initMolarUI();
   initBrandTip();
+  checkBundleVersion().then(showVersionMismatchBanner).catch(() => {});
 
   // 侧栏抽屉：resize 回调中访问已加载模块，未加载则跳过
   initSideDrawers({

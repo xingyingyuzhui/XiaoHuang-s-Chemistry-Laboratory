@@ -70,11 +70,19 @@ function getDbPath() {
  * 2) 快照内 server/public（开发 / Electron asar / pkg 内嵌）
  */
 function getPublicDir() {
+  const snap = path.join(getSnapshotRoot(), 'public');
+  // Electron / pkg：默认只用内置 public，避免 userData 旁旧 public 覆盖新后端
+  if (isElectron() || isPkg()) {
+    if (process.env.CHEM_LAB_WRITABLE_PUBLIC === '1') {
+      const beside = path.join(getWritableRoot(), 'public');
+      if (fs.existsSync(path.join(beside, 'index.html'))) return beside;
+    }
+    return snap;
+  }
   const beside = path.join(getWritableRoot(), 'public');
   if (fs.existsSync(path.join(beside, 'index.html'))) {
     return beside;
   }
-  const snap = path.join(getSnapshotRoot(), 'public');
   return snap;
 }
 

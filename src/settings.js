@@ -376,6 +376,22 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
   applyTheme(settings.theme);
   applyBrand(settings.brand);
 
+  let buildInfoEl = document.getElementById('settingsBuildInfo');
+  if (!buildInfoEl) {
+    buildInfoEl = document.createElement('p');
+    buildInfoEl.id = 'settingsBuildInfo';
+    buildInfoEl.className = 'settings-hint settings-build-info';
+    document.querySelector('.settings-drawer-body .settings-section')?.appendChild(buildInfoEl);
+  }
+  fetch('/api/health')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((health) => {
+      if (health?.buildId) {
+        buildInfoEl.textContent = `应用 ${health.appVersion || '—'} · 构建 ${health.buildId}`;
+      }
+    })
+    .catch(() => {});
+
   return {
     getSettings: () => loadSettings(),
     openDrawer,

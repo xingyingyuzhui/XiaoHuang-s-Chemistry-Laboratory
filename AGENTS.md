@@ -12,11 +12,14 @@ Agent tooling under `.grok/`, `.github/workflows/`, and `skills/` is local/priva
 - Lab materials should match real chemistry appearance (e.g. sodium is gray-white; solids need texture and edges).
 - Accepted PixiJS 8 as the primary renderer for the 2.5D interactive lab bench rather than Three.js for that surface.
 - When not locked to a 1:1 replica brief, creative visual judgment is welcome if the result looks better.
+- For Electron desktop bundle mismatches that cause API failures, prefer architectural fixes (build-manifest version lock, capability checks) over explaining one-off install causes.
 
 ## Learned Workspace Facts
 
 - GitHub origin is `https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory.git`.
 - Local dev: Vite frontend on port 5173 with `/api` proxied to Express on port 3000.
+- Primary user-facing delivery is the Windows Electron desktop installer (`electron-builder` NSIS); packaged builds bundle embedded `resources/server/` and frontend `public/`.
+- Packaged Electron can hit selective API 404s when frontend/backend builds mismatch; mitigated by `build-manifest.json` and startup version lock in `electron/main.cjs`.
 - Chemist 1:1 reference: full-app video `https://www.youtube.com/watch?v=J0ffIBhzgA4`; sodium/water reaction reference `https://www.youtube.com/watch?v=xOJE0ON0IJc`.
-- Sibling multisubject project based on this lab lives at `/Users/qin/Desktop/小黄的教室` (follow-on work moved there).
+- This repo is the legacy single-subject chemistry lab; follow-on multisubject work lives at `/Users/qin/Desktop/小黄的教室`.
 - After structure cleanup, `src/battle/` is the preferred layered-module exemplar for new feature packaging.

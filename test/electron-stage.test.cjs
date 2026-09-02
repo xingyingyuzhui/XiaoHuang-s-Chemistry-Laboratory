@@ -82,9 +82,16 @@ test('stage script runs require smoke check after copy', () => {
   assert.match(script, /Stage smoke require FAILED/);
 });
 
-test('electron main shows dialog on bootstrap failure (no silent quit only)', () => {
+test('stage script runs AI route smoke including /api/ai/reaction', () => {
+  const script = source('scripts/stage-electron-server.js');
+  assert.match(script, /stage-route-smoke/);
+  const smoke = source('scripts/stage-route-smoke.cjs');
+  assert.match(smoke, /\/api\/ai\/reaction/);
+});
+
+test('electron main enforces version lock when packaged', () => {
   const main = source('electron/main.cjs');
-  assert.match(main, /dialog/);
-  assert.match(main, /showMessageBox|showErrorBox/);
-  assert.match(main, /启动失败/);
+  assert.match(main, /version-lock/);
+  assert.match(main, /assertBundleConsistency/);
+  assert.match(main, /app\.isPackaged/);
 });
