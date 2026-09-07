@@ -95,3 +95,27 @@ test('electron main enforces version lock when packaged', () => {
   assert.match(main, /assertBundleConsistency/);
   assert.match(main, /app\.isPackaged/);
 });
+
+test('electron-builder packs every relative require from main.cjs', () => {
+  const main = source('electron/main.cjs');
+  const yml = source('electron-builder.yml');
+  const filesBlock = yml.match(/^files:\n((?:  - .+\n)+)/m);
+  assert.ok(filesBlock, 'files: list must exist in electron-builder.yml');
+  const packed = new Set(
+    filesBlock[1]
+      .split('\n')
+      .map((line) => line.replace(/^\s*-\s*/, '').trim())
+      .filter(Boolean),
+  );
+  const relRequires = [...main.matchAll(/require\(['"](\.\/[^'"]+)['"]\)/g)].map(
+    (m) => m[1],
+  );
+  assert.ok(relRequires.length >= 1, 'main.cjs should require local modules');
+  for (const rel of relRequires) {
+    const asElectronPath = path.posix.join('electron', path.posix.basename(rel));
+    assert.ok(
+      packed.has(asElectronPath) || packed.has(rel.replace(/^\.\//, 'electron/')),
+      `electron-builder.yml files must include ${asElectronPath} (required by main.cjs as ${rel})`,
+    );
+  }
+});

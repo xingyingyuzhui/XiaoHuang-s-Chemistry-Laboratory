@@ -14,6 +14,7 @@ directories:
 
 files:
   - electron/main.cjs
+  - electron/version-lock.cjs
   - electron/build/icon.png
   - package.json
 
