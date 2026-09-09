@@ -401,8 +401,9 @@ async function generateBalanceStepTip({ equation, step = {} } = {}) {
 
 async function generateBalance(equation) {
   const system = `你是高中化学老师。将用户给出的化学方程式配平。
-只输出 JSON：{ "equation": "配平后的式子，用 → 连接", "steps": ["步骤说明"] }
-系数用最小整数；不要 Markdown。`;
+只输出 JSON：{ "equation": "配平后的式子，用 = 连接", "steps": ["步骤说明"] }
+系数用最小整数。输入通常不写气体/沉淀符号；请在生成物上按中学习惯补 ↑（气体）或 ↓（沉淀）。
+反应物不要加 ↑↓；H2O 一般不加。不要 Markdown。`;
 
   const { content } = await callDeepSeekChat({
     system,

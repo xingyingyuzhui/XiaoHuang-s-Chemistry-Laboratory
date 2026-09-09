@@ -167,3 +167,61 @@ test('auto-fills species when empty arrays', () => {
   assert.equal(r.ok, true);
   assert.ok(r.script.species.left.length >= 1);
 });
+
+test('accepts species marker ↑ and dual-reads formula CO2↑', () => {
+  const withField = validateBalanceScript({
+    title: '带 marker',
+    startEquation: 'CaCO3 + 2HCl = CaCl2 + H2O + CO2',
+    targetEquation: 'CaCO3 + 2HCl = CaCl2 + H2O + CO2',
+    species: {
+      left: [
+        { formula: 'CaCO3', coef: 1 },
+        { formula: 'HCl', coef: 1 },
+      ],
+      right: [
+        { formula: 'CaCl2', coef: 1 },
+        { formula: 'H2O', coef: 1 },
+        { formula: 'CO2', coef: 1, marker: '↑' },
+      ],
+    },
+    steps: [{ label: '观察', tip: '气体', action: 'explain' }],
+  });
+  assert.equal(withField.ok, true);
+  assert.equal(withField.script.species.right[2].formula, 'CO2');
+  assert.equal(withField.script.species.right[2].marker, '↑');
+
+  const dual = validateBalanceScript({
+    title: '尾部 dual-read',
+    startEquation: 'CaCO3 + 2HCl = CaCl2 + H2O + CO2',
+    targetEquation: 'CaCO3 + 2HCl = CaCl2 + H2O + CO2↑',
+    species: {
+      left: [
+        { formula: 'CaCO3', coef: 1 },
+        { formula: 'HCl', coef: 1 },
+      ],
+      right: [
+        { formula: 'CaCl2', coef: 1 },
+        { formula: 'H2O', coef: 1 },
+        { formula: 'CO2↑', coef: 1 },
+      ],
+    },
+    steps: [{ label: '观察', tip: '气体', action: 'explain' }],
+  });
+  assert.equal(dual.ok, true);
+  assert.equal(dual.script.species.right[2].formula, 'CO2');
+  assert.equal(dual.script.species.right[2].marker, '↑');
+});
+
+test('rejects HTML in formula even with marker attempt', () => {
+  const r = validateBalanceScript({
+    title: 'xss',
+    startEquation: 'H2 + O2 = H2O',
+    targetEquation: '2H2 + O2 = 2H2O',
+    species: {
+      left: [{ formula: 'H2<script>', coef: 1 }, { formula: 'O2', coef: 1 }],
+      right: [{ formula: 'H2O', coef: 1 }],
+    },
+    steps: [{ label: 'x', tip: 'x', action: 'explain' }],
+  });
+  assert.equal(r.ok, false);
+});

@@ -42,6 +42,8 @@ test('balance-model: buildEquation format accepted by check', async () => {
   const coefs = { left: [4, 3], right: [2] };
   const eq = buildEquation(species, coefs);
   assert.match(eq, /Fe/);
+  assert.match(eq, /=/);
+  assert.doesNotMatch(eq, /→/);
   assert.equal(isPracticeFinished(species, coefs, '4Fe + 3O2 = 2Fe2O3'), true);
 });
 

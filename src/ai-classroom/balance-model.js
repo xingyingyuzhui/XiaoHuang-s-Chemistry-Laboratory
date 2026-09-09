@@ -8,9 +8,29 @@ import {
   equationsEquivalent,
   checkConservation,
   parseEquationSides,
+  formatEquation,
+  prettyFormula,
 } from '../equation-balance.js';
 
 const PROGRESS_KEY = 'balance-script-progress';
+
+/** 起式展示：系数一律 1，不带 ↑↓（练习从全 1 起步） */
+export function startEquationFromSides(sides) {
+  if (!sides?.left?.length || !sides?.right?.length) return '';
+  return formatEquation(
+    sides.left.map((s) => ({
+      formula: s.formula,
+      coef: 1,
+      marker: '',
+    })),
+    sides.right.map((s) => ({
+      formula: s.formula,
+      coef: 1,
+      marker: '',
+    })),
+    { annotate: false },
+  );
+}
 
 export function loadProgress() {
   try {
@@ -141,20 +161,21 @@ export function isPracticeFinished(species, coefs, targetEquation) {
 }
 
 /**
- * 根据 startEquation + 当前系数，拼出当前方程字符串
- * species 结构：{ left: [{ formula, coef }], right: [{ formula, coef }] }
- * coefs 结构：{ left: [n, ...], right: [n, ...] }
+ * 根据 species + 当前系数拼方程（练习过程不自动补 ↑↓，只带已存 marker）
  */
 export function buildEquation(species, coefs) {
   if (!species) return '';
-  const fmtSide = (side, sideCoefs) =>
-    side.map((sp, i) => {
-      const c = (sideCoefs && sideCoefs[i]) || sp.coef || 1;
-      return `${c > 1 ? c : ''}${sp.formula}`;
-    }).join(' + ');
-  const left = fmtSide(species.left || [], coefs?.left || []);
-  const right = fmtSide(species.right || [], coefs?.right || []);
-  return `${left} → ${right}`;
+  const mapSide = (side, sideCoefs) =>
+    (side || []).map((sp, i) => ({
+      formula: sp.formula,
+      coef: (sideCoefs && sideCoefs[i]) || sp.coef || 1,
+      marker: sp.marker || '',
+    }));
+  return formatEquation(
+    mapSide(species.left, coefs?.left),
+    mapSide(species.right, coefs?.right),
+    { annotate: false },
+  );
 }
 
 /**
@@ -168,11 +189,16 @@ export function initCoefs(species) {
 }
 
 /**
- * 格式化化学式中的数字为下标 Unicode
+ * 格式化化学式中的数字为下标 Unicode（不含 marker）
  */
 export function formatFormula(f) {
-  const SUB = '₀₁₂₃₄₅₆₇₈₉';
-  return String(f || '').replace(/\d/g, (d) => SUB[Number(d)] || d);
+  return prettyFormula(f);
+}
+
+/** 展示用：下标化学式 + 状态符号 */
+export function formatSpeciesLabel(sp) {
+  if (!sp) return '';
+  return prettyFormula(sp.formula || '') + (sp.marker || '');
 }
 
 /**

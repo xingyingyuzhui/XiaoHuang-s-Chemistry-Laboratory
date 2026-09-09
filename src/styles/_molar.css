@@ -249,6 +249,13 @@
   color: var(--diagram, var(--ink));
 }
 
+.molar-balance-hint {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
 .molar-balance-steps {
   margin: 0.35rem 0 0;
   padding-left: 1.15rem;

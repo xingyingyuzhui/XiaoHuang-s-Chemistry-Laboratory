@@ -23,9 +23,10 @@ function clip(s, n) {
   return String(s || '').trim().slice(0, n);
 }
 
-/** 化学式：字母、数字、括号、中间点；拒绝 HTML/脚本字符 */
+/** 化学式：字母、数字、括号、中间点；拒绝 HTML/脚本字符（不含 ↑↓，标记走 marker 字段） */
 const FORMULA_SAFE_RE = /^[A-Za-z0-9()[\]{}·.•\-]+$/;
 const SUB_DIGITS = '₀₁₂₃₄₅₆₇₈₉';
+const VALID_MARKERS = new Set(['', '↑', '↓']);
 
 function isSafeFormula(raw) {
   const s = String(raw || '').trim();
@@ -38,20 +39,51 @@ function isSafeFormula(raw) {
   return FORMULA_SAFE_RE.test(plain);
 }
 
+/**
+ * 规范化物种：formula 纯净；尾部 ↑↓ dual-read 进 marker
+ * @returns {{ ok: true, item: { formula, coef, marker } } | { ok: false, reason: string }}
+ */
+function normalizeSpeciesItem(sp, sideName, index) {
+  if (!sp || typeof sp !== 'object') {
+    return { ok: false, reason: `${sideName} 第 ${index + 1} 项无效` };
+  }
+  let formula = clip(sp.formula, 60);
+  let marker = '';
+  if (sp.marker === '↑' || sp.marker === '↓') marker = sp.marker;
+  if (formula.endsWith('↑') || formula.endsWith('↓')) {
+    if (!marker) marker = formula.slice(-1);
+    formula = formula.slice(0, -1);
+  }
+  if (!formula) {
+    return { ok: false, reason: `${sideName} 第 ${index + 1} 项化学式不能为空` };
+  }
+  if (!isSafeFormula(formula)) {
+    return { ok: false, reason: `${sideName} 第 ${index + 1} 项化学式格式无效` };
+  }
+  if (!VALID_MARKERS.has(marker)) {
+    return { ok: false, reason: `${sideName} 第 ${index + 1} 项状态符号无效` };
+  }
+  return {
+    ok: true,
+    item: {
+      formula,
+      coef: Number(sp.coef) || 1,
+      marker,
+    },
+  };
+}
+
 function validateSpeciesSide(side, sideName) {
   if (!Array.isArray(side) || side.length === 0) {
     return { ok: false, reason: `${sideName} 至少需要一种物质` };
   }
+  const items = [];
   for (let i = 0; i < side.length; i++) {
-    const sp = side[i];
-    if (!sp || typeof sp !== 'object') return { ok: false, reason: `${sideName} 第 ${i + 1} 项无效` };
-    const formula = clip(sp.formula, 60);
-    if (!formula) return { ok: false, reason: `${sideName} 第 ${i + 1} 项化学式不能为空` };
-    if (!isSafeFormula(sp.formula)) {
-      return { ok: false, reason: `${sideName} 第 ${i + 1} 项化学式格式无效` };
-    }
+    const checked = normalizeSpeciesItem(side[i], sideName, i);
+    if (!checked.ok) return checked;
+    items.push(checked.item);
   }
-  return { ok: true };
+  return { ok: true, items };
 }
 
 function sideName(side) {
@@ -150,8 +182,8 @@ function validateBalanceScript(raw) {
   if (!rightCheck.ok) return rightCheck;
 
   const normalizedSpecies = {
-    left: speciesIn.left.map((sp) => ({ formula: clip(sp.formula, 60), coef: Number(sp.coef) || 1 })),
-    right: speciesIn.right.map((sp) => ({ formula: clip(sp.formula, 60), coef: Number(sp.coef) || 1 })),
+    left: leftCheck.items,
+    right: rightCheck.items,
   };
 
   if (!Array.isArray(raw.steps)) return { ok: false, reason: 'steps 必须是数组' };

@@ -3,7 +3,7 @@
  */
 
 import { renderChemKeypadHtml } from '../chem-keypad.js';
-import { formatFormula, buildEquation } from './balance-model.js';
+import { formatFormula, formatSpeciesLabel, buildEquation } from './balance-model.js';
 
 function escape(s) {
   return String(s ?? '')
@@ -110,10 +110,11 @@ export function htmlPracticeBody(script, stepIdx, coefs, stepResult, isLastStep,
     const idx = step.focus.index;
     const currentVal = coefs?.[side]?.[idx] ?? 1;
     const formula = script.species?.[side]?.[idx]?.formula || '';
+    const sp = script.species?.[side]?.[idx];
     inputHtml = `
       <div class="balance-coef-block">
         <div class="balance-coef-input-row">
-          <label>将 <strong>${formatFormula(formula)}</strong> 的系数改为</label>
+          <label>将 <strong>${escape(formatSpeciesLabel(sp) || formatFormula(formula))}</strong> 的系数改为</label>
           <input type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                  class="balance-coef-input" id="balanceCoefInput" readonly
                  value="${currentVal}" data-side="${side}" data-index="${idx}"
@@ -214,15 +215,16 @@ export function renderSpeciesEquation(species, coefs, focus, finished) {
       const focused = !finished && focus && focus.side === sideKey && focus.index === i;
       const safeCoef = Number.isFinite(Number(c)) ? Number(c) : 1;
       const coefStr = safeCoef > 1 ? `<strong class="balance-coef">${safeCoef}</strong>` : '';
-      // 先 escape 再下标，避免恶意 formula 注入 HTML
+      // 先 escape 再下标，避免恶意 formula 注入 HTML；marker 单独拼
       const formulaHtml = formatFormula(escape(sp.formula));
-      return `<span class="balance-species${focused ? ' is-focused' : ''}" data-side="${escape(sideKey)}" data-index="${i}">${coefStr}${formulaHtml}</span>`;
+      const markerHtml = escape(sp.marker || '');
+      return `<span class="balance-species${focused ? ' is-focused' : ''}" data-side="${escape(sideKey)}" data-index="${i}">${coefStr}${formulaHtml}${markerHtml}</span>`;
     }).join('<span class="balance-plus">+</span>');
 
   return `
     <div class="balance-eq-line">
       <span class="balance-eq-side">${sideHtml('left', species.left)}</span>
-      <span class="balance-eq-arrow">→</span>
+      <span class="balance-eq-arrow">=</span>
       <span class="balance-eq-side">${sideHtml('right', species.right)}</span>
     </div>`;
 }
@@ -290,7 +292,7 @@ export function htmlScriptEditor(draft, selectedStep, mode = 'script', opts = {}
         <label class="field field-span2 lab-equation-field">
           <span>目标式（已配平，须守恒）</span>
           <input type="text" class="lab-input" id="balanceEditTarget" value="${escape(draft.targetEquation)}" maxlength="200"
-                 placeholder="2H₂ + O₂ → 2H₂O" autocomplete="off" />
+                 placeholder="2H₂ + O₂ = 2H₂O" autocomplete="off" />
           ${renderChemKeypadHtml('bal-target')}
         </label>
       </div>

@@ -14,6 +14,9 @@ const FIXTURES = [
   'C2H5OH + O2 = CO2 + H2O',
   '2H₂ + O₂ → 2H₂O',
   '(NH4)2SO4 = NH4 + SO4', // 结构解析，不要求守恒
+  'CaCO3 + 2HCl = CaCl2 + H2O + CO2↑',
+  'H2(g) + O2(g) = H2O(l)',
+  'Fe＋O2＝Fe2O3',
 ];
 
 test('client speciesFromEquation matches server for fixtures', async () => {
@@ -23,6 +26,15 @@ test('client speciesFromEquation matches server for fixtures', async () => {
     const b = serverEq.speciesFromEquation(eq);
     assert.deepEqual(a, b, `species mismatch for ${eq}`);
   }
+});
+
+test('trailing state marker is stripped into marker field', async () => {
+  const client = await import('../src/equation-balance.js');
+  const a = client.speciesFromEquation('C + O2 = CO2↑');
+  const b = serverEq.speciesFromEquation('C + O2 = CO2↑');
+  assert.equal(a.right[0].formula, 'CO2');
+  assert.equal(a.right[0].marker, '↑');
+  assert.deepEqual(a, b);
 });
 
 test('client checkConservation ok matches server isEquationConserved', async () => {

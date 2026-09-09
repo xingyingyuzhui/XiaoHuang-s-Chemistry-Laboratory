@@ -4,8 +4,9 @@
 
 import { calcMolarMass, normalizeFormulaInput } from './molar.js';
 import { moleculeApi, aiApi } from './api/client.js';
-import { balanceEquation, checkConservation } from './equation-balance.js';
+import { balanceEquation, checkConservation, mergeMarkersFromEquation, formatEquation } from './equation-balance.js';
 import { mountChemKeypads } from './chem-keypad.js';
+import { getAnnotateStateMarkers } from './settings.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -205,13 +206,19 @@ function runBalanceLocal() {
     return;
   }
   try {
-    const result = balanceEquation(input);
-    const check = checkConservation(result.equation.replace('→', '='));
+    const annotate = getAnnotateStateMarkers();
+    const result = balanceEquation(input, { annotate });
+    const check = checkConservation(result.equation);
     if (box) {
       box.innerHTML = `
         <h4>配平结果</h4>
         <p class="molar-balance-eq">${escapeHtml(result.equation)}</p>
         <p class="quiz-status ${check.ok ? 'is-ok' : 'is-err'}">${escapeHtml(check.message)}</p>
+        ${
+          annotate
+            ? '<p class="molar-balance-hint">状态符号（↑↓）为课本示意，可按题意改写</p>'
+            : ''
+        }
         <ol class="molar-balance-steps">
           ${(result.steps || []).map((s) => `<li>${escapeHtml(s)}</li>`).join('')}
         </ol>
@@ -232,6 +239,7 @@ function runBalanceLocal() {
 async function runBalanceAi() {
   const input = $('#balanceInput')?.value?.trim();
   const status = $('#balanceStatus');
+  const box = $('#balanceResult');
   if (!input) {
     if (status) {
       status.textContent = '请输入方程式';
@@ -246,19 +254,62 @@ async function runBalanceAi() {
   try {
     const data = await aiApi.balance({ equation: input });
     const suggested = data?.equation || data?.balanced || '';
-    if (suggested) {
-      const inputEl = $('#balanceInput');
-      if (inputEl) inputEl.value = String(suggested).replace(/→/g, '=');
+    const annotate = getAnnotateStateMarkers();
+    // 本地系数权威
+    const local = balanceEquation(input, { annotate });
+    const merged = suggested
+      ? mergeMarkersFromEquation(
+          String(suggested),
+          {
+            left: local.left,
+            right: local.right,
+          },
+          { annotate },
+        )
+      : { left: local.left, right: local.right };
+    const equation = formatEquation(merged.left, merged.right, {
+      annotate: false,
+    });
+    const check = checkConservation(equation);
+    const inputEl = $('#balanceInput');
+    if (inputEl) inputEl.value = equation;
+    if (box) {
+      box.innerHTML = `
+        <h4>配平结果</h4>
+        <p class="molar-balance-eq">${escapeHtml(equation)}</p>
+        <p class="quiz-status ${check.ok ? 'is-ok' : 'is-err'}">${escapeHtml(check.message)}</p>
+        ${
+          annotate
+            ? '<p class="molar-balance-hint">状态符号（↑↓）为课本示意；系数经本地校验，标注已合并 AI 建议</p>'
+            : ''
+        }
+        <ol class="molar-balance-steps">
+          ${(Array.isArray(data?.steps) ? data.steps : local.steps || [])
+            .map((s) => `<li>${escapeHtml(s)}</li>`)
+            .join('')}
+        </ol>
+      `;
     }
-    // 始终本地再配平/校验
-    runBalanceLocal();
     if (status) {
-      status.textContent = (status.textContent || '') + '（含 AI 建议）';
+      status.textContent = check.ok
+        ? '已配平并校验守恒（含 AI 建议）'
+        : '配平后校验异常';
+      status.className = 'quiz-status ' + (check.ok ? 'is-ok' : 'is-err');
     }
   } catch (err) {
-    if (status) {
-      status.textContent = err.message || 'AI 建议失败，可直接本地配平';
-      status.className = 'quiz-status is-err';
+    // 无 Key / 失败：降级本地配平
+    try {
+      runBalanceLocal();
+      if (status) {
+        status.textContent =
+          (status.textContent || '已本地配平') +
+          `（AI：${err.message || '不可用'}）`;
+      }
+    } catch {
+      if (status) {
+        status.textContent = err.message || 'AI 建议失败，可直接本地配平';
+        status.className = 'quiz-status is-err';
+      }
     }
   }
 }

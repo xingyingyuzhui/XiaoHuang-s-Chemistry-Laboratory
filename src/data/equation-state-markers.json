@@ -1,0 +1,17 @@
+{
+  "gas": [
+    "H2", "O2", "N2", "Cl2", "F2", "Br2", "I2",
+    "CO2", "CO", "NO", "NO2", "N2O", "SO2", "SO3", "H2S",
+    "NH3", "HCl", "HF", "HBr", "HI",
+    "CH4", "C2H4", "C2H2", "PH3", "O3"
+  ],
+  "ppt": [
+    "AgCl", "AgBr", "AgI", "Ag2S", "Ag2CO3",
+    "BaSO4", "BaCO3", "Ba3(PO4)2",
+    "CaCO3", "CaSO4", "CaC2O4", "MgCO3",
+    "PbSO4", "PbI2", "PbS",
+    "Cu(OH)2", "Fe(OH)2", "Fe(OH)3", "Al(OH)3", "Zn(OH)2", "Mg(OH)2", "Mn(OH)2",
+    "CuS", "FeS", "ZnS", "CdS"
+  ],
+  "notes": "与 equation-state-markers.js 保持同步；运行时以 .js 为准。"
+}

@@ -31,12 +31,30 @@ export const DEFAULT_SETTINGS = {
     apiKey: '',
     model: 'deepseek-v4-flash',
   },
+  /** 化学引擎：配平结果是否标注 ↑↓ */
+  chem: {
+    annotateStateMarkers: true,
+  },
 };
 
 const ALLOWED_MODELS = new Set(['deepseek-v4-flash', 'deepseek-v4-pro']);
 
 // 缓存的设置
 let cachedSettings = null;
+
+export function normalizeChem(chem) {
+  return {
+    annotateStateMarkers: chem?.annotateStateMarkers !== false,
+  };
+}
+
+/** 同步读取：配平是否标注状态符号（默认开） */
+export function getAnnotateStateMarkers() {
+  if (cachedSettings?.chem) {
+    return cachedSettings.chem.annotateStateMarkers !== false;
+  }
+  return DEFAULT_SETTINGS.chem.annotateStateMarkers;
+}
 
 /** 预览色（设置卡片小色块，与主题 token 大致对应） */
 const THEME_PREVIEW = {
@@ -76,6 +94,7 @@ export async function loadSettings() {
           ? settings.ai.model
           : DEFAULT_SETTINGS.ai.model,
       },
+      chem: normalizeChem(settings.chem),
     };
     return cachedSettings;
   } catch (err) {
@@ -107,6 +126,9 @@ export async function saveSettings(patch) {
             ? patch.electronOrder
             : cachedSettings.electronOrder,
         ai: patch.ai ? { ...cachedSettings.ai, ...patch.ai } : cachedSettings.ai,
+        chem: patch.chem
+          ? normalizeChem({ ...cachedSettings.chem, ...patch.chem })
+          : cachedSettings.chem,
       };
     }
     return true;
@@ -211,6 +233,8 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
   const themeStatus = $('#themeStatus');
   const defaultPage = $('#settingDefaultPage');
   const defaultPageStatus = $('#defaultPageStatus');
+  const annotateStateMarkers = $('#settingAnnotateStateMarkers');
+  const chemAnnotateStatus = $('#chemAnnotateStatus');
 
   const apiBase = $('#aiApiBase');
   const apiKey = $('#aiApiKey');
@@ -258,6 +282,9 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
     syncBrandInputs(settings.brand);
     syncThemePicker(settings.theme);
     if (defaultPage) defaultPage.value = settings.defaultPage;
+    if (annotateStateMarkers) {
+      annotateStateMarkers.checked = settings.chem?.annotateStateMarkers !== false;
+    }
     if (apiBase) apiBase.value = settings.ai.apiBase;
     if (apiKey) apiKey.value = settings.ai.apiKey;
     if (apiModel) apiModel.value = settings.ai.model;
@@ -350,6 +377,17 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
       setStatus(defaultPageStatus, '已保存', true);
     } catch (err) {
       setStatus(defaultPageStatus, '保存失败: ' + err.message, false);
+    }
+  });
+
+  annotateStateMarkers?.addEventListener('change', async () => {
+    try {
+      await saveSettings({
+        chem: { annotateStateMarkers: Boolean(annotateStateMarkers.checked) },
+      });
+      setStatus(chemAnnotateStatus, '已保存', true);
+    } catch (err) {
+      setStatus(chemAnnotateStatus, '保存失败: ' + err.message, false);
     }
   });
 

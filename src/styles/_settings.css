@@ -151,6 +151,24 @@
   margin: 0;
 }
 
+.settings-drawer .field-check {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+}
+
+.settings-drawer .field-check input[type='checkbox'] {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.settings-drawer .field-check span {
+  line-height: 1.4;
+}
+
 .brand-settings-row {
   display: flex;
   flex-direction: column;

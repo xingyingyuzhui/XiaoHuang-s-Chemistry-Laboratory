@@ -16,6 +16,7 @@ import {
   buildPracticeStepsFromEquations,
   formatBalanceImportSummary,
   downloadJsonFile,
+  startEquationFromSides,
 } from './balance-model.js';
 import { bindChemKeypad, mountChemKeypads } from '../chem-keypad.js';
 import { appAlert, appConfirm } from '../app-dialog.js';
@@ -27,6 +28,14 @@ import {
   renderSpeciesEquation,
   sanitizePracticeTip,
 } from './balance-views.js';
+import {
+  balanceEquation,
+  mergeMarkersFromEquation,
+  formatEquation,
+  parseEquationSides,
+  speciesFromEquation,
+} from '../equation-balance.js';
+import { getAnnotateStateMarkers } from '../settings.js';
 
 const DRAWER_KEY = 'balance-drawer-collapsed';
 const KEYPAD_BUBBLE_ID = 'balanceCoefKeypadBubble';
@@ -922,9 +931,43 @@ export function createBalanceShellController({ select, escapeHtml, balanceScript
       stepEditMode = false;
       draft = scriptToDraft(null);
       draft.title = `AI 草稿：${eq.slice(0, 24)}`;
-      draft.startEquation = eq.replace(/→/g, '=').replace(/\s+/g, ' ').trim();
-      draft.targetEquation = String(target).replace(/→/g, '=').replace(/\s+/g, ' ').trim();
       draft.difficulty = 'AI';
+
+      const annotate = getAnnotateStateMarkers();
+      const promptStart = eq.replace(/→/g, '=').replace(/\s+/g, ' ').trim();
+      let targetEq = String(target).replace(/→/g, '=').replace(/\s+/g, ' ').trim();
+      let sides = null;
+
+      // 本地系数权威 + 合并 AI/白名单状态符号（受设置开关控制）
+      try {
+        const local = balanceEquation(eq, { annotate });
+        sides = mergeMarkersFromEquation(
+          targetEq,
+          { left: local.left, right: local.right },
+          { annotate },
+        );
+        targetEq = formatEquation(sides.left, sides.right, { annotate: false });
+      } catch {
+        sides = parseEquationSides(targetEq);
+        if (!sides) {
+          throw new Error('模型返回的式子无法解析，请改用如 H2 + O2 = H2O 的格式');
+        }
+        sides = mergeMarkersFromEquation(targetEq, sides, { annotate });
+        targetEq = formatEquation(sides.left, sides.right, { annotate: false });
+      }
+
+      // 起式必须能解析出物种；提示词含 (g)/(aq) 等已可解析，自然语言则从目标式回退
+      let startEq = promptStart;
+      if (!speciesFromEquation(startEq)) {
+        startEq = startEquationFromSides(sides);
+      }
+      if (!speciesFromEquation(startEq)) {
+        throw new Error('起式无法解析，请输入如 H2 + O2 = H2O 的方程式后再生成');
+      }
+
+      draft.startEquation = startEq;
+      draft.targetEquation = targetEq;
+      draft.species = speciesFromEquation(startEq);
       // 根据目标式系数生成 set_coef 练习步（并保留最多 3 条 AI 思路）
       draft.steps = buildPracticeStepsFromEquations(
         draft.startEquation,

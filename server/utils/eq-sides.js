@@ -2,7 +2,7 @@
 
 /**
  * 方程式解析 / 守恒（CJS，供 balance-script-schema 等服务端使用）
- * 与 src/equation-balance.js 中学范围约定一致。
+ * 与 src/equation-balance.js 中学范围约定一致（parse / marker 剥离）。
  */
 
 const SUB = '₀₁₂₃₄₅₆₇₈₉';
@@ -11,7 +11,21 @@ function toAscii(s) {
   return String(s || '')
     .replace(/[₀₁₂₃₄₅₆₇₈₉]/g, (d) => String(SUB.indexOf(d)))
     .replace(/[→⇌↔]/g, '=')
+    .replace(/＝/g, '=')
+    .replace(/＋/g, '+')
+    // 化学键盘常见物态标注，配平解析不需要
+    .replace(/\((s|l|g|aq)\)/gi, '')
     .replace(/\s+/g, '');
+}
+
+function splitTrailingMarker(token) {
+  let s = String(token || '');
+  let marker = '';
+  if (s.endsWith('↑') || s.endsWith('↓')) {
+    marker = s.slice(-1);
+    s = s.slice(0, -1);
+  }
+  return { formula: s, marker };
 }
 
 function parseFormula(formula) {
@@ -52,8 +66,10 @@ function parseFormula(formula) {
       const mult = n ? parseInt(n, 10) : 1;
       const top = stack[stack.length - 1];
       top[el] = (top[el] || 0) + mult;
-    } else {
+    } else if (/[·.•\-]/.test(s[i])) {
       i += 1;
+    } else {
+      throw new Error(`化学式含无法识别的字符「${s[i]}」`);
     }
   }
   if (stack.length !== 1) throw new Error('化学式括号不匹配');
@@ -68,13 +84,17 @@ function parseSpecies(raw) {
     coef = parseInt(m[1], 10) || 1;
     s = m[2];
   }
-  if (!s) throw new Error('化学式为空');
-  const counts = parseFormula(s);
-  return { coef, formula: s, counts };
+  const { formula, marker } = splitTrailingMarker(s);
+  if (!formula) throw new Error('化学式为空');
+  if (/[↑↓]/.test(formula)) {
+    throw new Error('状态符号只能写在化学式末尾');
+  }
+  const counts = parseFormula(formula);
+  return { coef, formula, marker, counts };
 }
 
 /**
- * @returns {{ left: {formula,coef,counts}[], right: {formula,coef,counts}[] } | null}
+ * @returns {{ left: {formula,coef,marker,counts}[], right: ... } | null}
  */
 function parseEquationSides(input) {
   try {
@@ -116,8 +136,16 @@ function speciesFromEquation(input) {
   const sides = parseEquationSides(input);
   if (!sides) return null;
   return {
-    left: sides.left.map((s) => ({ formula: s.formula, coef: 1 })),
-    right: sides.right.map((s) => ({ formula: s.formula, coef: 1 })),
+    left: sides.left.map((s) => ({
+      formula: s.formula,
+      coef: 1,
+      marker: s.marker || '',
+    })),
+    right: sides.right.map((s) => ({
+      formula: s.formula,
+      coef: 1,
+      marker: s.marker || '',
+    })),
   };
 }
 

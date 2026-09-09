@@ -27,6 +27,10 @@ const DEFAULT_SETTINGS = {
     apiKey: '',
     model: DEFAULT_MODEL,
   },
+  /** 化学引擎相关（配平等） */
+  chem: {
+    annotateStateMarkers: true,
+  },
 };
 
 const MASKED_KEY_PLACEHOLDER = '__MASKED_API_KEY__';
@@ -103,12 +107,18 @@ router.get('/', (req, res) => {
       defaultPage: DEFAULT_SETTINGS.defaultPage,
       electronOrder: [...DEFAULT_SETTINGS.electronOrder],
       ai: { ...DEFAULT_SETTINGS.ai },
+      chem: { ...DEFAULT_SETTINGS.chem },
     };
 
     rows.forEach((row) => {
       try {
         const value = JSON.parse(row.value);
-        if (row.key === 'brand' || row.key === 'theme' || row.key === 'ai') {
+        if (
+          row.key === 'brand' ||
+          row.key === 'theme' ||
+          row.key === 'ai' ||
+          row.key === 'chem'
+        ) {
           settings[row.key] = deepMerge(settings[row.key], value);
         } else {
           settings[row.key] = value;
@@ -117,6 +127,14 @@ router.get('/', (req, res) => {
         console.warn(`解析设置失败: ${row.key}`, e);
       }
     });
+
+    if (typeof settings.chem?.annotateStateMarkers !== 'boolean') {
+      settings.chem = {
+        ...DEFAULT_SETTINGS.chem,
+        ...(settings.chem && typeof settings.chem === 'object' ? settings.chem : {}),
+        annotateStateMarkers: settings.chem?.annotateStateMarkers !== false,
+      };
+    }
 
     // 纠正非法 apiBase
     const { base } = normalizeApiBase(settings.ai?.apiBase);
@@ -208,6 +226,14 @@ router.put('/', (req, res) => {
           'defaultPage',
           allowed.includes(page) ? page : 'table',
         );
+        continue;
+      }
+
+      if (key === 'chem' && patch.chem && typeof patch.chem === 'object') {
+        const oldChem = readSettingObject('chem', DEFAULT_SETTINGS.chem);
+        const nextChem = deepMerge(oldChem, patch.chem);
+        nextChem.annotateStateMarkers = nextChem.annotateStateMarkers !== false;
+        upsertSetting('chem', nextChem);
         continue;
       }
 

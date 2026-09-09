@@ -4,7 +4,7 @@
 
 数据全部保存在本机 SQLite；可选接入 **DeepSeek API** 做 AI 出题、提示、分子/反应生成等（仅按调用转发提示词，名单与试卷等业务数据留在本机）。
 
-**当前版本：v3.0.8** · 许可证见 [LICENSE](./LICENSE)（**非 MIT**；二次修改须注明来源，**禁止非授权商用**）
+**当前版本：v3.0.9** · 许可证见 [LICENSE](./LICENSE)（**非 MIT**；二次修改须注明来源，**禁止非授权商用**）
 
 <p align="center">
   <img src="docs/screenshots/01-table-default.jpg" alt="元素周期表 · 默认主题" width="900" />
@@ -30,12 +30,12 @@
 
 ## 下载安装（推荐）
 
-发布页：[Releases · v3.0.8](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.8)
+发布页：[Releases · v3.0.9](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.9)
 
 | 文件 | 平台 | 说明 |
 |------|------|------|
-| `XiaoHuang-ChemLab-Setup-3.0.8.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
-| `XiaoHuang-ChemLab-3.0.8-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
+| `XiaoHuang-ChemLab-Setup-3.0.9.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
+| `XiaoHuang-ChemLab-3.0.9-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
 
 ### Electron 版（Win 安装包 / Mac dmg）
 
@@ -442,6 +442,7 @@ npm run build:exe
 
 | 版本 | 说明 |
 |------|------|
+| **3.0.9** | **配平方程**：结果统一用 `=`；配平后可按课本习惯标注气体 ↑ / 沉淀 ↓（可关）；计算页与课堂分步配平共用引擎；AI 配平以本地系数为准并合并标注；兼容化学键盘 `(g)`/`(aq)` 等物态标注。 |
 | **3.0.8** | **修复**：Win 安装后主进程找不到 `version-lock.cjs` 秒退；`electron-builder` 补打该文件，并加测试防止再漏。 |
 | **3.0.7** | **Electron 桌面版**：`build-manifest.json` 前后端版本锁，启动自检不一致则弹窗；打包 stage 对关键 AI 路由（含 `/api/ai/reaction`）冒烟；Electron 优先内置 `public/` 避免旧文件覆盖；设置页显示 buildId；AI 添加反应入口友好阻断。 |
 | **3.0.6** | **Electron macOS**：补全「编辑」菜单标准 roles，修复输入框无法使用 ⌘V/⌘C 等系统快捷键；协议改为须注明来源且禁止非授权商用；清理仓库中与应用本体无关的 agent 工具目录。 |
