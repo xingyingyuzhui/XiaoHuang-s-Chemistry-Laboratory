@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS = {
   ai: {
     apiBase: 'https://api.deepseek.com',
     apiKey: '',
-    model: 'deepseek-v4-flash',
+    model: 'deepseek-flash',
   },
   /** 化学引擎：配平结果是否标注 ↑↓ */
   chem: {
@@ -37,7 +37,21 @@ export const DEFAULT_SETTINGS = {
   },
 };
 
-const ALLOWED_MODELS = new Set(['deepseek-v4-flash', 'deepseek-v4-pro']);
+const ALLOWED_MODELS = new Set(['deepseek-flash']);
+
+/** 与服务端 ai-config 对齐：旧模型名写入时迁到 deepseek-flash */
+const MODEL_ALIASES = {
+  'deepseek-v4-flash': 'deepseek-flash',
+  'deepseek-v4-flash-vision-exp': 'deepseek-flash',
+  'deepseek-v4.1-flash': 'deepseek-flash',
+  'deepseek-v4-pro': 'deepseek-flash',
+};
+
+function normalizeAiModel(raw) {
+  let model = String(raw || DEFAULT_SETTINGS.ai.model).trim();
+  if (MODEL_ALIASES[model]) model = MODEL_ALIASES[model];
+  return ALLOWED_MODELS.has(model) ? model : DEFAULT_SETTINGS.ai.model;
+}
 
 // 缓存的设置
 let cachedSettings = null;
@@ -90,9 +104,7 @@ export async function loadSettings() {
       ai: {
         apiBase: settings.ai?.apiBase || DEFAULT_SETTINGS.ai.apiBase,
         apiKey: settings.ai?.apiKey || '',
-        model: ALLOWED_MODELS.has(settings.ai?.model)
-          ? settings.ai.model
-          : DEFAULT_SETTINGS.ai.model,
+        model: normalizeAiModel(settings.ai?.model),
       },
       chem: normalizeChem(settings.chem),
     };
@@ -392,7 +404,7 @@ export async function initSettingsUI({ onDefaultPageChange } = {}) {
   });
 
   btnSaveAi?.addEventListener('click', async () => {
-    const model = apiModel?.value;
+    const model = normalizeAiModel(apiModel?.value);
     if (!ALLOWED_MODELS.has(model)) {
       setStatus(aiStatus, '不支持的模型', false);
       return;

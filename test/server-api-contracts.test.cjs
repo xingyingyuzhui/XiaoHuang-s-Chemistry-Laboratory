@@ -81,7 +81,7 @@ test('settings API masks a stored AI key', async () => {
         JSON.stringify({
           apiBase: 'https://api.deepseek.com',
           apiKey: 'sk-secret-value',
-          model: 'deepseek-v4-flash',
+          model: 'deepseek-flash',
         }),
       ],
     );

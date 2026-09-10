@@ -212,10 +212,16 @@
               <label class="field">
                 <span>模型</span>
                 <select id="aiModel">
-                  <option value="deepseek-v4-flash">deepseek-v4-flash（默认）</option>
-                  <option value="deepseek-v4-pro">deepseek-v4-pro</option>
+                  <option value="deepseek-flash">
+                    deepseek-flash（DeepSeek-V4.1-Flash，推荐）
+                  </option>
                 </select>
               </label>
+              <p class="settings-hint">
+                官方推荐名 <code>deepseek-flash</code>。旧名
+                <code>deepseek-v4-flash</code> /
+                <code>deepseek-v4-pro</code> 会自动迁移到本模型。
+              </p>
               <div class="settings-actions">
                 <button type="button" class="btn primary" id="btnSaveAi">保存 AI 设置</button>
               </div>

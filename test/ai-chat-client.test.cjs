@@ -10,7 +10,7 @@ test('AI client aborts an unresponsive provider request with a timeout error', a
     requestChatCompletion({
       apiKey: 'test-key',
       apiBase: 'https://api.deepseek.com',
-      model: 'deepseek-v4-flash',
+      model: 'deepseek-flash',
       system: 'system',
       user: 'user',
       timeoutMs: 5,
@@ -32,7 +32,7 @@ test('AI client returns content and turns provider errors into a safe gateway er
   const success = await requestChatCompletion({
     apiKey: 'test-key',
     apiBase: 'https://api.deepseek.com',
-    model: 'deepseek-v4-flash',
+    model: 'deepseek-flash',
     system: 'system',
     user: 'user',
     fetchImpl: async () => ({
@@ -40,13 +40,13 @@ test('AI client returns content and turns provider errors into a safe gateway er
       json: async () => ({ choices: [{ message: { content: '  化学答案  ' } }] }),
     }),
   });
-  assert.deepEqual(success, { content: '化学答案', model: 'deepseek-v4-flash' });
+  assert.deepEqual(success, { content: '化学答案', model: 'deepseek-flash' });
 
   await assert.rejects(
     requestChatCompletion({
       apiKey: 'test-key',
       apiBase: 'https://api.deepseek.com',
-      model: 'deepseek-v4-flash',
+      model: 'deepseek-flash',
       system: 'system',
       user: 'user',
       fetchImpl: async () => ({
