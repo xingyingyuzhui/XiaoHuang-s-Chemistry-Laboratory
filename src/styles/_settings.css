@@ -5,7 +5,7 @@
   background: color-mix(in srgb, var(--ink) 42%, transparent);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s var(--ease-out);
+  transition: opacity var(--dur) var(--ease-out);
   z-index: 80;
 }
 
@@ -27,7 +27,7 @@
   display: flex;
   flex-direction: column;
   transform: translateX(105%);
-  transition: transform 0.32s var(--ease-out);
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 
 .settings-drawer.is-open {
@@ -49,7 +49,7 @@
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--ink);
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
   letter-spacing: 0.02em;
 }
 
@@ -58,7 +58,7 @@
   width: 36px;
   height: 36px;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   color: var(--ink);
   font-size: 1.35rem;
@@ -92,7 +92,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--stamp);
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
   display: flex;
   align-items: center;
   gap: 0.45rem;
@@ -102,7 +102,7 @@
   content: '';
   width: 0.55rem;
   height: 0.55rem;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   background: var(--stamp);
   border: var(--ui-stroke) solid var(--border-ink);
   box-shadow: 1px 1px 0 var(--border-ink);
@@ -111,7 +111,7 @@
 .settings-block {
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.85rem 0.95rem;
   margin-bottom: 0.75rem;
   box-shadow: var(--shadow-print-sm);
@@ -186,7 +186,7 @@
   width: 56px;
   height: 56px;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--paper);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
@@ -230,14 +230,14 @@
   text-align: left;
   cursor: pointer;
   border: var(--ui-stroke-strong) solid var(--border-ink);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   padding: 0.7rem 0.75rem 0.75rem;
   box-shadow: var(--shadow-print-sm);
   font: inherit;
   color: var(--text-primary);
-  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) ease,
-    background var(--dur-fast) ease;
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 
 .theme-card:hover {
@@ -261,7 +261,7 @@
 .theme-card-swatch i {
   width: 1.1rem;
   height: 1.1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   border: 1.5px solid var(--border-ink);
   display: block;
 }
@@ -271,7 +271,7 @@
   font-weight: 800;
   font-size: 0.92rem;
   margin-bottom: 0.15rem;
-  font-family: var(--font-serif-cjk), var(--font-cjk);
+  font-family: var(--font-heading);
 }
 
 .theme-card-desc {
@@ -331,7 +331,7 @@
   border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-weight: 600;
@@ -353,7 +353,7 @@
   border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-weight: 600;

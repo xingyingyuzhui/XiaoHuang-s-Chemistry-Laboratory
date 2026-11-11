@@ -407,3 +407,42 @@ test('mastery classification: knowledge field boosts classification', async () =
     assert.equal(redox.total, 1, 'knowledge field "氧化还原反应" should classify correctly');
   });
 });
+
+test('mastery classification: knowledge equal to a catalog name maps to that topic even without keywords', async () => {
+  await withApiServer(async (baseUrl) => {
+    run(`CREATE TABLE IF NOT EXISTS quiz_sessions (
+      id TEXT PRIMARY KEY, created_at INTEGER, grades TEXT, difficulty TEXT,
+      topics TEXT, reveal TEXT, total INTEGER, correct INTEGER, answered INTEGER, summary TEXT
+    )`);
+    run(`CREATE TABLE IF NOT EXISTS quiz_items (
+      id TEXT PRIMARY KEY, session_id TEXT, idx INTEGER, stem TEXT, options TEXT,
+      answer INTEGER, knowledge TEXT, hint TEXT, explain_bank TEXT,
+      chosen INTEGER, used_hint INTEGER, used_explain INTEGER, is_correct INTEGER
+    )`);
+    run(`CREATE TABLE IF NOT EXISTS quiz_wrong_book (
+      id TEXT PRIMARY KEY, created_at INTEGER, stem TEXT, options TEXT,
+      answer INTEGER, knowledge TEXT, hint TEXT, explain_bank TEXT,
+      last_chosen INTEGER, last_session_id TEXT, dismissed INTEGER
+    )`);
+
+    const now = Date.now();
+    run(
+      `INSERT INTO quiz_sessions (id, created_at, grades, difficulty, topics, reveal, total, correct, answered, summary)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['test-kexact', now, '[]', '', '[]', 'immediate', 1, 0, 1, ''],
+    );
+    // "电化学基础" is not itself a keyword of the electrochem topic
+    run(
+      `INSERT INTO quiz_items (id, session_id, idx, stem, options, answer, knowledge, chosen, is_correct)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['qi-kexact', 'test-kexact', 0, '下列说法正确的是', '[]', 0, '电化学基础', 0, 0],
+    );
+
+    const response = await fetch(`${baseUrl}/api/mastery`);
+    const payload = await response.json();
+    assert.equal(payload.success, true);
+    const echem = payload.data.topics.find((t) => t.id === 'electrochem');
+    assert.equal(echem.total, 1, 'knowledge "电化学基础" should land in 电化学基础');
+    assert.ok(!payload.data.topics.some((t) => t.id === 'uncategorized'), 'nothing should be uncategorized');
+  });
+});

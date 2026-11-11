@@ -64,6 +64,18 @@ html[data-theme='reagent'] {
   --radius-box: 6px;
   --radius-card: 10px;
   --radius-control: 8px;
+  /* 判题语义色：答对 / 答错（与 --stamp/--diagram 品牌色分开） */
+  --ok: #3f7f5f;
+  --ok-soft: #e4eee6;
+  --bad: #b4472e;
+  --bad-soft: #f5e1d8;
+  --mid: #b8862b; /* 中间档：练习中 */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-pill: 999px;
   --gap-size: 4px;
   --f-gap-size: 6px;
 

@@ -124,7 +124,10 @@ export function createElectronViewer(container) {
     canvas.height = size;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, size, size);
-    ctx.font = `bold ${fontPx}px Arial, "Noto Sans SC", sans-serif`;
+    // 跟随主题字体角色（--font-main），与界面文字一致
+    const family =
+      getComputedStyle(document.documentElement).getPropertyValue('--font-main').trim() || 'sans-serif';
+    ctx.font = `bold ${fontPx}px ${family}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if (stroke) {

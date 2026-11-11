@@ -56,6 +56,12 @@ function classifyQuestion(knowledge, stem) {
   const knowledgeIsYear = /^\d{4}.*高考/.test(knowledgeStr) || /^\d{4}.*试卷/.test(knowledgeStr);
   const useKnowledgeBoost = knowledgeStr.length > 0 && !knowledgeIsYear;
 
+  // knowledge 与目录名完全一致（智能出题按章节名写入）：直接归入，不靠关键词猜
+  if (useKnowledgeBoost) {
+    const exact = KNOWLEDGE_CATALOG.find((cat) => cat.name === knowledgeStr);
+    if (exact) return exact.id;
+  }
+
   let bestId = 'uncategorized';
   let bestLen = 0;
 

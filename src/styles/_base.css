@@ -13,6 +13,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 表单控件默认不继承字体（Chromium 回落 Arial），统一跟随字体角色 */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+}
+
 /* 氛围层由 themes 下各主题 skin 控制 */
 body::before {
   content: '';

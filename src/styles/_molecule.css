@@ -32,7 +32,7 @@
   font-weight: 700;
   color: var(--diagram);
   letter-spacing: 0.02em;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .mol-info-section ul {
@@ -53,7 +53,7 @@
   border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--text-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.38rem 0.45rem;
   text-align: center;
   cursor: pointer;
@@ -79,7 +79,7 @@
 .mol-btn strong {
   font-size: 0.82rem;
   font-weight: 800;
-  font-family: var(--font-mono), var(--font-latin);
+  font-family: var(--font-mono);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
@@ -202,7 +202,7 @@
 .mol-card.drag-over {
   outline: 2px dashed var(--stamp);
   outline-offset: 2px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .mol-card.is-active .mol-card-main {
@@ -218,7 +218,7 @@
   background: color-mix(in srgb, var(--ink) 45%, transparent);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s var(--ease-out);
+  transition: opacity var(--dur) var(--ease-out);
   z-index: 100;
 }
 
@@ -234,13 +234,13 @@
   transform: translate(-50%, -48%) scale(0.96);
   width: min(440px, 92vw);
   background: var(--card-elevated);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: 6px 6px 0 color-mix(in srgb, var(--ink) 88%, transparent);
   z-index: 110;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.22s var(--ease-out), transform 0.28s var(--ease-spring);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-spring);
 }
 
 .modal-panel.is-open {
@@ -262,7 +262,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .modal-body {
@@ -273,7 +273,7 @@
 .modal-body textarea {
   width: 100%;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-weight: 500;

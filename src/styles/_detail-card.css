@@ -36,12 +36,12 @@
 .detail-badge {
   width: 54px;
   height: 54px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: grid;
   place-content: center;
   font-weight: 800;
   font-size: 1.25rem;
-  font-family: var(--font-display), var(--font-latin);
+  font-family: var(--font-display);
   letter-spacing: -0.02em;
   color: var(--text-primary);
   background-color: var(--zone-bg, var(--card-elevated));
@@ -73,7 +73,7 @@
   margin: 0;
   font-size: 1.08rem;
   font-weight: 700;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
   letter-spacing: 0.01em;
   color: var(--text-primary);
 }
@@ -97,7 +97,7 @@
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.45rem 0.6rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--paper);
   border: 1.5px solid var(--border);
   font-size: 0.84rem;
@@ -106,14 +106,14 @@
 .kv span {
   color: var(--text-muted);
   font-weight: 600;
-  font-family: var(--font-cjk);
+  font-family: var(--font-main);
 }
 
 .kv strong {
   font-weight: 700;
   text-align: right;
   color: var(--text-primary);
-  font-family: var(--font-mono), var(--font-cjk);
+  font-family: var(--font-mono), var(--font-main);
   font-variant-numeric: tabular-nums;
 }
 
@@ -147,7 +147,7 @@
 .detail-teach {
   margin-top: 0.75rem;
   padding: 0.55rem 0.65rem;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px dashed color-mix(in srgb, var(--stamp) 40%, transparent);
   background: color-mix(in srgb, var(--stamp) 6%, var(--paper));
 }
@@ -156,7 +156,7 @@
   margin: 0 0 0.3rem;
   font-size: 0.78rem;
   color: var(--stamp);
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
 }
 
 .detail-teach p {

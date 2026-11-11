@@ -60,6 +60,20 @@ html[data-theme='pixel'] {
   --radius-box: 0;
   --radius-card: 0;
   --radius-control: 0;
+  /* 判题语义色：答对 / 答错（与 --stamp/--diagram 品牌色分开） */
+  --ok: #00b894;
+  --ok-soft: #c8f7e9;
+  --bad: #ff4757;
+  --bad-soft: #ffe0e5;
+  --mid: #fdcb6e; /* 中间档：练习中 */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-pill: 0;
+  --ease-reveal: steps(6, end);
+  --motion-steps: 6;
   --gap-size: 4px;
   --f-gap-size: 6px;
 

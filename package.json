@@ -24,6 +24,9 @@
     "dist:electron": "npm run build:frontend && npm run stage:electron && electron-builder -c.electronDist=node_modules/electron/dist"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "animejs": "^4.5.0",
     "canvas-confetti": "^1.9.4"
   },

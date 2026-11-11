@@ -12,12 +12,12 @@
   min-height: 36px;
   padding: 0.35rem 0.75rem;
   border: var(--ui-stroke-strong) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   color: var(--ink);
   font-size: 0.86rem;
   font-weight: 700;
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
   cursor: pointer;
   box-shadow: var(--shadow-print-sm);
   letter-spacing: 0.02em;
@@ -46,13 +46,13 @@
   min-width: 1.2em;
   height: 1.2em;
   padding: 0 0.28em;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent, var(--stamp));
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-main);
 }
 
 .mol-rxn-toggle[aria-expanded='true'] .mol-rxn-badge {
@@ -70,7 +70,7 @@
   width: min(320px, calc(100% - 1.5rem));
   display: flex;
   flex-direction: column;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   background: color-mix(in srgb, var(--card-elevated) 96%, transparent);
   backdrop-filter: blur(8px);
@@ -79,8 +79,8 @@
   opacity: 0;
   pointer-events: none;
   transition:
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.22s ease;
+    transform var(--dur) var(--ease-out),
+    opacity var(--dur) var(--ease-out);
   overflow: hidden;
 }
 
@@ -104,7 +104,7 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
   color: var(--text-primary);
 }
 
@@ -113,7 +113,7 @@
   width: 32px;
   height: 32px;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--paper);
   color: var(--ink);
   font-size: 1.15rem;
@@ -158,7 +158,7 @@
 
 .rxn-card {
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--paper);
   padding: 0.65rem 0.7rem 0.7rem;
   box-shadow: var(--shadow-print-sm);
@@ -180,7 +180,7 @@
   color: var(--stamp);
   background: var(--note-soft, var(--diagram-soft));
   border: 1px solid color-mix(in srgb, var(--stamp) 35%, transparent);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.12rem 0.45rem;
 }
 
@@ -195,7 +195,7 @@
   width: 24px;
   height: 24px;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--paper);
   color: var(--text-muted);
   cursor: pointer;
@@ -214,7 +214,7 @@
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--text-primary);
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
   line-height: 1.3;
 }
 
@@ -272,7 +272,7 @@
 .rxn-ai-box h4 {
   margin: 0 0 0.55rem;
   font-size: 0.95rem;
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
 }
 
 .rxn-ai-box textarea {
@@ -280,7 +280,7 @@
   min-height: 88px;
   resize: vertical;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 0.55rem 0.65rem;
   font: inherit;
   font-size: 0.86rem;
@@ -303,7 +303,7 @@
 .rxn-ai-stepcount select {
   min-width: 5.5rem;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.45rem;
   font: inherit;
   font-size: 0.86rem;
@@ -334,7 +334,7 @@
 .rxn-ai-preview {
   margin-top: 0.65rem;
   padding: 0.65rem;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: var(--ui-stroke) dashed var(--border-ink);
   background: var(--note-soft, var(--diagram-soft));
 }
@@ -346,7 +346,7 @@
 .rxn-ai-preview h5 {
   margin: 0 0 0.3rem;
   font-size: 0.9rem;
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
 }
 
 .rxn-ai-preview-actions {
@@ -378,7 +378,7 @@
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.7rem 0.9rem 0.75rem;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   background: color-mix(in srgb, var(--card-elevated) 96%, transparent);
   backdrop-filter: blur(10px);
@@ -387,8 +387,8 @@
   pointer-events: none;
   transform: translateY(calc(100% + 1rem));
   transition:
-    opacity 0.2s ease,
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
   /* 避免子项 hover 阴影/描边被父级裁切 */
   overflow: visible;
 }
@@ -410,7 +410,7 @@
   right: 0;
   bottom: var(--rxn-dock-h);
   height: auto;
-  transition: bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: bottom var(--dur) var(--ease-out);
 }
 
 .stage-3d.rxn-playing .mol-props-card {
@@ -491,7 +491,7 @@
 .rxn-eq-mark {
   background: color-mix(in srgb, var(--stamp) 22%, transparent);
   color: var(--ink);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 0 0.12em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
@@ -533,7 +533,7 @@
 .rxn-player-bar-track {
   position: relative;
   height: 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--border-ink) 18%, transparent);
   overflow: hidden;
   flex-shrink: 0;
@@ -544,7 +544,7 @@
   width: 0%;
   border-radius: inherit;
   background: var(--stamp);
-  transition: width 0.12s linear;
+  transition: width var(--dur-fast) linear;
 }
 
 .rxn-player-meta {
@@ -593,7 +593,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--stamp);
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
   line-height: 1;
 }
 
@@ -659,7 +659,7 @@
   min-height: 3.6rem;
   text-align: center;
   border: 1.5px solid color-mix(in srgb, var(--border-ink) 28%, transparent);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--paper) 90%, transparent);
   padding: 0.42rem 0.5rem 0.48rem;
   cursor: pointer;
@@ -667,10 +667,10 @@
   color: inherit;
   /* 不用 translateY：横向列表 overflow 会裁切上移部分 */
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    opacity 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .rxn-hist-btn:hover {
@@ -683,7 +683,7 @@
 .rxn-hist-n {
   width: 1.45rem;
   height: 1.45rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: grid;
   place-items: center;
   font-size: 0.78rem;
@@ -839,4 +839,57 @@
 
 .stage-3d.rxn-playing .mol-bond-card {
   display: none;
+}
+
+/* ── 原子动画舞台（atom-stage.js）：盖在 3D 之上、播放条之上方 ── */
+.rxn-atom-stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: calc(100% - var(--rxn-dock-h, 0px));
+  z-index: 2;
+  display: none;
+  background: var(--stage-3d-bg, var(--paper));
+  pointer-events: none;
+}
+
+.rxn-atom-stage.is-on {
+  display: block;
+  animation: rxn-stage-in var(--dur-slow) var(--ease-out);
+}
+
+/* 原子视图里 3D 的「当前分子」卡片会过期，先藏起来 */
+.stage-3d.rxn-atoms .mol-info-card,
+.stage-3d.rxn-atoms .mol-bond-card {
+  display: none;
+}
+
+.stage-3d.rxn-atoms::after {
+  content: '原子示意 · 键的断开与形成';
+  position: absolute;
+  left: 1rem;
+  top: 0.9rem;
+  z-index: 3;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+@keyframes rxn-stage-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rxn-atom-stage.is-on {
+    animation: none;
+  }
 }

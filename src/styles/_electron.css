@@ -61,7 +61,7 @@
 .electron-card.drag-over {
   outline: 2px dashed var(--stamp);
   outline-offset: 2px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .stage-electron {
@@ -96,7 +96,7 @@
   z-index: 3;
   max-width: min(280px, calc(100% - 2rem));
   padding: 0.75rem 0.95rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
@@ -109,7 +109,7 @@
   letter-spacing: 0.02em;
   color: var(--diagram);
   font-weight: 700;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .electron-info-symbol {
@@ -118,7 +118,7 @@
   font-weight: 700;
   color: var(--ink);
   line-height: 1;
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-display);
 }
 
 .electron-info-name {
@@ -133,7 +133,7 @@
   padding: 0.4rem 0.6rem;
   background: var(--diagram-soft);
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 0.82rem;
   font-weight: 600;

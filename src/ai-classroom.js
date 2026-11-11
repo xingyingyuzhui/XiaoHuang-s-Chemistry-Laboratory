@@ -16,6 +16,8 @@ import { createLessonPacksController } from './ai-classroom/lesson-packs.js';
 import { createBalanceShellController } from './ai-classroom/balance-shell.js';
 import { escapeHtml } from './ai-classroom/quiz-views.js';
 import { appAlert, appConfirm } from './app-dialog.js';
+import { bumpBadge } from './ai-classroom/quiz-fx.js';
+import { CHEM_TOPICS } from './data/chem-topics.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -101,10 +103,7 @@ const wrongBook = createWrongBookController({
   aiApi,
   showAppBubble,
   isRateLimitedError,
-  onBadgeChange: (count) => {
-    wrongBookBadgeCount = count;
-    renderNav();
-  },
+  onBadgeChange: setWrongBookBadge,
   onOpenQuiz: () => selectSection('quiz'),
   onRefreshStats: () => quizShell.refreshStats(),
 });
@@ -130,10 +129,7 @@ quizShell = createQuizShellController({
   appAlert,
   appConfirm,
   isRateLimitedError,
-  onBadgeChange: (count) => {
-    wrongBookBadgeCount = count;
-    renderNav();
-  },
+  onBadgeChange: setWrongBookBadge,
 });
 
 let masteryInited = false;
@@ -141,7 +137,18 @@ const masteryMap = createMasteryMapController({
   select: $,
   escapeHtml,
   masteryApi,
+  onPractice: practiceTopic,
 });
+
+/** 知识地图「去练这个」：切到智能出题，并只选中该知识点所在年级与章节 */
+function practiceTopic(topicName) {
+  const topic = CHEM_TOPICS.find((t) => t.label === topicName);
+  if (!topic) return;
+  config = { ...config, grades: [topic.grade], topics: [topic.id] };
+  quizConfig.renderGradeChips();
+  quizConfig.renderTopicChips();
+  selectSection('quiz');
+}
 
 let lessonPackInited = false;
 const lessonPacks = createLessonPacksController({
@@ -158,6 +165,20 @@ const balanceShell = createBalanceShellController({
   balanceScriptsApi,
   aiApi,
 });
+
+/** 错题本角标：数字变化时跳一下，增加时弹出 +N */
+let wrongBookBadgeKnown = false;
+function setWrongBookBadge(count) {
+  const prev = wrongBookBadgeCount;
+  wrongBookBadgeCount = count;
+  renderNav();
+  // 第一次拿到数量只是建立基线，不弹动画
+  const first = !wrongBookBadgeKnown;
+  wrongBookBadgeKnown = true;
+  if (!first && count !== prev) {
+    bumpBadge($('[data-ai-section="wrong"] .ai-nav-badge'), count - prev);
+  }
+}
 
 function renderNav() {
   const list = $('#aiNavList');

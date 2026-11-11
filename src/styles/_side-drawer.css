@@ -27,7 +27,7 @@
 .side-drawer-head h2 {
   margin: 0;
   font-size: 1rem;
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
   color: var(--ink);
   line-height: 1.25;
   min-width: 0;
@@ -39,7 +39,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--paper, var(--card-elevated));
   color: var(--text-secondary);
   font-size: 0.9rem;

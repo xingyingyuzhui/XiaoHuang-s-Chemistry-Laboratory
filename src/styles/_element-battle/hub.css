@@ -249,9 +249,9 @@
   background: var(--card-elevated);
   box-shadow: var(--shadow-md);
   transition:
-    transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1),
-    box-shadow 0.22s ease,
-    border-color 0.2s ease;
+    transform var(--dur) var(--ease-spring),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
 }
 
 .battle-mode-card.is-featured {
@@ -378,7 +378,7 @@
   font-size: 0.7rem;
   font-weight: 800;
   padding: 0.18rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--border-soft);
   color: var(--text-muted);
   border: 1px solid var(--border);
@@ -413,7 +413,7 @@
 }
 
 .battle-cta-arrow {
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 
 .battle-cta-pulse:hover .battle-cta-arrow {
