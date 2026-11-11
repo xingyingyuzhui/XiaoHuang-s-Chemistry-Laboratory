@@ -6,6 +6,7 @@
 
 import { formatChemOption, formatChemPreview, formatChemStem } from './chem-text.js';
 import { appAlert, appConfirm } from '../app-dialog.js';
+import { countScore, celebrate, revealResultList } from './quiz-fx.js';
 
 export function createOfflineQuizController({
   select,
@@ -174,7 +175,7 @@ export function createOfflineQuizController({
           if (oi === q.answer) cls += ' is-correct';
           else if (q.chosen === oi && q.chosen !== q.answer) cls += ' is-wrong';
         }
-        return `<button type="button" class="${cls}" data-oq="${qi}" data-opt="${oi}" ${submitted ? 'disabled' : ''}><strong>${letters[oi]}.</strong> ${formatChemOption(opt)}</button>`;
+        return `<button type="button" class="${cls}" data-oq="${qi}" data-opt="${oi}" ${submitted ? 'disabled' : ''}><strong class="quiz-opt-key">${letters[oi]}</strong><span class="quiz-opt-text">${formatChemOption(opt)}</span></button>`;
       }).join('');
 
       let feedback = '';
@@ -234,12 +235,15 @@ export function createOfflineQuizController({
       }
 
       const scoreLine = select('#offlineScoreLine');
-      if (scoreLine) {
-        scoreLine.textContent = `得分 ${data?.correct ?? 0} / ${data?.total ?? paper.length}（已作答 ${data?.answered ?? 0} 题）· 离线题库`;
-      }
+      const correct = data?.correct ?? 0;
+      const total = data?.total ?? paper.length;
+      const answered = data?.answered ?? 0;
+      countScore(scoreLine, (n) => `得分 ${n} / ${total}（已作答 ${answered} 题）· 离线题库`, correct);
 
       renderResultList();
       showView('result');
+      revealResultList(select('#offlineResultList'));
+      if (total > 0 && correct === total) window.setTimeout(() => celebrate(scoreLine), 700);
 
       if (typeof onRefreshStats === 'function') {
         try {
@@ -278,7 +282,7 @@ export function createOfflineQuizController({
           if (q.chosen === oi && q.chosen !== q.answer) cls += ' is-wrong';
         }
         if (q.chosen === oi) cls += ' is-selected';
-        return `<div class="${cls}"><strong>${letters[oi]}.</strong> ${formatChemOption(opt)}</div>`;
+        return `<div class="${cls}"><strong class="quiz-opt-key">${letters[oi]}</strong><span class="quiz-opt-text">${formatChemOption(opt)}</span></div>`;
       }).join('');
 
       return `

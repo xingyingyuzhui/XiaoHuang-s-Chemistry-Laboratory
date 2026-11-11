@@ -26,13 +26,15 @@ export function buildPaperHtml({ paper, submitted, reveal, escapeHtml }) {
         .map((opt, oi) => {
           let cls = 'quiz-opt';
           if (q.chosen === oi) cls += ' is-selected';
-          if (submitted || (reveal === 'immediate' && q.chosen !== null)) {
+          // 即时显示模式：答过就锁定，避免看到对错后改答案
+          const revealed = submitted || (reveal === 'immediate' && q.chosen !== null);
+          if (revealed) {
             if (oi === q.answer) cls += ' is-correct';
             else if (q.chosen === oi && q.chosen !== q.answer) cls += ' is-wrong';
           }
           return `<button type="button" class="${cls}" data-q="${qi}" data-opt="${oi}" ${
-            submitted ? 'disabled' : ''
-          }><strong>${letters[oi]}.</strong> ${escapeHtml(opt)}</button>`;
+            revealed ? 'disabled' : ''
+          }><strong class="quiz-opt-key">${letters[oi]}</strong><span class="quiz-opt-text">${escapeHtml(opt)}</span></button>`;
         })
         .join('');
 
@@ -91,7 +93,7 @@ export function buildResultListHtml({ paper, expandedResultIdx, escapeHtml }) {
           if (oi === q.answer) cls += ' is-correct';
           if (q.chosen === oi && q.chosen !== q.answer) cls += ' is-wrong';
           if (q.chosen === oi) cls += ' is-selected';
-          return `<div class="${cls}"><strong>${letters[oi]}.</strong> ${escapeHtml(opt)}</div>`;
+          return `<div class="${cls}"><strong class="quiz-opt-key">${letters[oi]}</strong><span class="quiz-opt-text">${escapeHtml(opt)}</span></div>`;
         })
         .join('');
 

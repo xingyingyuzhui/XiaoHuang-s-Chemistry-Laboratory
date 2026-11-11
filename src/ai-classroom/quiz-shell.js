@@ -3,6 +3,7 @@
  * 领域逻辑见 quiz-model.js；HTML 片段见 quiz-views.js
  */
 
+import { revealQuestion, countScore, celebrate, revealResultList } from './quiz-fx.js';
 import { buildPaperHtml, buildResultListHtml } from './quiz-views.js';
 
 /**
@@ -180,8 +181,15 @@ export function createQuizShellController({
     root.querySelectorAll('.quiz-opt').forEach((btn) => {
       btn.addEventListener('click', async () => {
         if (quizModel.getSubmitted()) return;
-        paper[Number(btn.dataset.q)].chosen = Number(btn.dataset.opt);
+        const qi = Number(btn.dataset.q);
+        const q = paper[qi];
+        const immediate = getConfig().reveal === 'immediate';
+        if (immediate && q.chosen !== null) return;
+        q.chosen = Number(btn.dataset.opt);
         renderPaper();
+        if (immediate) {
+          revealQuestion(root.querySelector(`.quiz-card[data-qi="${qi}"]`), { ok: q.chosen === q.answer });
+        }
       });
     });
 
@@ -289,9 +297,11 @@ export function createQuizShellController({
     }
 
     const scoreLine = select('#quizScoreLine');
-    if (scoreLine) {
-      scoreLine.textContent = `得分 ${correct} / ${total}（已作答 ${answered} 题）· ${quizConfig.diffLabel()}`;
-    }
+    const diff = quizConfig.diffLabel();
+    countScore(scoreLine, (n) => `得分 ${n} / ${total}（已作答 ${answered} 题）· ${diff}`, correct);
+    if (total > 0 && correct === total) window.setTimeout(() => celebrate(scoreLine), 700);
+    // 交卷后错题本已在服务端更新：立即刷新徽章（数字增加时侧栏会弹 +N）
+    if (saveOk) refreshStats();
 
     if (!saveOk && error) {
       await appAlert(
@@ -300,6 +310,7 @@ export function createQuizShellController({
     }
 
     renderResultList();
+    revealResultList(select('#quizResultList'));
     const report = select('#quizReport');
     const reportBody = select('#quizReportBody');
     if (report) report.hidden = true;

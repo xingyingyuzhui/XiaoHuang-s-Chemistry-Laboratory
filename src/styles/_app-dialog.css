@@ -18,7 +18,7 @@
   inset: 0;
   background: color-mix(in srgb, var(--ink) 45%, transparent);
   opacity: 0;
-  transition: opacity 0.2s var(--ease-out, ease-out);
+  transition: opacity var(--dur) var(--ease-out, ease-out);
   z-index: 400;
 }
 

@@ -11,6 +11,8 @@ import {
   isAiReactionAvailable,
   REINSTALL_HINT,
 } from '../boot/version-check.js';
+import { buildReactionPlan } from './reaction-plan.js';
+import { createAtomStage } from './atom-stage.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -43,6 +45,54 @@ let prePlaybackMolId = null;
 let lastStepIdx = -1;
 /** 本轮是否已播放结束 */
 let playbackEnded = false;
+
+/** 原子动画：剧本、舞台、当前视图（atoms | 3d），视图选择记在本机 */
+let atomPlan = null;
+let atomStage = null;
+const VIEW_KEY = 'xh-rxn-view';
+let viewMode = (() => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === '3d' ? '3d' : 'atoms';
+  } catch {
+    return 'atoms';
+  }
+})();
+/** 上次写入的文字帧（步骤），避免每帧重写方程式导致弹出动画永远在第 0 帧 */
+let lastTextKey = '';
+
+function currentElapsed() {
+  return playing ? (performance.now() - playStart) / 1000 : pausedElapsed;
+}
+
+function stage3d() {
+  return document.querySelector('.stage-3d');
+}
+
+function updateViewToggle() {
+  const btn = $('#rxnViewToggle');
+  if (!btn) return;
+  btn.hidden = !atomPlan;
+  btn.textContent = viewMode === 'atoms' ? '看 3D 结构' : '看原子动画';
+}
+
+function enterAtomView() {
+  const stage = stage3d();
+  if (!stage || !atomPlan) return;
+  stage.classList.add('rxn-atoms');
+  atomStage ||= createAtomStage(stage);
+  atomStage.start(atomPlan, currentElapsed);
+}
+
+function leaveAtomView() {
+  stage3d()?.classList.remove('rxn-atoms');
+  atomStage?.stop();
+}
+
+function applyViewMode() {
+  if (atomPlan && viewMode === 'atoms') enterAtomView();
+  else leaveAtomView();
+  updateViewToggle();
+}
 
 function stepTime(step) {
   return (Number(step?.t) || 0) * PLAYBACK_SCALE;
@@ -118,6 +168,17 @@ export function initMoleculeReactions() {
     if (src) startPlayback(src);
   });
   $('#molReactionPause')?.addEventListener('click', () => togglePause());
+  $('#rxnViewToggle')?.addEventListener('click', () => {
+    viewMode = viewMode === 'atoms' ? '3d' : 'atoms';
+    try {
+      localStorage.setItem(VIEW_KEY, viewMode);
+    } catch {
+      /* ignore */
+    }
+    applyViewMode();
+  });
+  window.addEventListener('chem-theme-change', () => atomStage?.refresh());
+  window.addEventListener('resize', () => atomStage?.refresh());
 
   $('#btnAiAddReaction')?.addEventListener('click', () => openAiAdd());
   $('#rxnAiCancel')?.addEventListener('click', () => closeAiAdd());
@@ -173,6 +234,7 @@ function syncDockHeight() {
   const h = Math.ceil(playerEl.getBoundingClientRect().height + 14);
   stage.style.setProperty('--rxn-dock-h', `${Math.max(h, 180)}px`);
   notifyViewerResize();
+  atomStage?.refresh();
 }
 
 /**
@@ -305,6 +367,8 @@ function stopPlayback(hidePlayer) {
   activeReaction = null;
 
   if (hidePlayer) {
+    leaveAtomView();
+    atomPlan = null;
     playerEl?.classList.remove('is-open');
     const stage = document.querySelector('.stage-3d');
     stage?.classList.remove('rxn-playing');
@@ -561,6 +625,14 @@ async function startPlayback(reaction) {
     steps: Array.isArray(reaction.steps) ? reaction.steps : [],
   };
   activeReaction.__lastMolId = null;
+  lastTextKey = '';
+  try {
+    atomPlan = buildReactionPlan(activeReaction, stepTime, totalDuration(activeReaction.steps));
+  } catch (err) {
+    // AI 生成的方程式可能千奇百怪：出错就只用 3D 模式
+    console.warn('原子示意不可用', err);
+    atomPlan = null;
+  }
   playing = true;
   playbackEnded = false;
   pausedElapsed = 0;
@@ -574,6 +646,7 @@ async function startPlayback(reaction) {
   setPauseButtonState('playing');
   buildHistory(activeReaction);
   syncDockHeight();
+  applyViewMode();
 
   const steps = activeReaction.steps;
   renderPlayerFrame(activeReaction, steps[0] || null, 0, 0);
@@ -635,7 +708,10 @@ function renderPlayerFrame(reaction, step, progress, idx = 0) {
   const focus = step?.focus || 'reactant';
 
   playerEl.dataset.focus = focus;
-  if (eqEl) {
+  const textKey = `${reaction.id || reaction.title}|${idx}`;
+  const textChanged = textKey !== lastTextKey;
+  lastTextKey = textKey;
+  if (eqEl && textChanged) {
     // 符号动画感：整式 + 高亮片段
     eqEl.innerHTML = highlightEquation(
       reaction.equation,
@@ -645,18 +721,18 @@ function renderPlayerFrame(reaction, step, progress, idx = 0) {
     void eqEl.offsetWidth;
     eqEl.classList.add('rxn-eq-pop');
   }
-  if (labelEl) {
+  if (labelEl && textChanged) {
     labelEl.textContent = step
       ? `${idx + 1}. ${step.label}`
       : reaction.title;
   }
-  if (tipEl) tipEl.textContent = step?.tip || reaction.notes || '';
+  if (tipEl && textChanged) tipEl.textContent = step?.tip || reaction.notes || '';
   const pct = Math.round((progress || 0) * 100);
   if (barEl) barEl.style.width = `${pct}%`;
   if (scrub && document.activeElement !== scrub) {
     scrub.value = String(Math.round((progress || 0) * 1000));
   }
-  if (metaEl) {
+  if (metaEl && textChanged) {
     metaEl.innerHTML = `
       <div title="${escapeHtml(reaction.conditions || '')}"><span>条件</span><strong>${escapeHtml(reaction.conditions || '—')}</strong></div>
       <div title="${escapeHtml(reaction.phenomena || '')}"><span>现象</span><strong>${escapeHtml(reaction.phenomena || '—')}</strong></div>

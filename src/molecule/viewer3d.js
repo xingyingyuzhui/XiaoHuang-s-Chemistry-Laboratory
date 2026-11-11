@@ -1,7 +1,21 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { ATOM_COLORS, ATOM_RADIUS } from '../data/molecules.js';
+import { getViewerStyle, getShadowTexture, currentThemeId } from './viewer-style.js';
+
+function prefersReducedMotion() {
+  return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+}
+
+/** 带回弹的缓出：原子「长出来」时略微超过再落定 */
+function easeOutBack(u) {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2);
+}
 
 const STEP_AZIMUTH = 0.22; // 水平旋转步进（弧度）
 const STEP_POLAR = 0.16; // 俯仰步进
@@ -53,7 +67,27 @@ export function createMoleculeViewer(container) {
   controls.autoRotate = false;
   controls.autoRotateSpeed = AUTO_SPEED;
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const ambient = new THREE.AmbientLight(0xffffff, 0.78);
+  scene.add(ambient);
+  let style = getViewerStyle(currentThemeId());
+  /** 环境反射贴图（光亮 / 哑光主题用），懒创建 */
+  let envTex = null;
+  function applySceneStyle() {
+    if (style.environment) {
+      if (!envTex) {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        pmrem.dispose();
+      }
+      scene.environment = envTex;
+    } else {
+      scene.environment = null;
+    }
+    ambient.intensity = style.ambient;
+  }
+  applySceneStyle();
+  /** 载入动画：原子由中心向外依次长出，键在两端原子出现后伸出 */
+  let intro = null;
   const key = new THREE.DirectionalLight(0xffffff, 0.95);
   key.position.set(5, 8, 4);
   scene.add(key);
@@ -112,6 +146,18 @@ export function createMoleculeViewer(container) {
     }
   }
 
+  /** 背面外扩一圈纯色网格做描边（文具墨线 / 黑板粉笔 / 像素硬边） */
+  function addOutline(mesh, geometry, sx, sy, sz) {
+    if (!style.outline) return;
+    const o = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({ color: style.outline.color, side: THREE.BackSide }),
+    );
+    o.scale.set(sx, sy, sz);
+    o.userData.isOutline = true;
+    mesh.add(o);
+  }
+
   function makeBond(a, b, orderIndex = 0, orderTotal = 1) {
     const start = new THREE.Vector3(a.x, a.y, a.z);
     const end = new THREE.Vector3(b.x, b.y, b.z);
@@ -125,19 +171,33 @@ export function createMoleculeViewer(container) {
       let perp = new THREE.Vector3(0, 1, 0);
       if (Math.abs(n.dot(perp)) > 0.9) perp = new THREE.Vector3(1, 0, 0);
       perp = perp.cross(n).normalize();
-      const spread = 0.12;
+      const spread = style.bondRadius * 2.6;
       const t = orderIndex - (orderTotal - 1) / 2;
       bondOffset = perp.multiplyScalar(t * spread);
     }
 
-    const geom = new THREE.CylinderGeometry(0.07, 0.07, len, 12);
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0x94a3b8,
-      metalness: 0.1,
-      roughness: 0.4,
-    });
-    const mesh = new THREE.Mesh(geom, mat);
+    // 双色键：靠近哪个原子的那一半用哪个原子的颜色（-y 半段朝 a）
+    let mesh;
+    const r = orderTotal > 1 ? style.bondRadius * 0.75 : style.bondRadius;
+    if (style.twoToneBonds) {
+      const half = len / 2;
+      const ga = style.bondGeometry(half).scale(r / style.bondRadius, 1, r / style.bondRadius).translate(0, -half / 2, 0);
+      const gb = style.bondGeometry(half).scale(r / style.bondRadius, 1, r / style.bondRadius).translate(0, half / 2, 0);
+      const geom = mergeGeometries([ga, gb], true);
+      ga.dispose();
+      gb.dispose();
+      const ca = ATOM_COLORS[a.el] ?? ATOM_COLORS.default;
+      const cb = ATOM_COLORS[b.el] ?? ATOM_COLORS.default;
+      mesh = new THREE.Mesh(geom, [style.bondMaterial(ca, a.el), style.bondMaterial(cb, b.el)]);
+    } else {
+      const geom = style.bondGeometry(len).scale(r / style.bondRadius, 1, r / style.bondRadius);
+      mesh = new THREE.Mesh(geom, style.bondMaterial(style.neutralBond, ''));
+    }
     mesh.position.copy(mid).add(bondOffset);
+    if (style.outline) {
+      const k = (r + style.outline.width) / r;
+      addOutline(mesh, mesh.geometry, k, 1, k);
+    }
 
     const axis = new THREE.Vector3(0, 1, 0);
     const quaternion = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
@@ -145,11 +205,15 @@ export function createMoleculeViewer(container) {
     return mesh;
   }
 
+  /** 材质可能是数组（双色键） */
+  function eachMaterial(mesh, fn) {
+    const m = mesh?.material;
+    if (!m) return;
+    (Array.isArray(m) ? m : [m]).forEach(fn);
+  }
+
   function clearBondHighlight() {
-    if (selectedBondMesh?.material) {
-      selectedBondMesh.material.color.setHex(0x94a3b8);
-      selectedBondMesh.material.emissive?.setHex?.(0x000000);
-    }
+    eachMaterial(selectedBondMesh, (m) => m.emissive?.setHex?.(0x000000));
     selectedBondMesh = null;
   }
 
@@ -229,10 +293,8 @@ export function createMoleculeViewer(container) {
       const mesh = bondHits[0].object;
       clearSelection();
       selectedBondMesh = mesh;
-      if (mesh.material) {
-        mesh.material.color.setHex(0xe11d48);
-        if (mesh.material.emissive) mesh.material.emissive.setHex(0x4c0519);
-      }
+      // 选中键：整根发红光（保留两端原子色，便于看清是哪两个原子）
+      eachMaterial(mesh, (m) => m.emissive?.setHex?.(0xbe123c));
       const info = describeBond(
         mesh.userData.i,
         mesh.userData.j,
@@ -382,7 +444,11 @@ export function createMoleculeViewer(container) {
     pad.addEventListener('pointercancel', stopHold);
   }
 
-  function load(molecule) {
+  /**
+   * @param {object} molecule
+   * @param {{ keepCamera?: boolean, animate?: boolean }} [opts] 换主题时保留视角、不播载入动画
+   */
+  function load(molecule, opts = {}) {
     // 先清选中态与信息卡，再 dispose 网格（避免改已 dispose 的 material）
     clearSelection();
     bondSelectHandler?.(null);
@@ -420,15 +486,13 @@ export function createMoleculeViewer(container) {
       const atom = molecule.atoms[ai];
       const color = ATOM_COLORS[atom.el] ?? ATOM_COLORS.default;
       const r = ATOM_RADIUS[atom.el] ?? ATOM_RADIUS.default;
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(r, 28, 28),
-        new THREE.MeshStandardMaterial({
-          color,
-          metalness: 0.2,
-          roughness: 0.35,
-        }),
-      );
+      const geom = style.atomGeometry(r);
+      const mesh = new THREE.Mesh(geom, style.atomMaterial(color, atom.el));
       mesh.position.set(atom.x, atom.y, atom.z);
+      if (style.outline) {
+        const k = (r + style.outline.width) / r;
+        addOutline(mesh, geom, k, k, k);
+      }
       mesh.userData = { isAtom: true, atomIndex: ai };
       const label = makeAtomLabel(atom.el, r);
       mesh.add(label);
@@ -443,14 +507,85 @@ export function createMoleculeViewer(container) {
     const box = new THREE.Box3().setFromObject(root);
     const size = box.getSize(new THREE.Vector3()).length() || 2;
     const center = box.getCenter(new THREE.Vector3());
-    const dist = Math.max(size * 1.85, 4.2);
-    controls.target.copy(center);
-    camera.position.copy(center).add(new THREE.Vector3(dist * 0.72, dist * 0.48, dist * 0.9));
-    controls.minDistance = Math.max(dist * 0.35, 2);
-    controls.maxDistance = Math.max(dist * 4, 20);
-    controls.update();
-    saveHomeView();
+
+    // 地面软阴影：托住分子，不随视角转
+    if (style.shadow) {
+      const ext = box.getSize(new THREE.Vector3());
+      const span = Math.max(ext.x, ext.z, 1.2) * 1.5;
+      const shadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(span, span),
+        new THREE.MeshBasicMaterial({
+          map: getShadowTexture(style.shadow.hard),
+          color: 0x000000,
+          transparent: true,
+          opacity: style.shadow.opacity,
+          depthWrite: false,
+        }),
+      );
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(center.x, box.min.y - 0.45, center.z);
+      shadow.userData.isShadow = true;
+      shadow.renderOrder = -1;
+      root.add(shadow);
+    }
+
+    if (!opts.keepCamera) {
+      const dist = Math.max(size * 1.85, 4.2);
+      controls.target.copy(center);
+      camera.position.copy(center).add(new THREE.Vector3(dist * 0.72, dist * 0.48, dist * 0.9));
+      controls.minDistance = Math.max(dist * 0.35, 2);
+      controls.maxDistance = Math.max(dist * 4, 20);
+      controls.update();
+      saveHomeView();
+    }
+    startIntro(center, opts.animate !== false);
     resize();
+  }
+
+  /** 原子按到中心的距离排序依次长出；键在两端都出现后沿长度伸出；标签随原子淡入 */
+  function startIntro(center, enabled) {
+    intro = null;
+    if (!enabled || prefersReducedMotion() || !atomMeshes.length) return;
+    const order = atomMeshes
+      .map((m, i) => ({ i, d: m.position.distanceTo(center) }))
+      .sort((a, b) => a.d - b.d);
+    const step = Math.min(55, 700 / Math.max(1, atomMeshes.length));
+    const delay = new Array(atomMeshes.length);
+    order.forEach((o, rank) => {
+      delay[o.i] = rank * step;
+    });
+    atomMeshes.forEach((m) => m.scale.setScalar(0.001));
+    bondMeshes.forEach((m) => m.scale.set(1, 0.001, 1));
+    labelObjs.forEach((l) => {
+      if (l.element) l.element.style.opacity = '0';
+    });
+    intro = { t0: performance.now(), delay, atomDur: 420, bondDur: 260 };
+  }
+
+  function tickIntro(now) {
+    if (!intro) return;
+    const t = now - intro.t0;
+    let done = true;
+    atomMeshes.forEach((m, i) => {
+      const u = Math.min(1, Math.max(0, (t - intro.delay[i]) / intro.atomDur));
+      if (u < 1) done = false;
+      m.scale.setScalar(Math.max(0.001, u <= 0 ? 0 : easeOutBack(u)));
+      const label = m.children.find((c) => c.isCSS2DObject);
+      if (label?.element) label.element.style.opacity = String(Math.min(1, Math.max(0, (u - 0.5) * 2)));
+    });
+    bondMeshes.forEach((m) => {
+      const { i, j } = m.userData;
+      const startAt = Math.max(intro.delay[i] ?? 0, intro.delay[j] ?? 0) + intro.atomDur * 0.6;
+      const u = Math.min(1, Math.max(0, (t - startAt) / intro.bondDur));
+      if (u < 1) done = false;
+      m.scale.set(1, Math.max(0.001, 1 - Math.pow(1 - u, 3)), 1);
+    });
+    if (done) {
+      labelObjs.forEach((l) => {
+        if (l.element) l.element.style.opacity = '';
+      });
+      intro = null;
+    }
   }
 
   function resize() {
@@ -467,8 +602,9 @@ export function createMoleculeViewer(container) {
     labelRenderer.setSize(w, h);
   }
 
-  function animate() {
+  function animate(now = performance.now()) {
     raf = requestAnimationFrame(animate);
+    tickIntro(now);
     controls.update();
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
@@ -480,6 +616,10 @@ export function createMoleculeViewer(container) {
 
   function onThemeChange() {
     syncBackground();
+    // 换主题：换画风并保持当前视角，不重播载入动画
+    style = getViewerStyle(currentThemeId());
+    applySceneStyle();
+    if (currentMolecule) load(currentMolecule, { keepCamera: true, animate: false });
   }
 
   if (typeof window !== 'undefined') {
@@ -529,6 +669,7 @@ export function createMoleculeViewer(container) {
       ro = null;
     }
     clearRoot();
+    envTex?.dispose();
     controls.dispose();
     renderer.dispose();
     canvas.remove();

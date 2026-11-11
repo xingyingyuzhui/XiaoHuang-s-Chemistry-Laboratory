@@ -1,4 +1,5 @@
 import { appAlert } from '../app-dialog.js';
+import { revealQuestion } from './quiz-fx.js';
 
 /** 错题本独立控制器：本地展开/作答状态与 API、气泡提示解耦于课堂入口。 */
 export function createWrongBookController({
@@ -67,7 +68,7 @@ export function createWrongBookController({
         if (state.chosen === optionIndex) className += ' is-selected';
         if (state.locked && optionIndex === item.answer) className += ' is-correct';
         else if (state.locked && state.chosen === optionIndex) className += ' is-wrong';
-        return `<button type="button" class="${className}" data-wb-id="${escapeHtml(item.id)}" data-wb-opt="${optionIndex}" ${state.locked ? 'disabled' : ''}><strong>${letters[optionIndex]}.</strong> ${escapeHtml(option)}</button>`;
+        return `<button type="button" class="${className}" data-wb-id="${escapeHtml(item.id)}" data-wb-opt="${optionIndex}" ${state.locked ? 'disabled' : ''}><strong class="quiz-opt-key">${letters[optionIndex]}</strong><span class="quiz-opt-text">${escapeHtml(option)}</span></button>`;
       }).join('');
       const feedback = !state.locked ? '' : state.chosen === item.answer
         ? '<p class="quiz-feedback is-ok">回答正确，已自动移出错题本</p>'
@@ -142,11 +143,17 @@ export function createWrongBookController({
       const data = await quizApi.attemptWrong(item.id, state.chosen);
       state.locked = true;
       if (typeof data.answer === 'number') item.answer = data.answer;
+      const justRevealed = () =>
+        revealQuestion(select(`[data-wb-card="${CSS.escape(item.id)}"]`), { ok: state.chosen === item.answer });
       if (data.cleared) {
         onBadgeChange(Math.max(0, list.length - 1));
         render();
-        window.setTimeout(async () => { reset(); await load(); await onRefreshStats(); }, 900);
-      } else render();
+        justRevealed();
+        window.setTimeout(async () => { reset(); await load(); await onRefreshStats(); }, 1400);
+      } else {
+        render();
+        justRevealed();
+      }
     } catch (error) {
       await appAlert(error.message || '提交失败', { title: '提交失败' });
     }

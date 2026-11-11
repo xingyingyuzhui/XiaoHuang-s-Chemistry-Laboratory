@@ -8,6 +8,7 @@
  * - 3D 分子、电子排布、课堂、元素乱斗：首次进入 Tab 时动态 import
  */
 
+import './styles/fonts.js';
 import './styles/index.css';
 import { initPeriodicTable, scheduleFit } from './periodic-table.js';
 import { initSettingsUI } from './settings.js';

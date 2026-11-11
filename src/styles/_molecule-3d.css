@@ -4,14 +4,14 @@
 }
 
 .atom-label {
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-display);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink);
   background: var(--card-elevated);
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 2px 7px;
   line-height: 1.25;
   box-shadow: 2px 2px 0 color-mix(in srgb, var(--ink) 70%, transparent);
@@ -23,7 +23,7 @@
 .tip-card {
   border: var(--ui-stroke-strong) solid var(--border-ink);
   background: var(--note-soft);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   padding: 0.8rem 0.9rem;
   box-shadow: var(--shadow-print-sm);
 }
@@ -35,7 +35,7 @@
   text-transform: none;
   color: var(--stamp);
   font-weight: 700;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .tip-card p {
@@ -90,7 +90,7 @@
   max-height: min(48vh, 360px);
   overflow: auto;
   padding: 0.75rem 0.95rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
@@ -106,7 +106,7 @@
   max-height: min(36vh, 280px);
   overflow: auto;
   padding: 0.65rem 0.85rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
@@ -122,7 +122,7 @@
   min-width: 240px;
   max-width: min(420px, 78%);
   padding: 0.8rem 1rem 0.85rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--card-elevated) 96%, transparent);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
@@ -135,7 +135,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--stamp);
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .mol-bond-title {
@@ -181,7 +181,7 @@
   letter-spacing: 0.02em;
   color: var(--diagram);
   font-weight: 700;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .mol-props-section ul {
@@ -203,7 +203,7 @@
   letter-spacing: 0.02em;
   color: var(--diagram);
   font-weight: 700;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .mol-info-card .mol-info-title {
@@ -212,7 +212,7 @@
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.3;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .mol-info-card .mol-info-desc {
@@ -255,7 +255,7 @@
   left: 0.85rem;
   bottom: 0.85rem;
   padding: 0.35rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--card-elevated);
   border: var(--ui-stroke) solid var(--border-ink);
   color: var(--text-muted);
@@ -276,7 +276,7 @@
   min-width: 64px;
   height: 36px;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   color: var(--ink);
   font-size: 0.82rem;
@@ -317,7 +317,7 @@
   grid-template-rows: repeat(3, 40px);
   gap: 0.35rem;
   padding: 0.4rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
@@ -328,7 +328,7 @@
   width: 40px;
   height: 40px;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--paper);
   color: var(--ink);
   font-size: 1.1rem;

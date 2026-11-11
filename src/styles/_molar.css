@@ -16,7 +16,7 @@
   gap: 0.85rem;
   margin-bottom: 0.9rem;
   padding: 1.05rem 1.15rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--note-soft);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print);
@@ -33,7 +33,7 @@
   color: var(--ink-soft);
   letter-spacing: 0.04em;
   margin-bottom: 0.2rem;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .molar-total-formula {
@@ -55,6 +55,15 @@
   font-weight: 800;
   color: var(--stamp);
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.molar-total-formula sub,
+.molar-balance-eq sub,
+.preset-chip sub {
+  font-size: 0.68em;
+  line-height: 0;
+  vertical-align: -0.28em;
 }
 
 .molar-total .unit {
@@ -69,7 +78,7 @@
   border-collapse: collapse;
   font-size: 1.02rem;
   border: var(--ui-stroke-strong) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--card-elevated);
   box-shadow: var(--shadow-print-sm);
@@ -93,26 +102,120 @@
   letter-spacing: 0.02em;
   background: var(--diagram-soft);
   border-bottom: var(--ui-stroke) solid var(--border-ink);
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .molar-table td {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 1.02rem;
-  font-family: var(--font-mono), var(--font-cjk);
+  font-family: var(--font-mono), var(--font-main);
 }
 
-.molar-table td.name {
+.molar-table td.name,
+.molar-table .name {
   color: var(--text-muted);
   font-weight: 500;
-  font-family: var(--font-cjk);
+  font-family: var(--font-main);
+}
+
+.molar-table .mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.molar-table .num {
+  text-align: right;
+}
+
+.molar-el-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* —— 元素徽章：与周期表分区同色，各主题自动换色 —— */
+.molar-stage [data-zone='s'] { --zone-bg: var(--zone-s); }
+.molar-stage [data-zone='p'] { --zone-bg: var(--zone-p); }
+.molar-stage [data-zone='d'] { --zone-bg: var(--zone-d); }
+.molar-stage [data-zone='ds'] { --zone-bg: var(--zone-ds); }
+.molar-stage [data-zone='f'] { --zone-bg: var(--zone-f); }
+.molar-stage [data-zone='noble'] { --zone-bg: var(--zone-noble); }
+
+.molar-el {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-sm);
+  background: var(--zone-bg, var(--zone-p));
+  border: var(--ui-stroke) solid var(--border-ink);
+  color: var(--ink-lab, var(--ink));
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* —— 质量分数条 —— */
+.molar-share-head {
+  width: 34%;
+}
+
+.molar-share {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.molar-bar {
+  position: relative;
+  flex: 1;
+  height: 0.7rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  overflow: hidden;
+}
+
+.molar-bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  /* 取分区色的色相，统一提到中等明度与饱和度：
+   * 浅色主题的淡色分区变鲜明，黑板主题的暗色分区变亮，像素主题的高饱和色不过曝 */
+  background: oklch(from var(--zone-bg, var(--zone-p)) var(--bar-l, 0.7) min(calc(c * 2.5 + 0.05), 0.16) h);
+  transition: width var(--dur-reveal) var(--ease-reveal);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+.molar-pct {
+  min-width: 3.4rem;
+  text-align: right;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+/* —— 出错时：一键试示例 —— */
+.molar-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.8rem;
+}
+
+.molar-try > span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
 }
 
 .molar-error {
   color: var(--stamp);
   padding: 1rem 1.1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--stamp-soft);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
@@ -123,7 +226,7 @@
   font-weight: 800;
   margin-bottom: 0.4rem;
   color: var(--stamp);
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .molar-error-msg {
@@ -148,7 +251,7 @@
   background: var(--card-elevated);
   border: 1px solid var(--border-ink);
   padding: 0.05rem 0.3rem;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   font-size: 0.84em;
 }
 
@@ -215,7 +318,7 @@
   width: 100%;
   box-sizing: border-box;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.5rem 0.6rem;
   font: inherit;
   font-size: 0.9rem;
@@ -230,7 +333,7 @@
 
 .molar-tool-panel {
   padding: 0.85rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   box-shadow: var(--shadow-print-sm);
@@ -239,14 +342,133 @@
 
 .molar-tool-panel h4 {
   margin: 0 0 0.45rem;
-  font-family: var(--font-serif-cjk), inherit;
+  font-family: var(--font-heading);
 }
 
 .molar-balance-eq {
-  font-size: 1.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  margin: 0.25rem 0 0.5rem;
-  color: var(--diagram, var(--ink));
+  margin: 0.35rem 0 0.75rem;
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+
+.eq-sp {
+  white-space: nowrap;
+}
+
+.eq-coef {
+  display: inline-block;
+  color: var(--stamp);
+  font-weight: 800;
+  margin-right: 0.08em;
+  animation: eq-coef-in var(--dur-slow) var(--ease-spring) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+.eq-coef:empty {
+  margin: 0;
+}
+
+.eq-op {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.eq-op.eq-eq {
+  color: var(--ink-soft);
+  padding: 0 0.15rem;
+}
+
+.eq-mark {
+  color: var(--diagram);
+  margin-left: 0.05em;
+}
+
+@keyframes eq-coef-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35em) scale(1.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* —— 逐元素守恒核对 —— */
+.molar-cons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.65rem;
+}
+
+.molar-cons-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.65rem 0.25rem 0.3rem;
+  border-radius: var(--radius-pill);
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-print-sm);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink);
+  animation: cons-chip-in var(--dur) var(--ease-out) both;
+  /* 系数全部弹出后再逐个亮起 */
+  animation-delay: calc(var(--n, 0) * 90ms + 150ms + var(--i, 0) * 110ms);
+}
+
+.molar-cons-chip .molar-el {
+  min-width: 1.6rem;
+  height: 1.6rem;
+  font-size: 0.8rem;
+  border-radius: var(--radius-pill);
+}
+
+.molar-cons-chip.is-ok b {
+  color: var(--diagram);
+}
+
+.molar-cons-chip.is-err {
+  border-color: var(--stamp);
+}
+
+.molar-cons-chip.is-err b {
+  color: var(--stamp);
+}
+
+@keyframes cons-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 像素主题：动画逐帧 */
+html[data-theme='pixel'] .eq-coef,
+html[data-theme='pixel'] .molar-cons-chip {
+  animation-timing-function: steps(4, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-coef,
+  .molar-cons-chip {
+    animation: none;
+  }
+  .molar-bar i {
+    transition: none;
+  }
 }
 
 .molar-balance-hint {

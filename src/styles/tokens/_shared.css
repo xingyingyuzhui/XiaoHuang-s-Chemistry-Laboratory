@@ -24,6 +24,25 @@
   --dur-fast: 0.15s;
   --dur: 0.28s;
   --dur-slow: 0.45s;
+  /* 数据揭示（进度条伸展 / 数字滚动）：像素主题改为逐帧跳动 */
+  --dur-reveal: 0.7s;
+  --ease-reveal: var(--ease-out);
+  --motion-steps: 0;
+
+  /* 圆角阶梯：组件只用这 6 级，主题按风格整体缩放（像素主题全为 0）
+   * xs 标签/小徽章 · sm 小按钮/芯片 · md 输入框/按钮/列表项 · lg 卡片 · xl 面板 · pill 胶囊 */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* 字体角色：组件只用角色名，具体字体由主题决定
+   * --font-main 正文/界面 · --font-heading 标题 · --font-mono 数字/化学式/代码
+   * --font-formula 题干里的教材体化学式 */
+  --font-heading: var(--font-main);
+  --font-formula: 'Times New Roman', 'Noto Serif', serif;
 
   /* 描边厚度：主题可覆盖 */
   --ui-stroke: 1.5px;

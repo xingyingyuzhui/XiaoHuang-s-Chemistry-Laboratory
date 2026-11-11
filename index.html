@@ -21,12 +21,6 @@
         transition: opacity 0.22s ease;
       }
     </style>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&family=Quicksand:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
   </head>
   <body>
     <div id="app">
@@ -502,6 +496,7 @@
                   <p class="rxn-player-tip" id="rxnPlayerTip"></p>
                 </div>
                 <div class="rxn-player-actions">
+                  <button type="button" class="btn ghost btn-sm" id="rxnViewToggle" hidden>看 3D 结构</button>
                   <button type="button" class="btn ghost btn-sm" id="molReactionPause">暂停</button>
                   <button type="button" class="btn primary btn-sm" id="molReactionReplay">重播</button>
                   <button type="button" class="mol-rxn-icon-btn" id="molReactionPlayerClose" aria-label="关闭播放" title="关闭">×</button>
@@ -708,17 +703,24 @@
               </header>
               <div class="rollcall-layout">
                 <div class="rollcall-stage">
-                  <div class="rollcall-deck" id="rollcallDeck" aria-live="polite">
-                    <div class="rollcall-card" id="rollcallCard">
-                      <span class="rollcall-card-label">准备就绪</span>
-                      <strong class="rollcall-card-name" id="rollcallCardName">点名</strong>
+                  <div class="rollcall-slot" id="rollcallCard" data-phase="">
+                    <span class="rollcall-card-label" id="rollcallLabel">准备就绪</span>
+                    <div class="rollcall-reel">
+                      <strong class="rollcall-card-name" id="rollcallCardName" aria-live="polite">点名</strong>
                     </div>
                   </div>
                   <div class="rollcall-actions">
                     <button type="button" class="btn primary" id="btnRollcallSpin">开始点名</button>
-                    <button type="button" class="btn ghost" id="btnRollcallAgain" hidden>再来一次</button>
+                    <span class="rollcall-hint">空格键也可以抽</span>
                   </div>
                   <p class="quiz-status" id="rollcallStatus" aria-live="polite"></p>
+                  <div class="rollcall-roster-wrap">
+                    <div class="rollcall-roster-head">
+                      <span>本轮已点 <b id="rollcallRoundCount">0 / 0</b> · 全班点完一轮前不重复</span>
+                      <button type="button" class="btn ghost btn-sm" id="btnRollcallReset">重新一轮</button>
+                    </div>
+                    <div class="rollcall-roster" id="rollcallRoster"></div>
+                  </div>
                 </div>
                 <div class="rollcall-manage">
                   <h4>班级名单</h4>
@@ -754,18 +756,21 @@
                 <h3>知识掌握地图</h3>
               </header>
               <div id="masteryStatus" class="quiz-status"></div>
-              <div id="masterySummary"></div>
+              <div class="mastery-top">
+                <div id="masterySummary" class="mastery-summary"></div>
+                <div id="masteryRing" class="mastery-ring"></div>
+              </div>
               <div class="mastery-section">
-                <h4>薄弱知识点</h4>
+                <h4>优先复习</h4>
                 <div id="masteryWeak"></div>
+              </div>
+              <div class="mastery-section">
+                <h4>知识点掌握度<small>按年级 · 条长为正确率</small></h4>
+                <div id="masteryTopics" class="mastery-grid"></div>
               </div>
               <div class="mastery-section">
                 <h4>复习建议</h4>
                 <div id="masterySuggestions"></div>
-              </div>
-              <div class="mastery-section">
-                <h4>全部知识点</h4>
-                <div id="masteryTopics"></div>
               </div>
             </div>
 

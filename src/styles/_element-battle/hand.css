@@ -67,10 +67,10 @@
     rotateY(var(--tilt-y))
     scale(var(--zoom));
   transition:
-    transform 0.22s var(--b-ease-spring),
-    box-shadow 0.2s ease,
-    opacity 0.15s ease,
-    filter 0.15s ease;
+    transform var(--dur) var(--b-ease-spring),
+    box-shadow var(--dur) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
   z-index: calc(var(--i, 0) + 1);
 }
 
@@ -428,7 +428,7 @@ button.bc:disabled {
   letter-spacing: 0.02em;
   line-height: 1.15;
   padding: 0.12rem 0.38rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--card-elevated) 88%, #fff);
   border: 1px solid color-mix(in srgb, var(--border-ink) 22%, transparent);
   color: var(--ink-soft);
@@ -483,7 +483,7 @@ button.bc:disabled {
 .bc-meters i {
   flex: 1;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   background: color-mix(in srgb, var(--border) 75%, transparent);
   position: relative;
   overflow: hidden;
@@ -563,7 +563,7 @@ button.bc:disabled {
   font-size: 0.62rem;
   font-weight: 900;
   padding: 0.1rem 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 /* 手牌差值：绝对定位贴底，不参与高度计算 */

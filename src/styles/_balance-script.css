@@ -41,7 +41,7 @@
   justify-content: center;
   min-height: 5.5rem;
   padding: 1.25rem 1.5rem;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   background: var(--card-elevated, var(--paper));
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
@@ -57,7 +57,7 @@
   font-weight: 700;
   line-height: 1.35;
   color: var(--ink);
-  font-family: var(--font-serif-cjk), var(--font-sans, system-ui);
+  font-family: var(--font-heading);
 }
 
 .balance-eq-side {
@@ -71,8 +71,8 @@
   display: inline-flex;
   align-items: baseline;
   padding: 0.15rem 0.35rem;
-  border-radius: 8px;
-  transition: background 0.15s, box-shadow 0.15s;
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast), box-shadow var(--dur-fast);
 }
 
 .balance-species.is-focused {
@@ -108,7 +108,7 @@
 .balance-step-progress-bar {
   flex: 1;
   height: 6px;
-  border-radius: 99px;
+  border-radius: var(--radius-pill);
   background: var(--border, #e5e5e5);
   overflow: hidden;
 }
@@ -116,8 +116,8 @@
 .balance-step-progress-fill {
   height: 100%;
   background: var(--primary, var(--stamp));
-  border-radius: 99px;
-  transition: width 0.25s ease;
+  border-radius: var(--radius-pill);
+  transition: width var(--dur) var(--ease-out);
 }
 
 .balance-step-indicator {
@@ -131,7 +131,7 @@
   padding: 1.25rem 1.35rem;
   background: var(--card-elevated, var(--paper));
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-print-sm);
 }
 
@@ -140,7 +140,7 @@
   font-weight: 800;
   color: var(--ink);
   margin: 0 0 0.55rem;
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
 }
 
 .balance-step-tip {
@@ -172,7 +172,7 @@
   width: 4.25rem;
   padding: 0.5rem 0.45rem;
   border: var(--ui-stroke-strong) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 1.45rem;
   font-weight: 800;
   text-align: center;
@@ -233,7 +233,7 @@
   appearance: none;
   min-height: 2.7rem;
   border: var(--ui-stroke) solid var(--border-ink);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--paper);
   font: inherit;
   font-size: 1.22rem;
@@ -264,7 +264,7 @@
   max-width: 28rem;
   margin: 0;
   padding: 0.5rem 0.75rem;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--diagram-soft, #f0f4f8);
   border: var(--ui-stroke) solid var(--border-ink);
   font-size: 0.98rem;
@@ -290,7 +290,7 @@
 
 .balance-feedback {
   padding: 0.55rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 1rem;
   font-weight: 700;
   margin-top: 0.65rem;

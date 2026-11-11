@@ -22,7 +22,7 @@
   appearance: none;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: var(--ui-stroke) solid var(--border-ink);
   background: var(--card-elevated);
   color: var(--ink);
@@ -50,7 +50,7 @@
   height: 48px;
   object-fit: contain;
   object-position: center bottom;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
   box-shadow: var(--shadow-print-sm);
@@ -101,7 +101,7 @@
 
 .brand-tip-card {
   position: relative;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--card-elevated);
   border: var(--ui-stroke-strong) solid var(--border-ink);
@@ -126,7 +126,7 @@
   font-weight: 800;
   letter-spacing: 0.02em;
   color: var(--stamp);
-  font-family: var(--font-serif-cjk), var(--font-cjk);
+  font-family: var(--font-heading);
 }
 
 .brand-tip-badge::before {
@@ -143,7 +143,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   padding: 0.18rem 0.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: var(--ui-stroke) solid var(--border-ink);
   color: var(--ink-soft);
   background: var(--card-elevated);
@@ -218,7 +218,7 @@
   border-left: var(--ui-stroke-strong) solid var(--border-ink);
   border-top: var(--ui-stroke-strong) solid var(--border-ink);
   transform: rotate(45deg);
-  border-radius: 2px 0 0 0;
+  border-radius: var(--radius-xs) 0 0 0;
   pointer-events: none;
 }
 
@@ -230,7 +230,7 @@
   border-top: none;
   border-right: var(--ui-stroke-strong) solid var(--border-ink);
   border-bottom: var(--ui-stroke-strong) solid var(--border-ink);
-  border-radius: 0 0 2px 0;
+  border-radius: 0 0 var(--radius-xs) 0;
 }
 
 .brand-tip-bubble.is-scrollable .brand-tip-text {
@@ -250,7 +250,7 @@
 
 .brand-tip-btn {
   appearance: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 0.8rem;
   font: inherit;
   font-size: 0.8rem;
@@ -301,7 +301,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ink);
-  font-family: var(--font-serif-cjk);
+  font-family: var(--font-heading);
   line-height: 1.25;
 }
 
@@ -331,11 +331,11 @@
   background: color-mix(in srgb, var(--paper-deep) 80%, #fff);
   color: var(--ink-soft);
   font: inherit;
-  font-family: var(--font-cjk);
+  font-family: var(--font-main);
   font-weight: 700;
   font-size: 0.82rem;
   padding: 0.45rem 0.8rem;
-  border-radius: 8px 8px 4px 4px;
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-xs) var(--radius-xs);
   cursor: pointer;
   box-shadow: none;
 }

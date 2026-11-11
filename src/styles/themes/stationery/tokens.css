@@ -54,6 +54,18 @@ html[data-theme='stationery'] {
   --radius-box: 8px;
   --radius-card: 14px;
   --radius-control: 10px;
+  /* 判题语义色：答对 / 答错（与 --stamp/--diagram 品牌色分开） */
+  --ok: #2f7d4f;
+  --ok-soft: #e3f1e5;
+  --bad: #c0392b;
+  --bad-soft: #fbe3df;
+  --mid: #c9971c; /* 中间档：练习中 */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
   --gap-size: 5px;
   --f-gap-size: 8px;
 
@@ -63,7 +75,8 @@ html[data-theme='stationery'] {
   --font-display: 'Instrument Serif', 'Noto Serif SC', serif;
   --font-latin: 'Noto Sans SC', system-ui, sans-serif;
   --font-cjk: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --font-serif-cjk: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  --font-serif-cjk: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-heading: var(--font-serif-cjk);
   --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
   --font-main: var(--font-cjk);
 

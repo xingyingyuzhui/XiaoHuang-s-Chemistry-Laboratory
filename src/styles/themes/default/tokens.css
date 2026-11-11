@@ -56,18 +56,24 @@ html[data-theme='default'] {
   --radius-box: 10px;
   --radius-card: 20px;
   --radius-control: 12px;
+  /* 判题语义色：答对 / 答错（与 --stamp/--diagram 品牌色分开） */
+  --ok: #16a34a;
+  --ok-soft: #dcfce7;
+  --bad: #dc2626;
+  --bad-soft: #fee2e2;
+  --mid: #f59e0b; /* 中间档：练习中 */
   --gap-size: 4px;
   --f-gap-size: 6px;
 
   --ui-stroke: 1.5px;
   --ui-stroke-strong: 1px;
 
-  --font-display: 'Quicksand', system-ui, sans-serif;
-  --font-latin: 'Quicksand', system-ui, sans-serif;
-  --font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+  --font-latin: var(--font-cjk);
+  --font-display: var(--font-cjk);
   --font-serif-cjk: var(--font-cjk);
-  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-main: var(--font-latin), var(--font-cjk);
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-main: var(--font-cjk);
 
   --topbar-bg: color-mix(in srgb, var(--card-bg) 88%, transparent);
   --topbar-border: 1px solid var(--border-soft);

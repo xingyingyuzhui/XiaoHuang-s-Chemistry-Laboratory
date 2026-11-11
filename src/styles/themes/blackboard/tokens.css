@@ -62,6 +62,18 @@ html[data-theme='blackboard'] {
   --radius-box: 4px;
   --radius-card: 8px;
   --radius-control: 6px;
+  /* 判题语义色：答对 / 答错（与 --stamp/--diagram 品牌色分开） */
+  --ok: #8fe3a8;
+  --ok-soft: #24493a;
+  --bad: #ff8a80;
+  --bad-soft: #5a2920;
+  --mid: #ffd166; /* 中间档：练习中 */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-pill: 999px;
   --gap-size: 4px;
   --f-gap-size: 6px;
 
