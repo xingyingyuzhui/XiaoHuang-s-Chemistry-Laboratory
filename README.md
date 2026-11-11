@@ -4,7 +4,7 @@
 
 数据全部保存在本机 SQLite；可选接入 **DeepSeek API** 做 AI 出题、提示、分子/反应生成等（仅按调用转发提示词，名单与试卷等业务数据留在本机）。
 
-**当前版本：v3.0.10** · 许可证见 [LICENSE](./LICENSE)（**非 MIT**；二次修改须注明来源，**禁止非授权商用**）
+**当前版本：v3.1.0** · 许可证见 [LICENSE](./LICENSE)（**非 MIT**；二次修改须注明来源，**禁止非授权商用**）
 
 <p align="center">
   <img src="docs/screenshots/01-table-default.jpg" alt="元素周期表 · 默认主题" width="900" />
@@ -30,12 +30,12 @@
 
 ## 下载安装（推荐）
 
-发布页：[Releases · v3.0.10](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.0.10)
+发布页：[Releases · v3.1.0](https://github.com/xingyingyuzhui/XiaoHuang-s-Chemistry-Laboratory/releases/tag/v3.1.0)
 
 | 文件 | 平台 | 说明 |
 |------|------|------|
-| `XiaoHuang-ChemLab-Setup-3.0.10.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
-| `XiaoHuang-ChemLab-3.0.10-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
+| `XiaoHuang-ChemLab-Setup-3.1.0.exe` | Windows x64 | **Electron 安装包**（推荐，无黑色控制台） |
+| `XiaoHuang-ChemLab-3.1.0-mac-arm64.dmg` | macOS Apple 芯片 | Electron 安装盘（M1 / M2 / M3 / M4） |
 
 ### Electron 版（Win 安装包 / Mac dmg）
 
@@ -442,6 +442,7 @@ npm run build:exe
 
 | 版本 | 说明 |
 |------|------|
+| **3.1.0** | **界面全面升级**：统一字体/圆角/动效规范（离线可用的本地字体）；计算页质量分数条与守恒核对；做题答对答错特效（五套主题各不相同）与满分章；随机点名老虎机与整轮不重复；知识地图按年级三列与「去练这个」；反应剧院原子级断键/成键动画；3D 分子主题材质与载入动画。修复知识点同名归类。 |
 | **3.0.10** | **AI**：默认模型升级为官方 `deepseek-flash`（DeepSeek-V4.1-Flash）；旧名 `deepseek-v4-flash` / `deepseek-v4-pro` 自动迁移；课堂调用仍关闭 thinking 以保速度。 |
 | **3.0.9** | **配平方程**：结果统一用 `=`；配平后可按课本习惯标注气体 ↑ / 沉淀 ↓（可关）；计算页与课堂分步配平共用引擎；AI 配平以本地系数为准并合并标注；兼容化学键盘 `(g)`/`(aq)` 等物态标注。 |
 | **3.0.8** | **修复**：Win 安装后主进程找不到 `version-lock.cjs` 秒退；`electron-builder` 补打该文件，并加测试防止再漏。 |
