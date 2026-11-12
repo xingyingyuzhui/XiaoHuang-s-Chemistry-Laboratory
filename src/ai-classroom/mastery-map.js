@@ -184,20 +184,34 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
       .join('');
   }
 
-  function renderWeakTopics(topics) {
+  function renderWeakTopics(topics, loadingMessage = '') {
     const el = select('#masteryWeak');
     if (!el) return;
     const weak = topics
       .filter(isWeak)
       .sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101) || b.wrong - a.wrong)
       .slice(0, 4);
+    // 保留四个网格槽位：窄窗口会换行，单纯预留一行高度仍会推动下方知识点。
+    const longestName = CHEM_TOPICS.reduce(
+      (name, t) => t.label.length > name.length ? t.label : name,
+      '',
+    );
+    const reserve = `<div class="mastery-weak mastery-weak-reserve" aria-hidden="true">${Array.from({ length: 4 }, () => `
+      <div class="mastery-weak-card" data-level="unstarted">
+        <span class="mastery-weak-rank">4</span>
+        <div class="mastery-weak-body"><strong>${escapeHtml(longestName)}</strong><span>正确率 100% · 999 道错题</span></div>
+        <button type="button" class="btn ghost btn-sm" tabindex="-1" disabled>去练这个</button>
+      </div>`).join('')}</div>`;
     if (!weak.length) {
       const any = topics.some((t) => t.total > 0);
-      el.innerHTML = `<p class="quiz-muted">${any ? '目前没有薄弱知识点，继续保持！' : '做完第一套练习后，这里会列出最需要复习的知识点。'}</p>`;
+      const message = loadingMessage || (any
+        ? '目前没有薄弱知识点，继续保持！'
+        : '做完第一套练习后，这里会列出最需要复习的知识点。');
+      el.innerHTML = `${reserve}<p class="quiz-muted">${escapeHtml(message)}</p>`;
       return;
     }
     const canPractice = typeof onPractice === 'function';
-    el.innerHTML = `<div class="mastery-weak">${weak
+    el.innerHTML = `${reserve}<div class="mastery-weak">${weak
       .map(
         (t, i) => `
         <div class="mastery-weak-card" data-level="${t.level}" style="--i:${i}">
@@ -252,8 +266,7 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
     renderSummary(data, topics);
     renderRing(data, topics);
     renderTopics(topics);
-    const weak = select('#masteryWeak');
-    if (weak) weak.innerHTML = '<p class="quiz-muted">正在读取练习记录…</p>';
+    renderWeakTopics([], '正在读取练习记录…');
   }
 
   async function load() {

@@ -1804,9 +1804,23 @@ html[data-theme='pixel'] .mastery-ring-seg {
   color: var(--ink);
 }
 
-/* 优先复习：预留一行卡片的高度，「暂无」文字与卡片切换时下方不跳 */
+/* 空态、加载态与真实卡片使用相同的四槽网格，换行时也保留高度。 */
 #masteryWeak {
-  min-height: 6.4rem;
+  display: grid;
+}
+
+#masteryWeak > * {
+  grid-area: 1 / 1;
+  align-self: start;
+}
+
+.mastery-weak-reserve {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mastery-weak-reserve .mastery-weak-card {
+  animation: none;
 }
 
 /* 优先复习卡 */
@@ -1817,6 +1831,7 @@ html[data-theme='pixel'] .mastery-ring-seg {
 }
 
 .mastery-weak-card {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 0.7rem;
@@ -1859,10 +1874,10 @@ html[data-theme='pixel'] .mastery-ring-seg {
   color: var(--text-muted);
 }
 
-/* 按年级三列 */
+/* 按年级分列；侧栏占宽后仍须给题数和「待复习」标记留足空间。 */
 .mastery-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
   gap: 0.9rem;
 }
 
