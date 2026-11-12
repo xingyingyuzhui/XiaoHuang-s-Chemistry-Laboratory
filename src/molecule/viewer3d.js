@@ -80,10 +80,14 @@ export function createMoleculeViewer(container) {
         pmrem.dispose();
       }
       scene.environment = envTex;
+      scene.environmentIntensity = style.envIntensity ?? 1;
     } else {
       scene.environment = null;
     }
     ambient.intensity = style.ambient;
+    // 光亮 / 哑光主题：电影级色调映射压住高光，白色原子不再过曝成纯白
+    renderer.toneMapping = style.toneMapping ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
+    renderer.toneMappingExposure = style.exposure ?? 1;
   }
   applySceneStyle();
   /** 载入动画：原子由中心向外依次长出，键在两端原子出现后伸出 */
@@ -146,6 +150,11 @@ export function createMoleculeViewer(container) {
     }
   }
 
+  function colorOf(el) {
+    if (el === 'H' && style.hydrogen != null) return style.hydrogen;
+    return ATOM_COLORS[el] ?? ATOM_COLORS.default;
+  }
+
   /** 背面外扩一圈纯色网格做描边（文具墨线 / 黑板粉笔 / 像素硬边） */
   function addOutline(mesh, geometry, sx, sy, sz) {
     if (!style.outline) return;
@@ -186,8 +195,8 @@ export function createMoleculeViewer(container) {
       const geom = mergeGeometries([ga, gb], true);
       ga.dispose();
       gb.dispose();
-      const ca = ATOM_COLORS[a.el] ?? ATOM_COLORS.default;
-      const cb = ATOM_COLORS[b.el] ?? ATOM_COLORS.default;
+      const ca = colorOf(a.el);
+      const cb = colorOf(b.el);
       mesh = new THREE.Mesh(geom, [style.bondMaterial(ca, a.el), style.bondMaterial(cb, b.el)]);
     } else {
       const geom = style.bondGeometry(len).scale(r / style.bondRadius, 1, r / style.bondRadius);
@@ -484,7 +493,7 @@ export function createMoleculeViewer(container) {
 
     for (let ai = 0; ai < molecule.atoms.length; ai++) {
       const atom = molecule.atoms[ai];
-      const color = ATOM_COLORS[atom.el] ?? ATOM_COLORS.default;
+      const color = colorOf(atom.el);
       const r = ATOM_RADIUS[atom.el] ?? ATOM_RADIUS.default;
       const geom = style.atomGeometry(r);
       const mesh = new THREE.Mesh(geom, style.atomMaterial(color, atom.el));
@@ -511,7 +520,7 @@ export function createMoleculeViewer(container) {
     // 地面软阴影：托住分子，不随视角转
     if (style.shadow) {
       const ext = box.getSize(new THREE.Vector3());
-      const span = Math.max(ext.x, ext.z, 1.2) * 1.5;
+      const span = Math.max(ext.x, ext.z, 1) * 1.15;
       const shadow = new THREE.Mesh(
         new THREE.PlaneGeometry(span, span),
         new THREE.MeshBasicMaterial({

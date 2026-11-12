@@ -75,34 +75,51 @@ export function renderChemKeypadHtml(idSuffix = '') {
 export function bindChemKeypad(input, keypad, opts = {}) {
   if (!input || !keypad) return () => {};
 
-  let hideTimer = null;
+  // 不再「聚焦即弹出、失焦即收起」：键盘在文档流里，自动开合会把下方按钮顶来顶去，
+  // 点「计算」时按钮会在点击瞬间跳走。改为输入框右侧的「符号」按钮显式开合。
+  let wrap = input.parentElement;
+  if (!wrap?.classList.contains('chem-input-wrap')) {
+    wrap = document.createElement('span');
+    wrap.className = 'chem-input-wrap';
+    if (input instanceof HTMLTextAreaElement) wrap.classList.add('is-textarea');
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+  }
+  let toggle = wrap.querySelector('.chem-keypad-toggle');
+  if (!toggle) {
+    toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'chem-keypad-toggle';
+    toggle.textContent = '符号';
+    toggle.title = '化学符号键盘（· → ↑ ↓ ⇌ 上下标）';
+    wrap.appendChild(toggle);
+  }
+  if (keypad.id) toggle.setAttribute('aria-controls', keypad.id);
+
+  const sync = () => {
+    toggle.setAttribute('aria-expanded', keypad.hidden ? 'false' : 'true');
+    toggle.classList.toggle('is-on', !keypad.hidden);
+  };
   const show = () => {
-    if (hideTimer) {
-      clearTimeout(hideTimer);
-      hideTimer = null;
-    }
     keypad.hidden = false;
+    sync();
   };
-  const scheduleHide = () => {
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = window.setTimeout(() => {
-      const active = document.activeElement;
-      if (active === input || keypad.contains(active)) return;
-      keypad.hidden = true;
-    }, 180);
+  const hide = () => {
+    keypad.hidden = true;
+    sync();
   };
+  sync();
 
-  const onFocus = () => show();
-  const onBlur = () => scheduleHide();
-  input.addEventListener('focus', onFocus);
-  input.addEventListener('blur', onBlur);
-  keypad.addEventListener('focusin', show);
-  keypad.addEventListener('focusout', scheduleHide);
-
-  const onMouseDown = (e) => {
-    e.preventDefault();
+  // 按住按钮不抢走输入框焦点（光标位置保留，插入符号仍在原处）
+  const keepFocus = (e) => e.preventDefault();
+  toggle.addEventListener('mousedown', keepFocus);
+  const onToggle = () => {
+    if (keypad.hidden) show();
+    else hide();
+    input.focus();
   };
-  keypad.addEventListener('mousedown', onMouseDown);
+  toggle.addEventListener('click', onToggle);
+  keypad.addEventListener('mousedown', keepFocus);
 
   const onKeyClick = (e) => {
     const btn = e.target.closest('[data-chem-insert]');
@@ -111,26 +128,18 @@ export function bindChemKeypad(input, keypad, opts = {}) {
     if (!text) return;
     insertAtCursor(input, text);
     opts.onInsert?.(input.value);
-    show();
   };
   keypad.addEventListener('click', onKeyClick);
 
   const closeBtn = keypad.querySelector('[data-chem-keypad-close]');
-  const onClose = () => {
-    keypad.hidden = true;
-    input.blur();
-  };
-  closeBtn?.addEventListener('click', onClose);
+  closeBtn?.addEventListener('click', hide);
 
   return () => {
-    if (hideTimer) clearTimeout(hideTimer);
-    input.removeEventListener('focus', onFocus);
-    input.removeEventListener('blur', onBlur);
-    keypad.removeEventListener('focusin', show);
-    keypad.removeEventListener('focusout', scheduleHide);
-    keypad.removeEventListener('mousedown', onMouseDown);
+    toggle.removeEventListener('mousedown', keepFocus);
+    toggle.removeEventListener('click', onToggle);
+    keypad.removeEventListener('mousedown', keepFocus);
     keypad.removeEventListener('click', onKeyClick);
-    closeBtn?.removeEventListener('click', onClose);
+    closeBtn?.removeEventListener('click', hide);
   };
 }
 

@@ -232,10 +232,36 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
       '</ul>';
   }
 
+  let rendered = false;
+
+  /**
+   * 首次进入先画骨架：版式与真实数据一致（统计卡、环形图、按年级的知识点），
+   * 数据回来只替换内容，页面不会从空白突然撑开、整体下移。
+   */
+  function renderSkeleton() {
+    const topics = CHEM_TOPICS.filter((t) => t.id !== 'g3-gaokao').map((t) => ({
+      id: t.id,
+      name: t.label,
+      total: 0,
+      correct: 0,
+      wrong: 0,
+      accuracy: null,
+      level: 'unstarted',
+    }));
+    const data = { summary: { totalQuestions: 0, accuracy: 0, totalWrong: 0 } };
+    renderSummary(data, topics);
+    renderRing(data, topics);
+    renderTopics(topics);
+    const weak = select('#masteryWeak');
+    if (weak) weak.innerHTML = '<p class="quiz-muted">正在读取练习记录…</p>';
+  }
+
   async function load() {
+    // 状态行只用于报错：不再显示「加载中…」，否则每次进入都会多一行把内容往下推
     const status = select('#masteryStatus');
+    if (!rendered) renderSkeleton();
     try {
-      if (status) status.textContent = '加载中…';
+      if (status) status.textContent = '';
       const data = await masteryApi.summary();
       const topics = data.topics || [];
       // 「综合/待归类」不是章节，不计入覆盖率与分布图
@@ -247,6 +273,7 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
       renderSuggestions(data.suggestions || []);
       const root = select('#aiSectionMastery');
       if (root) reveal(root);
+      rendered = true;
       if (status) status.textContent = '';
     } catch (err) {
       if (status) status.textContent = `加载失败：${err.message || ''}`;

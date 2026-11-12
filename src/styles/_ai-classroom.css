@@ -1115,6 +1115,48 @@ select.lab-input,
 .chem-keypad[hidden] {
   display: none !important;
 }
+
+/* 输入框右侧的「符号」开关（替代聚焦自动弹出） */
+.chem-input-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.chem-input-wrap > input,
+.chem-input-wrap > textarea {
+  width: 100%;
+  padding-right: 3.6rem;
+}
+
+.chem-keypad-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.18rem 0.5rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--card-elevated);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.chem-input-wrap.is-textarea .chem-keypad-toggle {
+  top: 0.4rem;
+  transform: none;
+}
+
+.chem-keypad-toggle:hover,
+.chem-keypad-toggle.is-on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-ink));
+}
 .chem-keypad-head {
   display: flex;
   align-items: center;
@@ -1760,6 +1802,11 @@ html[data-theme='pixel'] .mastery-ring-seg {
   padding-left: 0.8rem;
   font-family: var(--font-mono);
   color: var(--ink);
+}
+
+/* 优先复习：预留一行卡片的高度，「暂无」文字与卡片切换时下方不跳 */
+#masteryWeak {
+  min-height: 6.4rem;
 }
 
 /* 优先复习卡 */
