@@ -12,7 +12,7 @@ import * as THREE from 'three';
 let toonRamp = null;
 function getToonRamp() {
   if (toonRamp) return toonRamp;
-  const data = new Uint8Array([90, 170, 255]);
+  const data = new Uint8Array([130, 200, 255]);
   toonRamp = new THREE.DataTexture(data, data.length, 1, THREE.RedFormat);
   toonRamp.minFilter = THREE.NearestFilter;
   toonRamp.magFilter = THREE.NearestFilter;
@@ -53,7 +53,11 @@ export function currentThemeId() {
  *   neutralBond: number,
  *   outline: { color: THREE.Color, width: number } | null,
  *   environment: boolean,
+ *   envIntensity?: number,
  *   ambient: number,
+ *   toneMapping: boolean,
+ *   exposure?: number,
+ *   hydrogen: number | null,
  *   shadow: { opacity: number, hard: boolean } | null,
  * }}
  */
@@ -77,7 +81,9 @@ export function getViewerStyle(themeId) {
       outline: { color: new THREE.Color(0x2d3436), width: 0.045 },
       environment: false,
       ambient: 0.85,
-      shadow: { opacity: 0.16, hard: true },
+      toneMapping: false,
+      hydrogen: 0xdfe6e9,
+      shadow: { opacity: 0.14, hard: true },
     };
   }
   if (id === 'stationery') {
@@ -94,7 +100,9 @@ export function getViewerStyle(themeId) {
       outline: { color: ink, width: 0.035 },
       environment: false,
       ambient: 0.75,
-      shadow: { opacity: 0.22, hard: false },
+      toneMapping: false,
+      hydrogen: 0xf4f1ea,
+      shadow: { opacity: 0.16, hard: false },
     };
   }
   if (id === 'blackboard') {
@@ -111,6 +119,8 @@ export function getViewerStyle(themeId) {
       outline: { color: new THREE.Color(0xf4f1e6), width: 0.025 },
       environment: false,
       ambient: 0.9,
+      toneMapping: false,
+      hydrogen: null,
       shadow: null,
     };
   }
@@ -127,8 +137,12 @@ export function getViewerStyle(themeId) {
       neutralBond: 0xa79e94,
       outline: null,
       environment: true,
+      envIntensity: 0.55,
       ambient: 0.35,
-      shadow: { opacity: 0.28, hard: false },
+      toneMapping: true,
+      exposure: 1.0,
+      hydrogen: 0xe4e0da,
+      shadow: { opacity: 0.16, hard: false },
     };
   }
   // default
@@ -145,8 +159,13 @@ export function getViewerStyle(themeId) {
     neutralBond: 0x94a3b8,
     outline: null,
     environment: true,
+    envIntensity: 0.6,
     ambient: 0.3,
-    shadow: { opacity: 0.3, hard: false },
+    toneMapping: true,
+    exposure: 1.0,
+    // 纯白氢在白底上会「消失」：改成浅灰，保留球体明暗
+    hydrogen: 0xdde3ea,
+    shadow: { opacity: 0.16, hard: false },
   };
 }
 

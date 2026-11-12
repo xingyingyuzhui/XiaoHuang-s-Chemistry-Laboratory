@@ -811,3 +811,14 @@ html[data-theme='blackboard'] .fx-circle path {
 #labModePrestudy[hidden] {
   display: none !important;
 }
+
+/* 防跳动：状态行始终占一行高度；按钮文字「开始点名 / 再抽一个」切换时宽度不变 */
+.rollcall-stage > .quiz-status {
+  min-height: 1.5em;
+  line-height: 1.5;
+  margin: 0;
+}
+
+#btnRollcallSpin {
+  min-width: 7.5em;
+}

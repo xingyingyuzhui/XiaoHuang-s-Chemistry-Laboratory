@@ -184,20 +184,34 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
       .join('');
   }
 
-  function renderWeakTopics(topics) {
+  function renderWeakTopics(topics, loadingMessage = '') {
     const el = select('#masteryWeak');
     if (!el) return;
     const weak = topics
       .filter(isWeak)
       .sort((a, b) => (a.accuracy ?? 101) - (b.accuracy ?? 101) || b.wrong - a.wrong)
       .slice(0, 4);
+    // 保留四个网格槽位：窄窗口会换行，单纯预留一行高度仍会推动下方知识点。
+    const longestName = CHEM_TOPICS.reduce(
+      (name, t) => t.label.length > name.length ? t.label : name,
+      '',
+    );
+    const reserve = `<div class="mastery-weak mastery-weak-reserve" aria-hidden="true">${Array.from({ length: 4 }, () => `
+      <div class="mastery-weak-card" data-level="unstarted">
+        <span class="mastery-weak-rank">4</span>
+        <div class="mastery-weak-body"><strong>${escapeHtml(longestName)}</strong><span>正确率 100% · 999 道错题</span></div>
+        <button type="button" class="btn ghost btn-sm" tabindex="-1" disabled>去练这个</button>
+      </div>`).join('')}</div>`;
     if (!weak.length) {
       const any = topics.some((t) => t.total > 0);
-      el.innerHTML = `<p class="quiz-muted">${any ? '目前没有薄弱知识点，继续保持！' : '做完第一套练习后，这里会列出最需要复习的知识点。'}</p>`;
+      const message = loadingMessage || (any
+        ? '目前没有薄弱知识点，继续保持！'
+        : '做完第一套练习后，这里会列出最需要复习的知识点。');
+      el.innerHTML = `${reserve}<p class="quiz-muted">${escapeHtml(message)}</p>`;
       return;
     }
     const canPractice = typeof onPractice === 'function';
-    el.innerHTML = `<div class="mastery-weak">${weak
+    el.innerHTML = `${reserve}<div class="mastery-weak">${weak
       .map(
         (t, i) => `
         <div class="mastery-weak-card" data-level="${t.level}" style="--i:${i}">
@@ -232,10 +246,35 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
       '</ul>';
   }
 
+  let rendered = false;
+
+  /**
+   * 首次进入先画骨架：版式与真实数据一致（统计卡、环形图、按年级的知识点），
+   * 数据回来只替换内容，页面不会从空白突然撑开、整体下移。
+   */
+  function renderSkeleton() {
+    const topics = CHEM_TOPICS.filter((t) => t.id !== 'g3-gaokao').map((t) => ({
+      id: t.id,
+      name: t.label,
+      total: 0,
+      correct: 0,
+      wrong: 0,
+      accuracy: null,
+      level: 'unstarted',
+    }));
+    const data = { summary: { totalQuestions: 0, accuracy: 0, totalWrong: 0 } };
+    renderSummary(data, topics);
+    renderRing(data, topics);
+    renderTopics(topics);
+    renderWeakTopics([], '正在读取练习记录…');
+  }
+
   async function load() {
+    // 状态行只用于报错：不再显示「加载中…」，否则每次进入都会多一行把内容往下推
     const status = select('#masteryStatus');
+    if (!rendered) renderSkeleton();
     try {
-      if (status) status.textContent = '加载中…';
+      if (status) status.textContent = '';
       const data = await masteryApi.summary();
       const topics = data.topics || [];
       // 「综合/待归类」不是章节，不计入覆盖率与分布图
@@ -247,6 +286,7 @@ export function createMasteryMapController({ select, escapeHtml, masteryApi, onP
       renderSuggestions(data.suggestions || []);
       const root = select('#aiSectionMastery');
       if (root) reveal(root);
+      rendered = true;
       if (status) status.textContent = '';
     } catch (err) {
       if (status) status.textContent = `加载失败：${err.message || ''}`;

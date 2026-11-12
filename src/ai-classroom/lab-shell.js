@@ -738,7 +738,7 @@ export function createLabShellController({ select, escapeHtml, labsApi, aiApi })
     bindEquationKeypad(detail);
   }
 
-  /** 方程式输入框聚焦时显示 Unicode 化学符号软键盘 */
+  /** 方程式输入框旁的「符号」按钮开合 Unicode 化学符号软键盘 */
   function bindEquationKeypad(detail) {
     const input = detail.querySelector('#draftEquation');
     const keypad = detail.querySelector('.chem-keypad');
