@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 
 const { app } = require('../server');
 const { initDatabase, closeDatabase, run } = require('../server/db/sqlite');
+const { parseChemicalFormula, parseSpeciesBase } = require('../server/utils/chem-reference');
 const { validateMoleculePayload, relaxGeometry } = require('../server/utils/molecule-validate');
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -85,6 +86,44 @@ test('bidirectional bonds deduplicate cleanly and non-AI empty bonds infer coval
     bonds: [],
   }, { fromAi: false });
   assert.deepEqual(ch4Inferred.bonds, [[0, 1], [0, 2], [0, 3], [0, 4]]);
+});
+
+test('polyatomic ions preserve subscripts when stripping Unicode/caret/ASCII charges', () => {
+  assert.deepEqual(parseChemicalFormula('NH₄⁺').counts, { N: 1, H: 4 });
+  assert.deepEqual(parseChemicalFormula('NH4+').counts, { N: 1, H: 4 });
+  assert.deepEqual(parseChemicalFormula('SO₄²⁻').counts, { S: 1, O: 4 });
+  assert.deepEqual(parseChemicalFormula('SO4^2-').counts, { S: 1, O: 4 });
+  assert.deepEqual(parseChemicalFormula('CO₃²⁻').counts, { C: 1, O: 3 });
+  assert.deepEqual(parseChemicalFormula('S₂²⁻').counts, { S: 2 });
+  assert.deepEqual(parseChemicalFormula('OH-').counts, { O: 1, H: 1 });
+
+  const s2 = parseSpeciesBase('S₂²⁻');
+  assert.equal(s2.base, 'S2');
+  assert.equal(s2.charge, -2);
+  assert.deepEqual(s2.composition, { S: 2 });
+
+  const nh4 = parseSpeciesBase('NH₄⁺');
+  assert.equal(nh4.base, 'NH4');
+  assert.equal(nh4.charge, 1);
+  assert.deepEqual(nh4.composition, { N: 1, H: 4 });
+
+  const ca = parseSpeciesBase('Ca2+');
+  assert.equal(ca.base, 'Ca');
+  assert.equal(ca.charge, 2);
+
+  // AI-generated NH4+ passes stoichiometry & valence (N <= 4) cleanly
+  const s = 1.02 / Math.sqrt(3);
+  const ion = validateMoleculePayload({
+    name: '铵根离子', formula: 'NH₄⁺',
+    atoms: [
+      { el: 'N', x: 0, y: 0, z: 0 },
+      { el: 'H', x: s, y: s, z: s }, { el: 'H', x: s, y: -s, z: -s },
+      { el: 'H', x: -s, y: s, z: -s }, { el: 'H', x: -s, y: -s, z: s },
+    ],
+    bonds: [[0, 1], [0, 2], [0, 3], [0, 4]],
+  }, { fromAi: true, strictGeometry: true, relax: true });
+  assert.equal(ion.atoms.length, 5);
+  assert.equal(ion.bonds.length, 4);
 });
 
 test('rejects fake elements, valence/order violations, empty AI bonds, stoichiometry mismatch, and overlaps', () => {

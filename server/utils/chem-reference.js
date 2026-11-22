@@ -94,6 +94,30 @@ const ABSTRACT_TEXT_RE = /抽象|陌生|未知|假想|某立方|某晶胞|某晶
 const normalizeSub = (s) => String(s || '').replace(/[₀-₉]/g, (c) => SUB_MAP[c]);
 const normalizeSup = (s) => String(s || '').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]/g, (c) => SUP_MAP[c]);
 
+function splitCharge(rawStr) {
+  const s = String(rawStr || '').trim().replace(/\s+/g, '');
+  if (!s) return { body: '', charge: 0 };
+  const uni = s.match(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])$/);
+  if (uni) {
+    const magStr = normalizeSup(uni[1]);
+    const mag = magStr ? parseInt(magStr, 10) : 1;
+    return { body: s.slice(0, -uni[0].length), charge: uni[2] === '⁺' ? mag : -mag };
+  }
+  const caret = s.match(/\^(\d*)([+-])$/);
+  if (caret) {
+    const mag = caret[1] ? parseInt(caret[1], 10) : 1;
+    return { body: s.slice(0, -caret[0].length), charge: caret[2] === '+' ? mag : -mag };
+  }
+  const mono = s.match(/^([A-Z][a-z]?)(\d*)([+-])$/);
+  if (mono) {
+    const mag = mono[2] ? parseInt(mono[2], 10) : 1;
+    return { body: mono[1], charge: mono[3] === '+' ? mag : -mag };
+  }
+  const poly = s.match(/^(.+?)([+-])$/);
+  if (poly) return { body: poly[1], charge: poly[2] === '+' ? 1 : -1 };
+  return { body: s, charge: 0 };
+}
+
 function parseFormulaSegment(seg) {
   const stack = [Object.create(null)];
   let i = 0;
@@ -125,40 +149,31 @@ function parseFormulaSegment(seg) {
 }
 
 function parseChemicalFormula(raw) {
-  let s = normalizeSub(String(raw || '').trim()).replace(/\s+/g, '');
+  const { body } = splitCharge(raw);
+  const s = normalizeSub(body);
   if (!s) return null;
-  if (/[δ~≈?]|(?:^|[^A-Za-z])[xyz](?:$|[^a-z])/i.test(s) && !/^Xe|^Zn|^Zr|^Yb|^Y\b/.test(s)) {
-    if (/[δ~≈?]|[0-9][+-][xyz]|[a-z][+-][xyz]|[₀-₉][xyz]|[^A-Za-z][xyz]$/i.test(s)) return null;
-  }
-  s = normalizeSup(s).replace(/(?:\d+[+-]|[+-]\d*)$/, '');
-  if (!s || /[^A-Za-z0-9()[\]·.]/.test(s)) return null;
+  if (/[δ~≈?]|[0-9][+-][xyz]|[a-z][+-][xyz]|[^A-Za-z][xyz]$/i.test(s)) return null;
+  if (/[^A-Za-z0-9()[\]·.]/.test(s)) return null;
   const parts = s.split(/[·.]/).filter(Boolean);
   if (!parts.length) return null;
   const counts = Object.create(null);
   for (const part of parts) {
     const lead = part.match(/^(\d+)(.+)$/);
     const mult = lead ? parseInt(lead[1], 10) : 1;
-    const body = lead ? lead[2] : part;
-    const seg = parseFormulaSegment(body);
+    const chunk = lead ? lead[2] : part;
+    const seg = parseFormulaSegment(chunk);
     if (!seg || !Object.keys(seg).length) return null;
     for (const [el, cnt] of Object.entries(seg)) counts[el] = (counts[el] || 0) + cnt * mult;
   }
   let molarMass = 0;
   for (const [el, cnt] of Object.entries(counts)) molarMass += ATOMIC_WEIGHTS[el] * cnt;
-  return { counts, molarMass };
+  return { counts: { ...counts }, molarMass };
 }
 
 function parseSpeciesBase(rawStr) {
-  const s0 = normalizeSup(normalizeSub(String(rawStr || '').trim())).replace(/\s+/g, '');
-  if (!s0) return { base: '', element: null, charge: 0, composition: null, mass: null, isIupac: false };
-  let charge = 0;
-  let base = s0;
-  const cMatch = s0.match(/(\d*)([+-])$/);
-  if (cMatch) {
-    const mag = cMatch[1] ? parseInt(cMatch[1], 10) : 1;
-    charge = cMatch[2] === '+' ? mag : -mag;
-    base = s0.slice(0, -cMatch[0].length);
-  }
+  const { body, charge } = splitCharge(rawStr);
+  const base = normalizeSub(body);
+  if (!base) return { base: '', element: null, charge: 0, composition: null, mass: null, isIupac: false };
   if (IUPAC_ELEMENTS.has(base)) {
     return { base, element: base, charge, composition: { [base]: 1 }, mass: ATOMIC_WEIGHTS[base], isIupac: true };
   }
