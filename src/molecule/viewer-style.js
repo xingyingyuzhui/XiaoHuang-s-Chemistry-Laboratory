@@ -12,7 +12,7 @@ import * as THREE from 'three';
 let toonRamp = null;
 function getToonRamp() {
   if (toonRamp) return toonRamp;
-  const data = new Uint8Array([130, 200, 255]);
+  const data = new Uint8Array([175, 224, 255]);
   toonRamp = new THREE.DataTexture(data, data.length, 1, THREE.RedFormat);
   toonRamp.minFilter = THREE.NearestFilter;
   toonRamp.magFilter = THREE.NearestFilter;
@@ -55,6 +55,8 @@ export function currentThemeId() {
  *   environment: boolean,
  *   envIntensity?: number,
  *   ambient: number,
+ *   keyIntensity: number,
+ *   fillIntensity: number,
  *   toneMapping: boolean,
  *   exposure?: number,
  *   hydrogen: number | null,
@@ -76,13 +78,15 @@ export function getViewerStyle(themeId) {
       atomMaterial: (hex) => new THREE.MeshLambertMaterial({ color: hex, flatShading: true }),
       bondMaterial: (hex) => new THREE.MeshLambertMaterial({ color: hex, flatShading: true }),
       bondRadius,
-      twoToneBonds: true,
-      neutralBond: 0x636e72,
+      twoToneBonds: false,
+      neutralBond: 0x8e9aa4,
       outline: { color: new THREE.Color(0x2d3436), width: 0.045 },
       environment: false,
-      ambient: 0.85,
+      ambient: 1.8,
+      keyIntensity: 1.9,
+      fillIntensity: 0.6,
       toneMapping: false,
-      hydrogen: 0xdfe6e9,
+      hydrogen: 0xf1f5f9,
       shadow: { opacity: 0.14, hard: true },
     };
   }
@@ -95,13 +99,15 @@ export function getViewerStyle(themeId) {
       atomMaterial: (hex) => new THREE.MeshToonMaterial({ color: hex, gradientMap: getToonRamp() }),
       bondMaterial: (hex) => new THREE.MeshToonMaterial({ color: hex, gradientMap: getToonRamp() }),
       bondRadius,
-      twoToneBonds: true,
-      neutralBond: 0x8a8f99,
+      twoToneBonds: false,
+      neutralBond: 0xc2c7cf,
       outline: { color: ink, width: 0.035 },
       environment: false,
-      ambient: 0.75,
+      ambient: 1.0,
+      keyIntensity: 2.25,
+      fillIntensity: 0.35,
       toneMapping: false,
-      hydrogen: 0xf4f1ea,
+      hydrogen: 0xf6f4ef,
       shadow: { opacity: 0.16, hard: false },
     };
   }
@@ -112,13 +118,15 @@ export function getViewerStyle(themeId) {
       atomGeometry: sphere(28, 20),
       bondGeometry: cyl(12)(bondRadius),
       atomMaterial: (hex, el) => new THREE.MeshToonMaterial({ color: chalk(hex, el), gradientMap: getToonRamp() }),
-      bondMaterial: (hex, el) => new THREE.MeshToonMaterial({ color: chalk(hex, el), gradientMap: getToonRamp() }),
+      bondMaterial: (hex, el) => new THREE.MeshToonMaterial({ color: el ? chalk(hex, el) : hex, gradientMap: getToonRamp() }),
       bondRadius,
-      twoToneBonds: true,
-      neutralBond: 0xd8e2d6,
+      twoToneBonds: false,
+      neutralBond: 0xc4cfc3,
       outline: { color: new THREE.Color(0xf4f1e6), width: 0.025 },
       environment: false,
-      ambient: 0.9,
+      ambient: 0.95,
+      keyIntensity: 2.05,
+      fillIntensity: 0.35,
       toneMapping: false,
       hydrogen: null,
       shadow: null,
@@ -133,15 +141,17 @@ export function getViewerStyle(themeId) {
       atomMaterial: (hex) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.72, metalness: 0.0 }),
       bondMaterial: (hex) => new THREE.MeshStandardMaterial({ color: hex, roughness: 0.72, metalness: 0.0 }),
       bondRadius,
-      twoToneBonds: true,
-      neutralBond: 0xa79e94,
+      twoToneBonds: false,
+      neutralBond: 0x9c948b,
       outline: null,
       environment: true,
       envIntensity: 0.55,
       ambient: 0.35,
+      keyIntensity: 1.0,
+      fillIntensity: 0.35,
       toneMapping: true,
       exposure: 1.0,
-      hydrogen: 0xe4e0da,
+      hydrogen: 0xf1eee8,
       shadow: { opacity: 0.16, hard: false },
     };
   }
@@ -155,16 +165,18 @@ export function getViewerStyle(themeId) {
       new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.28, metalness: 0.05, clearcoat: 0.6, clearcoatRoughness: 0.25 }),
     bondMaterial: (hex) => new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.35, metalness: 0.05, clearcoat: 0.4 }),
     bondRadius,
-    twoToneBonds: true,
-    neutralBond: 0x94a3b8,
+    twoToneBonds: false,
+    neutralBond: 0x9aa5b4,
     outline: null,
     environment: true,
     envIntensity: 0.6,
     ambient: 0.3,
+    keyIntensity: 1.0,
+    fillIntensity: 0.35,
     toneMapping: true,
     exposure: 1.0,
-    // 纯白氢在白底上会「消失」：改成浅灰，保留球体明暗
-    hydrogen: 0xdde3ea,
+    // 浅珍珠白氢原子：在纯白底上保留清晰球体明暗，同时一眼识别为白色
+    hydrogen: 0xeef2f6,
     shadow: { opacity: 0.16, hard: false },
   };
 }

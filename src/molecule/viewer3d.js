@@ -69,6 +69,13 @@ export function createMoleculeViewer(container) {
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.78);
   scene.add(ambient);
+  const key = new THREE.DirectionalLight(0xffffff, 1.0);
+  key.position.set(5, 8, 4);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0x93c5fd, 0.35);
+  fill.position.set(-4, -2, -3);
+  scene.add(fill);
+
   let style = getViewerStyle(currentThemeId());
   /** 环境反射贴图（光亮 / 哑光主题用），懒创建 */
   let envTex = null;
@@ -85,6 +92,8 @@ export function createMoleculeViewer(container) {
       scene.environment = null;
     }
     ambient.intensity = style.ambient;
+    key.intensity = style.keyIntensity ?? 1.0;
+    fill.intensity = style.fillIntensity ?? 0.35;
     // 光亮 / 哑光主题：电影级色调映射压住高光，白色原子不再过曝成纯白
     renderer.toneMapping = style.toneMapping ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
     renderer.toneMappingExposure = style.exposure ?? 1;
@@ -92,12 +101,6 @@ export function createMoleculeViewer(container) {
   applySceneStyle();
   /** 载入动画：原子由中心向外依次长出，键在两端原子出现后伸出 */
   let intro = null;
-  const key = new THREE.DirectionalLight(0xffffff, 0.95);
-  key.position.set(5, 8, 4);
-  scene.add(key);
-  const fill = new THREE.DirectionalLight(0x93c5fd, 0.35);
-  fill.position.set(-4, -2, -3);
-  scene.add(fill);
 
   const root = new THREE.Group();
   scene.add(root);
