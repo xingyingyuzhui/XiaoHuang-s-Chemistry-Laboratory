@@ -1,0 +1,199 @@
+/* 晶胞模块 · 3D 暗棚画布、2D 投影徽章、图例与底部状态字幕 */
+
+.crystal-stage-wrap {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--radius-lg, 16px);
+  border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+  background: #0d1322;
+  overflow: hidden;
+  box-shadow: var(--shadow-md, 0 6px 20px rgba(15, 23, 42, 0.18));
+}
+
+.crystal-stage-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  background: #0d1322;
+}
+
+.crystal-webgl-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.crystal-webgl-canvas:active {
+  cursor: grabbing;
+}
+
+.crystal-label-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 4;
+}
+
+.crystal-badge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: rgba(13, 19, 34, 0.86);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  color: #f8fafc;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  will-change: transform, opacity;
+}
+
+.crystal-badge-fraction::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--badge-dot, #38bdf8);
+  flex-shrink: 0;
+}
+
+.crystal-badge-fraction.site-interior {
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(30, 27, 16, 0.92);
+  color: #fde68a;
+}
+
+.crystal-badge-distance {
+  padding: 0.32rem 0.72rem;
+  border-color: rgba(244, 63, 94, 0.88);
+  background: rgba(36, 12, 24, 0.92);
+  color: #ffe4e6;
+  font-size: 0.84rem;
+}
+
+.crystal-badge-coord {
+  padding: 0.32rem 0.72rem;
+  border-color: rgba(56, 189, 248, 0.88);
+  background: rgba(12, 28, 46, 0.92);
+  color: #e0f2fe;
+  font-size: 0.84rem;
+}
+
+.crystal-badge-hex {
+  padding: 0.35rem 0.8rem;
+  border-color: rgba(251, 191, 36, 0.9);
+  background: rgba(40, 28, 8, 0.92);
+  color: #fef3c7;
+  font-size: 0.84rem;
+}
+
+.crystal-badge-sub {
+  font-family: var(--font-main, system-ui, sans-serif);
+  font-size: 0.74rem;
+  font-weight: 500;
+  opacity: 0.88;
+}
+
+.crystal-legend {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.crystal-legend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #f1f5f9;
+  font-size: 0.82rem;
+  backdrop-filter: blur(6px);
+}
+
+.crystal-legend-sym {
+  font-family: var(--font-formula, serif);
+  font-weight: 700;
+}
+
+.crystal-legend-cnt {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.76rem;
+  color: #93c5fd;
+}
+
+.crystal-stage-tools {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 6;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.crystal-stage-btn {
+  min-height: 34px;
+  padding: 0.3rem 0.72rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.78);
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.crystal-stage-btn:hover {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(125, 211, 252, 0.65);
+}
+
+.crystal-stage-btn.is-active {
+  background: rgba(59, 130, 246, 0.85);
+  border-color: #93c5fd;
+  color: #ffffff;
+}
+
+.crystal-stage-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 0.85rem;
+  transform: translateX(-50%);
+  z-index: 6;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.45rem 1.05rem;
+  border-radius: 999px;
+  background: rgba(13, 19, 34, 0.86);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  color: #f8fafc;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}

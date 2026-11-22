@@ -1,0 +1,186 @@
+/* 晶胞模块 · 右侧参数面板骨架、晶胞头信息、分段切换与通用按钮 */
+
+.crystal-inspector {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-right: 0.12rem;
+}
+
+.crystal-card {
+  background: var(--card-bg, var(--surface, #ffffff));
+  border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 14px);
+  padding: 0.82rem 0.9rem;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.05));
+  display: flex;
+  flex-direction: column;
+  gap: 0.58rem;
+}
+
+.crystal-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.crystal-card-title {
+  margin: 0;
+  font-family: var(--font-heading, var(--font-main, system-ui));
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+
+.crystal-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent-soft, #eff6ff);
+  color: var(--accent, #2563eb);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.crystal-tag-qa {
+  background: var(--flame-soft, #fffbeb);
+  color: var(--flame, #d97706);
+}
+
+.crystal-header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.crystal-header-formula {
+  margin: 0;
+  font-family: var(--font-formula, 'Times New Roman', serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink, #0f172a);
+}
+
+.crystal-header-name {
+  margin: 0.2rem 0 0;
+  font-size: 0.84rem;
+  color: var(--ink-soft, var(--muted, #475569));
+}
+
+.crystal-sys-badge {
+  flex-shrink: 0;
+  padding: 0.2rem 0.56rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--ink-soft, #475569);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.crystal-param-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.crystal-param-pill {
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-xs, 6px);
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  color: var(--ink, #1e293b);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.crystal-seg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3rem;
+  padding: 0.24rem;
+  border-radius: var(--radius-md, 10px);
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.crystal-seg-btn {
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--ink-soft, #475569);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.crystal-seg-btn.is-active {
+  background: var(--card-bg, #ffffff);
+  border-color: var(--border, #cbd5e1);
+  color: var(--accent, #2563eb);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+}
+
+.crystal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md, 10px);
+  border: var(--ui-stroke, 1.5px) solid transparent;
+  font-family: var(--font-main, system-ui, sans-serif);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+
+.crystal-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.crystal-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.crystal-btn-primary {
+  background: var(--btn-primary, var(--accent, #3b82f6));
+  border-color: var(--btn-primary-border, var(--accent-hover, #2563eb));
+  color: #ffffff;
+}
+
+.crystal-btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-hover, var(--accent-hover, #2563eb));
+}
+
+.crystal-btn-ghost {
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  border-color: var(--border, #cbd5e1);
+  color: var(--ink, #1e293b);
+}
+
+.crystal-btn-ghost:hover:not(:disabled) {
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #2563eb);
+}
+
+.crystal-btn-full {
+  width: 100%;
+}
+
+.crystal-btn-sm {
+  min-height: 32px;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.78rem;
+}

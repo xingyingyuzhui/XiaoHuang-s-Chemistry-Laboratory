@@ -1,0 +1,263 @@
+/* 晶胞模块 · 外壳布局、顶栏 3 模块切换轨与左侧目录 */
+
+#panel-crystal.active {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+.crystal-root {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.crystal-shell {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow: hidden;
+}
+
+.crystal-topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0 0.1rem;
+}
+
+.crystal-mod-rail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem;
+  background: var(--card-bg, var(--surface, #ffffff));
+  border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.08));
+}
+
+.crystal-mod-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.42rem 0.95rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 10px);
+  background: transparent;
+  color: var(--ink-soft, var(--muted, #475569));
+  font-family: var(--font-main, system-ui, sans-serif);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast, 0.15s) ease,
+    color var(--dur-fast, 0.15s) ease,
+    border-color var(--dur-fast, 0.15s) ease,
+    transform var(--dur-fast, 0.15s) ease;
+  white-space: nowrap;
+}
+
+.crystal-mod-tab:hover {
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  color: var(--ink, #0f172a);
+}
+
+.crystal-mod-tab.is-active {
+  background: var(--accent, #3b82f6);
+  color: #ffffff;
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(59, 130, 246, 0.25));
+}
+
+.crystal-mod-num {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.crystal-module-host {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 通用 3 栏工作台（左导航 | 中舞台 | 右参数与思考题） */
+.crystal-workbench {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(290px, 340px);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0.75rem;
+  overflow: hidden;
+}
+
+.crystal-lib-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card-bg, var(--surface, #ffffff));
+  border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.06));
+  overflow: hidden;
+}
+
+.crystal-cat-tabs {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.22rem;
+  padding: 0.5rem;
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.crystal-cat-tab {
+  min-height: 34px;
+  padding: 0.3rem 0.2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--ink-soft, var(--muted, #475569));
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--dur-fast, 0.15s) ease, color var(--dur-fast, 0.15s) ease;
+}
+
+.crystal-cat-tab:hover {
+  background: var(--card-bg, #ffffff);
+  color: var(--ink, #0f172a);
+}
+
+.crystal-cat-tab.is-active {
+  background: var(--accent, #3b82f6);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.crystal-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.crystal-list-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.78rem;
+  border: var(--ui-stroke, 1.5px) solid var(--border-soft, var(--border, #e2e8f0));
+  border-radius: var(--radius-md, 12px);
+  background: var(--paper, var(--surface-2, #f8fafc));
+  color: var(--ink, #1e293b);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast, 0.15s) ease,
+    background var(--dur-fast, 0.15s) ease,
+    transform var(--dur-fast, 0.15s) ease;
+}
+
+.crystal-list-item:hover {
+  border-color: var(--accent, #3b82f6);
+  background: var(--card-elevated, var(--card-bg, #ffffff));
+}
+
+.crystal-list-item.is-active {
+  border-color: var(--accent, #3b82f6);
+  background: var(--accent-soft, #eff6ff);
+  box-shadow: var(--shadow-sm, 0 2px 6px rgba(59, 130, 246, 0.15));
+}
+
+.crystal-list-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.18rem;
+}
+
+.crystal-list-formula {
+  font-family: var(--font-formula, 'Times New Roman', serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+
+.crystal-list-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.crystal-swatch-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.25);
+  flex-shrink: 0;
+}
+
+.crystal-list-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink, #1e293b);
+  line-height: 1.3;
+}
+
+.crystal-list-sub {
+  margin-top: 0.14rem;
+  font-size: 0.76rem;
+  color: var(--text-muted, var(--muted, #64748b));
+  line-height: 1.3;
+}
+
+@media (min-width: 1600px) {
+  .crystal-workbench {
+    grid-template-columns: minmax(250px, 290px) minmax(0, 1fr) minmax(330px, 380px);
+  }
+}
+
+@media (max-width: 1080px) {
+  .crystal-workbench {
+    grid-template-columns: minmax(190px, 220px) minmax(0, 1fr) minmax(260px, 300px);
+    gap: 0.55rem;
+  }
+}
+
+@media (max-width: 860px) {
+  .crystal-workbench {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(340px, 1fr) auto;
+    overflow-y: auto;
+  }
+
+  .crystal-lib-sidebar {
+    max-height: 200px;
+  }
+}

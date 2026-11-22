@@ -1,0 +1,227 @@
+/* 晶胞模块 · 均摊法算式、拼晶胞提示、高考考点工具与默认遮挡思考题 */
+
+.crystal-slice-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.crystal-slice-actions .crystal-btn {
+  flex: 1;
+}
+
+.crystal-avg-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.58rem 0.68rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--paper, var(--surface-2, #f8fafc));
+  border: 1px solid var(--border-soft, var(--border, #e2e8f0));
+}
+
+.crystal-avg-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.83rem;
+}
+
+.crystal-avg-species {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ink, #0f172a);
+}
+
+.crystal-avg-eq {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: var(--accent, #2563eb);
+}
+
+.crystal-avg-note {
+  margin: 0.15rem 0 0;
+  padding-top: 0.35rem;
+  border-top: 1px dashed var(--border, #cbd5e1);
+  font-size: 0.78rem;
+  color: var(--ink-soft, var(--muted, #475569));
+  line-height: 1.45;
+}
+
+.crystal-tile-count {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-soft, #475569);
+}
+
+.crystal-tile-actions {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 0.9fr;
+  gap: 0.38rem;
+}
+
+.crystal-hex-banner {
+  padding: 0.55rem 0.68rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--paper, var(--surface-2, #f1f5f9));
+  border: 1px dashed var(--border-ink, #94a3b8);
+  color: var(--ink-soft, #475569);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.crystal-hex-banner.is-revealed {
+  background: var(--ok-soft, #dcfce7);
+  border: 1px solid var(--ok, #16a34a);
+  color: var(--ink, #0f172a);
+  font-weight: 600;
+}
+
+.crystal-exam-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.crystal-exam-tab {
+  min-height: 36px;
+  padding: 0.35rem 0.3rem;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border, #cbd5e1);
+  background: var(--paper, var(--surface-2, #f8fafc));
+  color: var(--ink-soft, #475569);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.crystal-exam-tab:hover {
+  border-color: var(--accent, #3b82f6);
+  color: var(--ink, #0f172a);
+}
+
+.crystal-exam-tab.is-active {
+  background: var(--accent, #3b82f6);
+  border-color: var(--accent, #3b82f6);
+  color: #ffffff;
+}
+
+.crystal-exam-body {
+  padding: 0.62rem 0.72rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--paper, var(--surface-2, #f8fafc));
+  border: 1px solid var(--border-soft, var(--border, #e2e8f0));
+}
+
+.crystal-exam-placeholder {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, var(--muted, #64748b));
+  line-height: 1.5;
+}
+
+.crystal-exam-metric {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.32rem;
+}
+
+.crystal-exam-k {
+  font-size: 0.8rem;
+  color: var(--ink-soft, #475569);
+  font-weight: 600;
+}
+
+.crystal-exam-v {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: var(--accent, #2563eb);
+}
+
+.crystal-exam-submetric {
+  font-size: 0.82rem;
+  color: var(--ink, #1e293b);
+  margin-bottom: 0.28rem;
+}
+
+.crystal-exam-formula {
+  margin: 0.25rem 0 0.4rem;
+  padding: 0.38rem 0.55rem;
+  border-radius: var(--radius-xs, 6px);
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  color: var(--ink, #0f172a);
+  word-break: break-word;
+}
+
+.crystal-density-meta {
+  display: flex;
+  gap: 0.8rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  color: var(--ink-soft, #475569);
+}
+
+.crystal-exam-desc,
+.crystal-exam-tip {
+  margin: 0.22rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft, #475569);
+  line-height: 1.48;
+}
+
+.crystal-qa-question {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  line-height: 1.5;
+}
+
+.crystal-qa-answer-box {
+  position: relative;
+  padding: 0.65rem 0.72rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--paper, var(--surface-2, #f8fafc));
+  border: 1px solid var(--border, #e2e8f0);
+  min-height: 68px;
+  overflow: hidden;
+}
+
+.crystal-qa-answer {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--ink, #1e293b);
+  line-height: 1.55;
+  transition: filter 0.22s ease, opacity 0.22s ease;
+}
+
+.crystal-qa-answer-box.is-covered .crystal-qa-answer {
+  filter: blur(7px);
+  opacity: 0.42;
+  user-select: none;
+  pointer-events: none;
+}
+
+.crystal-qa-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--paper, #f8fafc) 58%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.crystal-qa-foot {
+  display: flex;
+  justify-content: flex-end;
+}
