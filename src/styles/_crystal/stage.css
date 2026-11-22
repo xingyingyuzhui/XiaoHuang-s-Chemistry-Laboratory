@@ -1,12 +1,11 @@
 /* 晶胞模块 · 严格三行零遮挡主舞台、46px 顶栏、3D 投影徽章与通用按钮 */
 
 .crystal-main {
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
-  position: relative;
   overflow: hidden;
   background: var(--stage-3d-bg, var(--paper));
 }
@@ -143,22 +142,24 @@
 .crystal-badge-hex { padding: 0.28rem 0.68rem; border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft, var(--surface)) 95%, transparent); font-size: 0.8rem; }
 .crystal-badge-sub { font-family: var(--font-main); font-size: 0.72rem; font-weight: 600; color: var(--muted); }
 
-/* 舞台角落轻提示（不阻挡交互、不遮挡顶部标题） */
+/* 右上角极简轻提示（仅镁正六棱柱显现时出现） */
 .crystal-hex-toast {
   position: absolute;
-  left: 0.85rem;
-  bottom: 0.75rem;
+  top: 0.85rem;
+  right: 0.85rem;
   z-index: 6;
   pointer-events: none;
-  max-width: calc(100% - 1.7rem);
-  padding: 0.34rem 0.75rem;
+  max-width: min(320px, calc(100% - 1.7rem));
+  padding: 0.34rem 0.72rem;
   border-radius: var(--radius-pill, 999px);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 94%, transparent);
   border: var(--ui-stroke) solid var(--border-ink);
   color: var(--ink);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: var(--shadow-print-sm);
 }
 

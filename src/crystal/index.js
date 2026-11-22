@@ -1,6 +1,6 @@
 /**
  * 晶胞（3D 晶体库）顶层模块入口 — 与「3D 分子」1:1 对称
- * 左可收起「常见晶胞」抽屉 + 右侧零遮挡三行主舞台（46px 顶栏 + 3D 画布 + 底部专有操作栏），
+ * 左可收起「常见晶胞」抽屉 + 右侧 100% 全幅 3D 画布（四角浮层卡 + 右下相机操控盘），
  * 接入全站「拉下小黄」随堂助教上下文（src/assistant/page-context.js）。
  */
 
@@ -47,25 +47,13 @@ export function initCrystalLab() {
         <div class="crystal-drawer-body"></div>
       </div>
     </aside>
-    <div class="stage stage-3d crystal-main">
-      <header class="crystal-topbar">
-        <div class="crystal-topbar-info" aria-live="polite"></div>
-        <div class="crystal-topbar-right">
-          <div class="crystal-topbar-actions"></div>
-        </div>
-      </header>
-      <div class="crystal-stage-viewport"></div>
-      <div class="crystal-actionbar"></div>
-    </div>
+    <div class="stage stage-3d crystal-main"></div>
   `;
   root.appendChild(shell);
 
   const drawerEl = shell.querySelector('.crystal-drawer');
   const drawerBodyEl = shell.querySelector('.crystal-drawer-body');
-  const topbarInfoEl = shell.querySelector('.crystal-topbar-info');
-  const topbarActionsEl = shell.querySelector('.crystal-topbar-actions');
-  const stageViewportEl = shell.querySelector('.crystal-stage-viewport');
-  const actionbarEl = shell.querySelector('.crystal-actionbar');
+  const mainStageEl = shell.querySelector('.crystal-main');
 
   let assistantContext = null;
   let tabActive = true;
@@ -74,7 +62,8 @@ export function initCrystalLab() {
   registerPageAssistant('crystal', () => assistantContext);
 
   bindSideDrawer(drawerEl, {
-    onToggle() {
+    onToggle(_key, collapsed) {
+      if (collapsed) libraryInstance?.exitEditMode?.();
       requestAnimationFrame(() => {
         libraryInstance?.resize?.();
       });
@@ -83,9 +72,6 @@ export function initCrystalLab() {
 
   const shellContext = {
     drawerBodyEl,
-    topbarInfoEl,
-    topbarActionsEl,
-    actionbarEl,
     setPageContext(ctx) {
       assistantContext = ctx || null;
       notifyPageContextChange('crystal');
@@ -94,7 +80,7 @@ export function initCrystalLab() {
 
   function ensureMounted() {
     if (libraryInstance) return;
-    libraryInstance = mountLibraryView(stageViewportEl, shellContext);
+    libraryInstance = mountLibraryView(mainStageEl, shellContext);
     if (!tabActive) {
       libraryInstance?.pause?.();
     } else {
@@ -119,6 +105,7 @@ export function initCrystalLab() {
     },
     onLeave() {
       tabActive = false;
+      libraryInstance?.exitEditMode?.();
       libraryInstance?.pause?.();
     },
     resize() {

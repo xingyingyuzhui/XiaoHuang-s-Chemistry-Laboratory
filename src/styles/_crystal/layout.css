@@ -1,4 +1,4 @@
-/* 晶胞模块 · 左可收起抽屉布局、+ AI 生成按钮、6 类筛选胶囊与紧凑晶体卡片 */
+/* 晶胞模块 · 左可收起抽屉布局、50/50 操作行、6 类筛选胶囊、紧凑卡片与拖拽重排 */
 
 #panel-crystal {
   --bg: var(--bg-body);
@@ -38,7 +38,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.48rem;
+  gap: 0.45rem;
 }
 
 .crystal-drawer-body {
@@ -51,30 +51,12 @@
   overflow: hidden;
 }
 
-/* 虚线 + AI 生成晶胞按钮（对齐 3D 分子页 + 按钮质感） */
-.crystal-btn-add {
+/* 顶部 50/50 操作行：复用 .mol-toolbar / .mol-btn-add / .mol-btn-edit 视觉 */
+.crystal-toolbar {
   flex: 0 0 auto;
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  width: 100%;
-  min-height: 38px;
-  padding: 0.34rem 0.6rem;
-  border: 2px dashed var(--border-ink);
-  border-radius: var(--radius-md);
-  background: var(--surface-2, var(--paper));
-  color: var(--ink);
-  font-family: var(--font-main);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, transform var(--dur-fast) ease;
+  margin: 0;
+  padding: 2px 2px 0;
 }
-
-.crystal-btn-add:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
-.crystal-add-plus { font-size: 1.12rem; font-weight: 800; line-height: 1; }
 
 /* 6 类晶体筛选胶囊：全部 | 金属 | 离子 | 共价 | 分子 | 混合 */
 .crystal-cat-tabs {
@@ -124,7 +106,13 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
   gap: 0.42rem;
-  padding: 6px 6px 8px 4px;
+  padding: 6px 6px 8px 6px;
+}
+
+.crystal-lib-grid.is-pointer-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
 
 .crystal-drawer-item {
@@ -144,13 +132,18 @@
   font: inherit;
   cursor: pointer;
   box-shadow: var(--shadow-print-sm);
-  transition: transform var(--dur-fast) ease, background var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
+  transition: transform var(--dur-fast) ease, background var(--dur-fast) ease, box-shadow var(--dur-fast) ease, opacity var(--dur-fast) ease;
 }
 
 .crystal-drawer-item:hover,
 .crystal-drawer-item:focus-within { z-index: 2; }
 .crystal-drawer-item:hover { background: var(--diagram-soft, var(--surface-2)); transform: translateY(-1px); box-shadow: var(--shadow-print); }
 .crystal-drawer-item.is-active { border-color: var(--border-ink); background: var(--stamp-soft, var(--accent-soft)); box-shadow: var(--shadow-print); }
+.crystal-drawer-item.is-editing { cursor: grab; border-style: dashed; }
+.crystal-drawer-item.is-editing:active { cursor: grabbing; }
+.crystal-drawer-item.is-dragging { opacity: 0.42; }
+.crystal-drawer-item.drag-over { outline: 2px dashed var(--stamp); outline-offset: 2px; border-radius: var(--radius-md); }
+
 .crystal-drawer-item-top { display: flex; align-items: center; justify-content: space-between; gap: 0.24rem; min-width: 0; }
 
 .crystal-drawer-item-formula,
@@ -200,39 +193,54 @@
   flex-shrink: 0;
 }
 
+/* 编辑模式自定义 AI 晶胞删除角标（对齐 .mol-card-del） */
 .crystal-item-del {
+  display: none;
   position: absolute;
   top: -6px;
-  right: -6px;
+  left: -6px;
   z-index: 3;
   appearance: none;
-  width: 19px;
-  height: 19px;
+  width: 22px;
+  height: 22px;
   border: var(--ui-stroke) solid var(--border-ink);
   border-radius: 50%;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 0.8rem;
+  background: var(--stamp);
+  color: #ffffff;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
-  display: grid;
   place-items: center;
   cursor: pointer;
   padding: 0;
   box-shadow: var(--shadow-print-sm);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease, background var(--dur-fast) ease;
 }
 
-.crystal-drawer-item.is-custom:hover .crystal-item-del,
-.crystal-drawer-item.is-custom:focus-within .crystal-item-del { opacity: 1; pointer-events: auto; }
-.crystal-item-del:hover { color: #ffffff; background: var(--bad, #dc2626); border-color: var(--bad, #dc2626); }
+.crystal-lib-grid.is-edit-mode .crystal-drawer-item.is-custom .crystal-item-del { display: grid; }
+.crystal-item-del:hover { background: var(--bad, #dc2626); color: #ffffff; }
 .crystal-swatch-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent); flex-shrink: 0; }
 
-@media (hover: none) {
-  .crystal-drawer-item.is-custom .crystal-item-del { opacity: 1; pointer-events: auto; }
+/* 长按指针拖拽浮起幽灵卡片 */
+.crystal-drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 120;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.44rem 0.5rem;
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  background: var(--card-elevated);
+  color: var(--ink);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24), var(--shadow-print);
+  opacity: 0.96;
+  will-change: transform;
 }
+
+.crystal-drag-ghost .crystal-item-del { display: none; }
 
 @media (min-width: 1600px) {
   .crystal-shell { grid-template-columns: minmax(276px, 344px) minmax(0, 1fr); }

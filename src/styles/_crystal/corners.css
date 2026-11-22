@@ -1,0 +1,181 @@
+/* 晶胞 Tab · 四角浮层卡（对齐 3D 分子 .mol-info-card / .mol-props-card / .mol-controls） */
+
+/* 左上角：当前晶胞浮层卡（复用 .mol-info-card 五主题皮肤） */
+.crystal-corner-info {
+  padding: 0.62rem 0.82rem;
+  max-width: min(360px, calc(100% - 1.7rem));
+  max-height: none;
+  overflow: visible;
+  z-index: 5;
+}
+
+.crystal-corner-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.38rem;
+  margin: 0 0 0.42rem;
+  flex-wrap: wrap;
+}
+
+.crystal-corner-formula {
+  font-family: var(--font-formula, var(--font-mono));
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.crystal-corner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.crystal-corner-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-xs);
+  background: var(--surface-2, var(--paper));
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.crystal-corner-species em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* 左下角：晶胞探究交互浮层卡（复用 .mol-props-card 五主题皮肤，开启指针交互） */
+.crystal-corner-tools {
+  pointer-events: auto;
+  z-index: 5;
+  padding: 0.52rem 0.62rem;
+  max-width: min(480px, calc(100% - 178px));
+  max-height: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+}
+
+.crystal-corner-tools .crystal-mode-strip {
+  flex: 0 0 auto;
+  padding: 0.32rem 0.48rem;
+  gap: 0.34rem;
+}
+
+.crystal-tools-rows {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.34rem;
+}
+
+.crystal-corner-tools .crystal-inquiry-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.26rem;
+}
+
+.crystal-corner-tools .crystal-seg-btn {
+  min-height: 26px;
+  padding: 0.14rem 0.48rem;
+  font-size: 0.74rem;
+}
+
+.crystal-corner-tools .crystal-tool-btn {
+  min-height: 28px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.74rem;
+}
+
+.crystal-corner-tools .crystal-strip-chip {
+  font-size: 0.73rem;
+  padding: 0.1rem 0.38rem;
+}
+
+.crystal-corner-tools .crystal-strip-badge {
+  font-size: 0.74rem;
+  padding: 0.1rem 0.44rem;
+}
+
+.crystal-corner-tools .crystal-strip-text,
+.crystal-corner-tools .crystal-strip-note {
+  font-size: 0.74rem;
+}
+
+/* 黑板主题下浮层卡内部胶囊与按钮高对比可读性 */
+html[data-theme='blackboard'] .crystal-corner-chip,
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-mode-strip,
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-seg,
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-tool-btn,
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-stepper,
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-step-btn {
+  background: rgba(10, 22, 19, 0.58);
+  border-color: #3d6b5c;
+  color: #e2f0ea;
+}
+
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-seg-btn {
+  color: #a8c4b8;
+}
+
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-seg-btn.is-active {
+  background: #1a3d34;
+  border-color: #4a8a78;
+  color: #f2faf6;
+}
+
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-tool-btn:hover {
+  background: #1a3d34;
+  color: var(--diagram);
+}
+
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-tool-btn.is-active {
+  background: var(--stamp);
+  border-color: var(--btn-primary-border);
+  color: #132e26;
+}
+
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-strip-chip {
+  background: rgba(15, 36, 32, 0.85);
+  border-color: #3d6b5c;
+  color: #e8f4f0;
+}
+
+html[data-theme='blackboard'] .crystal-corner-tools .crystal-strip-text {
+  color: #b7d2c6;
+}
+
+html[data-theme='blackboard'] .crystal-drag-ghost {
+  background: #14352d;
+  border-color: #4a8a78;
+  color: #e8f4f0;
+}
+
+@media (max-width: 520px) {
+  .crystal-corner-info {
+    top: 0.55rem;
+    left: 0.55rem;
+    padding: 0.5rem 0.65rem;
+  }
+
+  .crystal-corner-tools {
+    bottom: 0.55rem;
+    left: 0.55rem;
+    max-width: calc(100% - 148px);
+    padding: 0.42rem 0.5rem;
+  }
+
+  .crystal-frame-toggle {
+    bottom: calc(0.75rem + 3 * 36px + 3 * 0.28rem + 0.4rem * 2 + 0.45rem);
+  }
+}

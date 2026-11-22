@@ -33,42 +33,34 @@ export function createCrystalViewer(container) {
   let shadowMesh = null;
   let currentCrystal = null;
   let displayMode = 'ball-stick';
-  let sliced = false, exploded = false, tileCount = 1, overlay = 'none';
+  let sliced = false, exploded = false, tileCount = 1, overlay = 'none', showFrame = true;
   let explodeProgress = 0, targetExplode = 0;
-
   let singleCellGroup = null, sliceState = null, overlayGroup = null, cameraLerp = null;
   let rafId = 0, running = false, lastTime = 0, pulsePhase = 0, disposed = false;
+  const camOffset = new THREE.Vector3();
+  const camSpherical = new THREE.Spherical();
 
   const tiler = createSupercellTiler({
     worldRoot, sharedUnitSphere, sharedUnitBox, addBadge: badges.add, clearBadges: badges.clear,
   });
 
   function syncGroundShadow() {
-    if (shadowMesh) {
-      disposeObjectTree(shadowMesh);
-      scene.remove(shadowMesh);
-      shadowMesh = null;
-    }
+    if (shadowMesh) { disposeObjectTree(shadowMesh); scene.remove(shadowMesh); shadowMesh = null; }
     const span = CELL_SCALE * (tileCount > 1 ? 1.65 + Math.sqrt(tileCount - 1) * 0.55 : 1.55);
-    const y = -CELL_SCALE * (tileCount > 1 ? 0.92 : 0.78);
-    shadowMesh = createGroundShadow(style, span, y);
+    shadowMesh = createGroundShadow(style, span, -CELL_SCALE * (tileCount > 1 ? 0.92 : 0.78));
     if (shadowMesh) scene.add(shadowMesh);
   }
 
   function clearActiveMeshes() {
     if (singleCellGroup) {
-      disposeGroupWithExtras(singleCellGroup);
-      worldRoot.remove(singleCellGroup);
-      singleCellGroup = null;
-      sliceState = null;
+      disposeGroupWithExtras(singleCellGroup); worldRoot.remove(singleCellGroup);
+      singleCellGroup = null; sliceState = null;
     }
     if (overlayGroup) {
-      disposeGroupWithExtras(overlayGroup);
-      worldRoot.remove(overlayGroup);
+      disposeGroupWithExtras(overlayGroup); worldRoot.remove(overlayGroup);
       overlayGroup = null;
     }
-    badges.clear('slice');
-    badges.clear('overlay');
+    badges.clear('slice'); badges.clear('overlay');
   }
 
   function frameCameraForTiles(count) {
@@ -80,21 +72,23 @@ export function createCrystalViewer(container) {
 
   function exitSupercellIfNeeded() {
     const wasTiled = tileCount > 1;
-    tileCount = 1;
-    tiler.clear();
-    tiler.snapToOrigin();
+    tileCount = 1; tiler.clear(); tiler.snapToOrigin();
     if (wasTiled) frameCameraForTiles(1);
   }
 
-  function resetSliceFlags() {
-    sliced = false; exploded = false; explodeProgress = 0; targetExplode = 0;
-  }
+  function resetSliceFlags() { sliced = false; exploded = false; explodeProgress = 0; targetExplode = 0; }
 
   function renderStill() {
     if (!running) {
       renderer.render(scene, camera);
       badges.update(camera, worldRoot.position, { sliced, explodeProgress });
     }
+  }
+
+  function applyFrameVisibility() {
+    worldRoot.traverse((child) => {
+      if (child.isLineSegments) child.visible = showFrame;
+    });
   }
 
   function rebuildScene({ keepTilesCamera = false } = {}) {
@@ -104,6 +98,7 @@ export function createCrystalViewer(container) {
 
     if (tileCount > 1 && !sliced) {
       const count = tiler.syncTiles(currentCrystal, tileCount, displayMode, style);
+      applyFrameVisibility();
       if (!keepTilesCamera) frameCameraForTiles(count);
       return;
     }
@@ -117,6 +112,7 @@ export function createCrystalViewer(container) {
       });
       singleCellGroup = sliceState.group;
       worldRoot.add(singleCellGroup);
+      applyFrameVisibility();
       return;
     }
 
@@ -140,6 +136,7 @@ export function createCrystalViewer(container) {
       displayMode, sharedUnitSphere, sharedUnitBox, style, atomOpacityMap,
     });
     worldRoot.add(singleCellGroup);
+    applyFrameVisibility();
   }
 
   function handleThemeChange(force = false) {
@@ -262,7 +259,9 @@ export function createCrystalViewer(container) {
     } else {
       clearActiveMeshes();
       syncGroundShadow();
-      frameCameraForTiles(tiler.syncTiles(currentCrystal, tileCount, displayMode, style));
+      const count = tiler.syncTiles(currentCrystal, tileCount, displayMode, style);
+      applyFrameVisibility();
+      frameCameraForTiles(count);
     }
   }
 
@@ -276,6 +275,36 @@ export function createCrystalViewer(container) {
     rebuildScene();
   }
 
+  function stepRotate(dAzimuth, dPolar) {
+    cameraLerp = null;
+    camOffset.copy(camera.position).sub(controls.target);
+    camSpherical.setFromVector3(camOffset);
+    camSpherical.theta += dAzimuth;
+    camSpherical.phi = THREE.MathUtils.clamp(camSpherical.phi + dPolar, 0.08, Math.PI - 0.08);
+    camSpherical.makeSafe();
+    camOffset.setFromSpherical(camSpherical);
+    camera.position.copy(controls.target).add(camOffset);
+    camera.lookAt(controls.target);
+    controls.update();
+    renderStill();
+  }
+
+  function stepZoom(factor) {
+    cameraLerp = null;
+    camOffset.copy(camera.position).sub(controls.target);
+    const dist = THREE.MathUtils.clamp(camOffset.length() * factor, controls.minDistance, controls.maxDistance);
+    camOffset.setLength(dist);
+    camera.position.copy(controls.target).add(camOffset);
+    controls.update();
+    renderStill();
+  }
+
+  function setShowFrame(on) {
+    showFrame = Boolean(on);
+    applyFrameVisibility();
+    renderStill();
+  }
+
   function resetCamera() {
     const dist = tileCount <= 1 ? 6.6 : 6.6 + Math.pow(tileCount - 1, 0.52) * 2.15;
     cameraLerp = {
@@ -286,10 +315,7 @@ export function createCrystalViewer(container) {
 
   function start() {
     if (running || disposed) return;
-    running = true;
-    lastTime = 0;
-    handleThemeChange(false);
-    resize();
+    running = true; lastTime = 0; handleThemeChange(false); resize();
     rafId = requestAnimationFrame(animate);
   }
 
@@ -302,26 +328,18 @@ export function createCrystalViewer(container) {
   function dispose() {
     if (disposed) return;
     disposed = true;
-    stop();
-    stopThemeObserver();
-    ro?.disconnect();
+    stop(); stopThemeObserver(); ro?.disconnect();
     controls.removeEventListener('start', onControlStart);
-    controls.dispose();
-    clearActiveMeshes();
-    tiler.clear();
+    controls.dispose(); clearActiveMeshes(); tiler.clear();
     if (shadowMesh) { disposeObjectTree(shadowMesh); scene.remove(shadowMesh); }
-    badges.dispose();
-    disposeEnv();
-    sharedUnitSphere.dispose();
-    sharedUnitBox.dispose();
-    sharedRingGeom.dispose();
-    renderer.dispose();
-    canvas.remove();
+    badges.dispose(); disposeEnv();
+    sharedUnitSphere.dispose(); sharedUnitBox.dispose(); sharedRingGeom.dispose();
+    renderer.dispose(); canvas.remove();
   }
 
   return {
     setCrystal, setDisplayMode, setSliced, setExploded, setTileCount, setOverlay,
     setAutoRotate(on) { controls.autoRotate = Boolean(on); },
-    resetCamera, start, stop, resize, dispose,
+    stepRotate, stepZoom, setShowFrame, resetCamera, start, stop, resize, dispose,
   };
 }
