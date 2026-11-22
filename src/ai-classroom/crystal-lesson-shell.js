@@ -217,7 +217,16 @@ export function createCrystalLessonShell({ hostEl } = {}) {
       if (destroyed) return;
       sectionActive = false;
       activeInstance?.pause?.();
-      notifyPageContextChange('ai');
+      const notifyLeave = () => {
+        if (!sectionActive && !destroyed) {
+          notifyPageContextChange('ai');
+        }
+      };
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(notifyLeave);
+      } else {
+        setTimeout(notifyLeave, 0);
+      }
     },
     resize() {
       scheduleResize();

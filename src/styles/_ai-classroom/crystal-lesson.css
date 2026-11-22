@@ -19,7 +19,8 @@
   overflow: hidden;
 }
 
-#aiSectionCrystal[hidden] {
+#aiSectionCrystal[hidden],
+#aiSectionCrystal [hidden] {
   display: none !important;
 }
 
