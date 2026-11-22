@@ -6,9 +6,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { getViewerStyle, getShadowTexture, currentThemeId } from '../../molecule/viewer-style.js';
-import { fracToCartesian, getCellCorners, computeBonds } from '../math/lattice.js';
+import { fracToCartesian, getCellCorners, computeBonds, computeCellBoundRadius } from '../math/lattice.js';
 
 export const CELL_SCALE = 2.4;
+export const FRAME_MARGIN = 1.54;
 const UP_VEC = new THREE.Vector3(0, 1, 0);
 
 function readCssColor(varName, fallback) {
@@ -43,7 +44,7 @@ export function createStudioStage(container) {
   scene.background = readStageBgColor();
 
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 120);
-  camera.position.set(4.8, 3.6, 5.6);
+  camera.position.set(6.5, 5.0, 7.5);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -58,8 +59,8 @@ export function createStudioStage(container) {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.07;
-  controls.minDistance = 2.0;
-  controls.maxDistance = 26;
+  controls.minDistance = 2.2;
+  controls.maxDistance = 48;
   controls.autoRotateSpeed = 1.1;
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.4);
@@ -138,6 +139,24 @@ export function getAtomRadius(sp, displayMode, isSliced) {
   const space = sp?.spaceRadius ?? 0.52;
   if (displayMode === 'space-filling') return space;
   return isSliced ? Math.max(ball * 1.18, Math.min(space * 0.68, ball + 0.08)) : ball;
+}
+
+export function computeCrystalFraming(
+  crystal,
+  camera,
+  { tileCount = 1, displayMode = 'ball-stick', margin = FRAME_MARGIN } = {},
+) {
+  const radius = computeCellBoundRadius(crystal, { tileCount, displayMode, scale: CELL_SCALE });
+  const halfV = THREE.MathUtils.degToRad((camera?.fov || 38) * 0.5);
+  const aspect = THREE.MathUtils.clamp(camera?.aspect || 1, 0.45, 4);
+  const halfAngle = aspect < 1 ? Math.atan(Math.tan(halfV) * aspect) : halfV;
+  const dist = (radius / Math.sin(Math.max(0.12, halfAngle))) * margin;
+  return {
+    radius,
+    dist,
+    minDistance: Math.max(2.2, radius * 0.65),
+    maxDistance: Math.max(40, dist * 2.6),
+  };
 }
 
 export function parseColor(raw, fallback = 0x94a3b8) {

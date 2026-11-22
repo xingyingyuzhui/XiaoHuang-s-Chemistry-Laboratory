@@ -302,3 +302,46 @@ export function computeDensity(Z, molarMass, lattice) {
   if (volFactorSq <= 0 || !(Z > 0) || !(molarMass > 0)) return NaN;
   return (Z * molarMass) / (NA * a * b * c * Math.sqrt(volFactorSq) * 1e-30);
 }
+
+/**
+ * 计算单晶胞或超晶胞（含原子球半径）绕几何质心的真实包围球半径
+ */
+export function computeCellBoundRadius(
+  crystal,
+  { tileCount = 1, displayMode = 'ball-stick', scale = 2.4 } = {},
+) {
+  if (!crystal?.lattice) return scale;
+  const offsets = tileCount > 1
+    ? computeSupercellOffsets(tileCount, crystal.system || 'cubic')
+    : [[0, 0, 0]];
+  const origin = fracToCartesian(0, 0, 0, crystal.lattice, scale);
+  const shifts = offsets.map(([du, dv, dw]) => {
+    const p = fracToCartesian(du, dv, dw, crystal.lattice, scale);
+    return { x: p.x - origin.x, y: p.y - origin.y, z: p.z - origin.z };
+  });
+  const n = shifts.length || 1;
+  const cx = shifts.reduce((s, v) => s + v.x, 0) / n;
+  const cy = shifts.reduce((s, v) => s + v.y, 0) / n;
+  const cz = shifts.reduce((s, v) => s + v.z, 0) / n;
+
+  const corners = getCellCorners(crystal.lattice, scale).vertices || [];
+  const spMap = new Map();
+  for (const sp of crystal.species || []) {
+    if (sp.id != null) spMap.set(sp.id, sp);
+    if (sp.symbol != null && !spMap.has(sp.symbol)) spMap.set(sp.symbol, sp);
+  }
+  const atoms = (crystal.atoms || []).map((a) => {
+    const p = fracToCartesian(a.u, a.v, a.w, crystal.lattice, scale);
+    const sp = spMap.get(a.species);
+    const r = displayMode === 'space-filling' ? (sp?.spaceRadius ?? 0.52) : (sp?.ballRadius ?? 0.28);
+    return { x: p.x, y: p.y, z: p.z, r };
+  });
+
+  let maxR = scale * 0.5;
+  for (const s of shifts) {
+    const sx = s.x - cx, sy = s.y - cy, sz = s.z - cz;
+    for (const v of corners) maxR = Math.max(maxR, Math.hypot(v.x + sx, v.y + sy, v.z + sz));
+    for (const a of atoms) maxR = Math.max(maxR, Math.hypot(a.x + sx, a.y + sy, a.z + sz) + a.r);
+  }
+  return maxR;
+}

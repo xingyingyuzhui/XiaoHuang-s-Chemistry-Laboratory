@@ -265,3 +265,37 @@ test('coordination centerIndex and shortestDistance.pair match actual periodic g
     );
   }
 });
+
+test('computeCellBoundRadius and computeCrystalFraming frame all 21 crystals cleanly without clipping', async () => {
+  const { CRYSTALS } = await loadEsm('src/crystal/data/crystals.js');
+  const { computeCellBoundRadius } = await loadEsm('src/crystal/math/lattice.js');
+  const { computeCrystalFraming } = await loadEsm('src/crystal/scene/scene-helpers.js');
+
+  const sinHalfV = Math.sin((38 * Math.PI) / 360);
+  for (const c of CRYSTALS) {
+    const rBall = computeCellBoundRadius(c, { tileCount: 1, displayMode: 'ball-stick' });
+    const rSpace = computeCellBoundRadius(c, { tileCount: 1, displayMode: 'space-filling' });
+    const rTile8 = computeCellBoundRadius(c, { tileCount: 8, displayMode: 'space-filling' });
+
+    assert.ok(rSpace > rBall, `${c.id} space-filling bound radius should exceed ball-stick`);
+    assert.ok(rTile8 > rSpace, `${c.id} 8-cell supercell bound radius should exceed single cell`);
+
+    for (const mode of ['ball-stick', 'space-filling']) {
+      const f = computeCrystalFraming(c, { fov: 38, aspect: 1.5 }, { tileCount: 1, displayMode: mode });
+      const r = mode === 'space-filling' ? rSpace : rBall;
+      const sphereFill = r / (f.dist * sinHalfV);
+      assert.ok(
+        sphereFill >= 0.55 && sphereFill <= 0.72,
+        `${c.id} (${mode}) bounding sphere fill ${sphereFill.toFixed(3)} out of comfortable range`,
+      );
+      assert.ok(f.minDistance < f.dist && f.dist < f.maxDistance, `${c.id} zoom bounds invalid`);
+    }
+
+    const fPortrait = computeCrystalFraming(c, { fov: 38, aspect: 0.65 }, { tileCount: 1, displayMode: 'space-filling' });
+    const fLandscape = computeCrystalFraming(c, { fov: 38, aspect: 1.5 }, { tileCount: 1, displayMode: 'space-filling' });
+    assert.ok(fPortrait.dist > fLandscape.dist, `${c.id} portrait aspect should pull camera back`);
+
+    const f8 = computeCrystalFraming(c, { fov: 38, aspect: 1.5 }, { tileCount: 8, displayMode: 'space-filling' });
+    assert.ok(f8.dist > fLandscape.dist && f8.maxDistance > f8.dist * 2, `${c.id} 8-cell framing invalid`);
+  }
+});
