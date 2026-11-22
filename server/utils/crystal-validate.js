@@ -19,6 +19,7 @@ const {
   analyzePeriodicCoordination,
   analyzeShortestDistance,
   resolveBondCutoffAndRule,
+  maybePromoteCoarseMolecularSpecies,
   verifyStoichiometryAndDensity,
 } = require('./crystal-geometry');
 
@@ -111,7 +112,11 @@ function parseSpecies(rawSpecies, raw, category) {
       color = count === 0 ? baseColor : shiftColorLuminance(baseColor, count === 1 ? 1.28 : 0.76);
     }
     const item = { id, symbol, color, ballRadius: 0.2, spaceRadius: 0.6, countPerCell: 0 };
-    if (Number.isFinite(Number(s.molarMass)) && Number(s.molarMass) > 0) item.molarMass = Number(s.molarMass);
+    if (!isAbstractCell && Number.isFinite(meta.mass) && meta.mass > 0) {
+      item.molarMass = Number(meta.mass.toFixed(2));
+    } else if (Number.isFinite(Number(s.molarMass)) && Number(s.molarMass) > 0) {
+      item.molarMass = Number(s.molarMass);
+    }
     return item;
   });
 
@@ -177,11 +182,20 @@ function validateCrystalPayload(raw) {
     throw new Error('去重后的基元原子 basisAtoms 数量需在 1～24 之间');
   }
 
+  const name = String(raw.name || raw.formula || '自定义晶胞').trim().slice(0, 40);
+  const formula = String(raw.formula || name).trim().slice(0, 40);
+  if (system === 'hexagonal' && /石墨烯|graphene/i.test(`${name} ${raw.subtitle || ''}`) && basis.every((b) => b.w === 0)) {
+    throw new Error('石墨烯为单层二维六方蜂窝片，不应将全部原子置于 w = 0（周期展开会产生虚假双层），请改用 2×2 单层中平面 w = 0.5（a = 492 pm, c = 335 pm, 8 个 C 原子）');
+  }
+
   const dMinPm = buildDistanceMatrixAndCheckCollisions(basis, species, speciesMeta, lattice);
   const atoms = expandPeriodic(basis);
   if (atoms.length < 1 || atoms.length > 120) throw new Error('展开后的晶胞原子数超出合理范围');
 
-  const averagingFormula = computeAveraging(species, atoms, system);
+  let averagingFormula = computeAveraging(species, atoms, system);
+  if (maybePromoteCoarseMolecularSpecies(species, speciesMeta, dMinPm, lattice, formula, category, isAbstractCell)) {
+    averagingFormula = computeAveraging(species, atoms, system);
+  }
   solveHardSphereRadii(species, speciesMeta, dMinPm, lattice, { category, isAbstractCell, rawSpaceRadii });
 
   const coordination = analyzePeriodicCoordination(
@@ -196,8 +210,6 @@ function validateCrystalPayload(raw) {
     basis, lattice, species, rawCut, rawRule, category, VALID_BOND_RULES,
   );
 
-  const name = String(raw.name || raw.formula || '自定义晶胞').trim().slice(0, 40);
-  const formula = String(raw.formula || name).trim().slice(0, 40);
   const dRaw = raw.density && typeof raw.density === 'object' ? raw.density : {};
   const density = verifyStoichiometryAndDensity(species, speciesMeta, lattice, formula, dRaw, isAbstractCell, system);
   const slug = formula.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 20) || 'cell';

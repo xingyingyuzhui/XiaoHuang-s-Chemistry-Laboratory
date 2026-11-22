@@ -237,33 +237,42 @@ test('validateCrystalPayload rejects collisions, stoichiometry mismatch, impossi
   assert.throws(() => validateCrystalPayload({ system: 'cubic', lattice: { a: 400 }, species: [{ id: 'A' }], basisAtoms: [{ species: 'B', u: 0, v: 0, w: 0 }] }), /粒子种类未知/);
   assert.throws(() => validateCrystalPayload({ system: 'cubic', lattice: { a: 400 }, species: [{ id: 'A' }], basisAtoms: [{ species: 'A', u: NaN, v: 0, w: 0 }] }), /分数坐标无效/);
 
-  // 跨种 0 pm 重叠
-  assert.throws(() => validateCrystalPayload({
-    name: '重叠晶胞', formula: 'NaCl', system: 'cubic', lattice: { a: 564 },
-    species: [{ id: 'Na', symbol: 'Na⁺' }, { id: 'Cl', symbol: 'Cl⁻' }],
-    basisAtoms: [{ species: 'Na', u: 0, v: 0, w: 0 }, { species: 'Cl', u: 0, v: 0, w: 0 }],
-  }), /重叠/);
+  // 跨种 0 pm 重叠 / <100 pm 周期碰撞 / Al2O3 计量失配 / 密度 > 26 g/cm3
+  assert.throws(() => validateCrystalPayload({ name: '重叠晶胞', formula: 'NaCl', system: 'cubic', lattice: { a: 564 }, species: [{ id: 'Na', symbol: 'Na⁺' }, { id: 'Cl', symbol: 'Cl⁻' }], basisAtoms: [{ species: 'Na', u: 0, v: 0, w: 0 }, { species: 'Cl', u: 0, v: 0, w: 0 }] }), /重叠/);
+  assert.throws(() => validateCrystalPayload({ name: '近距碰撞', formula: 'Cu', system: 'cubic', lattice: { a: 361 }, species: [{ id: 'Cu', symbol: 'Cu' }], basisAtoms: [{ species: 'Cu', u: 0, v: 0, w: 0 }, { species: 'Cu', u: 0.1, v: 0, w: 0 }] }), /重叠/);
+  assert.throws(() => validateCrystalPayload({ name: '氧化铝', formula: 'Al₂O₃', category: 'ionic', system: 'cubic', lattice: { a: 400 }, species: [{ id: 'Al', symbol: 'Al³⁺' }, { id: 'O', symbol: 'O²⁻' }], basisAtoms: [{ species: 'Al', u: 0, v: 0, w: 0 }, { species: 'O', u: 0.5, v: 0.5, w: 0 }, { species: 'O', u: 0.5, v: 0, w: 0.5 }] }), /计量比/);
+  assert.throws(() => validateCrystalPayload({ name: '异常金', formula: 'Au', category: 'metallic', system: 'cubic', lattice: { a: 260 }, species: [{ id: 'Au', symbol: 'Au' }], basisAtoms: mk('Au', FCC) }), /密度/);
+});
 
-  // < 100 pm 周期碰撞
-  assert.throws(() => validateCrystalPayload({
-    name: '近距碰撞', formula: 'Cu', system: 'cubic', lattice: { a: 361 },
-    species: [{ id: 'Cu', symbol: 'Cu' }],
-    basisAtoms: [{ species: 'Cu', u: 0, v: 0, w: 0 }, { species: 'Cu', u: 0.1, v: 0, w: 0 }],
-  }), /重叠/);
+test('C60 molecular crystal (symbol C60 & coarse-grained C) and polyatomic NH4Cl density', () => {
+  for (const sp of [{ id: 'C60', symbol: 'C₆₀' }, { id: 'C60', symbol: 'C60' }, { id: 'C', symbol: 'C' }]) {
+    const c60 = validateCrystalPayload({ name: '碳60', formula: 'C₆₀', category: 'molecular', system: 'cubic', lattice: { a: 1417 }, species: [sp], basisAtoms: mk(sp.id, FCC), bondCutoff: 0 });
+    assert.equal(c60.species[0].molarMass, 720.66);
+    assert.equal(c60.species[0].spaceRadius, 0.85);
+    assert.equal(c60.density.Z, 4);
+    assert.ok(Math.abs(c60.density.valueGcm3 - 1.68) < 0.03);
+    assert.equal(c60.coordination.number, 12);
+    assert.equal(c60.bondCutoff, 0);
+    if (sp.symbol === 'C') assert.equal(c60.species[0].symbol, 'C₆₀');
+  }
+  const nh4cl = validateCrystalPayload({ name: '氯化铵', formula: 'NH₄Cl', category: 'ionic', system: 'cubic', lattice: { a: 387.5 }, species: [{ id: 'NH4', symbol: 'NH₄⁺' }, { id: 'Cl', symbol: 'Cl⁻' }], basisAtoms: [{ species: 'Cl', u: 0, v: 0, w: 0 }, { species: 'NH4', u: 0.5, v: 0.5, w: 0.5 }] });
+  assert.ok(Math.abs(nh4cl.species[0].molarMass - 18.04) < 0.02);
+  assert.ok(Math.abs(nh4cl.density.valueGcm3 - 1.53) < 0.03);
+  const s8 = validateCrystalPayload({ name: '硫八分子', formula: 'S₈', category: 'molecular', system: 'cubic', lattice: { a: 1000 }, species: [{ id: 'S', symbol: 'S' }], basisAtoms: mk('S', FCC), bondCutoff: 0 });
+  assert.equal(s8.species[0].symbol, 'S₈');
+  assert.equal(s8.density.Z, 4);
+  assert.ok(Math.abs(s8.density.valueGcm3 - 1.7) < 0.05);
+});
 
-  // Al2O3 化学计量失配
-  assert.throws(() => validateCrystalPayload({
-    name: '氧化铝', formula: 'Al₂O₃', category: 'ionic', system: 'cubic', lattice: { a: 400 },
-    species: [{ id: 'Al', symbol: 'Al³⁺' }, { id: 'O', symbol: 'O²⁻' }],
-    basisAtoms: [{ species: 'Al', u: 0, v: 0, w: 0 }, { species: 'O', u: 0.5, v: 0.5, w: 0 }, { species: 'O', u: 0.5, v: 0, w: 0.5 }],
-  }), /计量比/);
-
-  // 理论密度 > 26 g/cm3 异常晶格
-  assert.throws(() => validateCrystalPayload({
-    name: '异常金', formula: 'Au', category: 'metallic', system: 'cubic', lattice: { a: 260 },
-    species: [{ id: 'Au', symbol: 'Au' }],
-    basisAtoms: mk('Au', FCC),
-  }), /密度/);
+test('Graphene single-layer w=0.5 2x2 honeycomb sheet (Z=8, CN=3, d=142pm, rho=2.27) & rejects w=0 chimney', () => {
+  const sites = [[0, 0, 0.5], [0.1667, 0.3333, 0.5], [0.5, 0, 0.5], [0.6667, 0.3333, 0.5], [0, 0.5, 0.5], [0.1667, 0.8333, 0.5], [0.5, 0.5, 0.5], [0.6667, 0.8333, 0.5]];
+  const g = validateCrystalPayload({ name: '石墨烯', formula: 'C', category: 'covalent', system: 'hexagonal', lattice: { a: 492, b: 492, c: 335 }, species: [{ id: 'C', symbol: 'C' }], basisAtoms: mk('C', sites), bondCutoff: 160 });
+  assert.deepEqual([g.species[0].countPerCell, g.density.Z, g.coordination.number, g.shortestDistance.valuePm, g.atoms.length], [8, 8, 3, 142, 13]);
+  assert.ok(Math.abs(g.density.valueGcm3 - 2.27) < 0.03);
+  assert.ok(g.atoms.every((a) => a.w === 0.5));
+  assert.throws(() => validateCrystalPayload({ name: '石墨烯', formula: 'C', category: 'covalent', system: 'hexagonal', lattice: { a: 246, b: 246, c: 670 }, species: [{ id: 'C', symbol: 'C' }], basisAtoms: mk('C', [[0, 0, 0], [1 / 3, 2 / 3, 0]]) }), /w = 0\.5/);
+  assert.match(crystalRouter.CRYSTAL_GENERATE_SYSTEM, /C₆₀[\s\S]*1417/);
+  assert.match(crystalRouter.CRYSTAL_GENERATE_SYSTEM, /石墨烯[\s\S]*w=0\.5/);
 });
 
 test('generateCrystalWithRetry repairs a validation error in 1 shot at temperature 0.1', async () => {

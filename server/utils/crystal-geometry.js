@@ -2,7 +2,7 @@
  * 晶胞周期几何、硬球相切半径求解、权威配位数/最短距离/键长截断与化学计量校验
  */
 
-const { ATOMIC_WEIGHTS, parseChemicalFormula, getSpeciesSeedRadiusPm } = require('./chem-reference');
+const { ATOMIC_WEIGHTS, parseChemicalFormula, parseSpeciesBase, getSpeciesSeedRadiusPm } = require('./chem-reference');
 
 const NA = 6.02214076e23;
 const DEG2RAD = Math.PI / 180;
@@ -251,6 +251,41 @@ function resolveBondCutoffAndRule(basis, lattice, species, rawCutoff, rawRule, c
 
 function gcdInt(a, b) { let x = Math.abs(a), y = Math.abs(b); while (y) { [x, y] = [y, x % y]; } return x || 1; }
 
+function resolveSpeciesCompositionAndMass(sp, fallbackMeta) {
+  const fromSym = parseSpeciesBase(sp?.symbol);
+  if (fromSym.isIupac && fromSym.composition) return { composition: fromSym.composition, mass: fromSym.mass };
+  const fromFormula = parseChemicalFormula(sp?.symbol);
+  if (fromFormula) return { composition: fromFormula.counts, mass: fromFormula.molarMass };
+  const comp = fallbackMeta?.composition || null;
+  if (!comp) return { composition: null, mass: 0 };
+  const mass = Number.isFinite(fallbackMeta.mass) && fallbackMeta.mass > 0
+    ? fallbackMeta.mass
+    : Object.entries(comp).reduce((acc, [el, mult]) => acc + mult * ATOMIC_WEIGHTS[el], 0);
+  return { composition: comp, mass };
+}
+
+function maybePromoteCoarseMolecularSpecies(species, speciesMeta, dMinPm, lattice, formula, category, isAbstractCell) {
+  if (isAbstractCell || category !== 'molecular' || species.length !== 1) return false;
+  const parsed = parseChemicalFormula(formula);
+  if (!parsed) return false;
+  const fTotal = Object.values(parsed.counts).reduce((a, b) => a + b, 0);
+  if (fTotal <= 1) return false;
+  const curComp = speciesMeta[0]?.composition;
+  const curTotal = curComp ? Object.values(curComp).reduce((a, b) => a + b, 0) : 0;
+  if (curTotal !== 1 || !(parsed.counts[speciesMeta[0].element] > 0)) return false;
+  const maxLat = Math.max(lattice.a, lattice.b, lattice.c);
+  const zSite = species[0].countPerCell;
+  const dMin = dMinPm?.[0]?.[0];
+  if (maxLat < 700 || !(zSite > 0 && zSite <= 8)) return false;
+  if (!(zSite < fTotal || (Number.isFinite(dMin) && dMin >= 350))) return false;
+  const promoted = parseSpeciesBase(formula);
+  if (!promoted.isIupac) return false;
+  species[0].symbol = formula;
+  species[0].molarMass = Number(parsed.molarMass.toFixed(2));
+  speciesMeta[0] = promoted;
+  return true;
+}
+
 function verifyStoichiometryAndDensity(species, speciesMeta, lattice, formula, dRaw, isAbstractCell, system) {
   const defaultFormulaText = (z) => (
     system === 'hexagonal' ? `ρ = (${z} × M) / (Nₐ · √3/2 · a² · c)`
@@ -272,13 +307,12 @@ function verifyStoichiometryAndDensity(species, speciesMeta, lattice, formula, d
   const cellCounts = Object.create(null);
   let cellMass = 0;
   for (let i = 0; i < species.length; i += 1) {
-    const comp = speciesMeta[i].composition;
+    const { composition: comp, mass } = resolveSpeciesCompositionAndMass(species[i], speciesMeta[i]);
     if (!comp) continue;
     for (const [el, mult] of Object.entries(comp)) {
-      const cnt = species[i].countPerCell * mult;
-      cellCounts[el] = (cellCounts[el] || 0) + cnt;
-      cellMass += cnt * ATOMIC_WEIGHTS[el];
+      cellCounts[el] = (cellCounts[el] || 0) + species[i].countPerCell * mult;
     }
+    cellMass += species[i].countPerCell * mass;
   }
   const parsedFormula = parseChemicalFormula(formula);
   let zVal = 1;
@@ -309,5 +343,6 @@ module.exports = {
   clamp, snap, fracToPm, distPm, computeDensity, normFrac, dedupBasis,
   buildDistanceMatrixAndCheckCollisions, solveHardSphereRadii,
   analyzePeriodicCoordination, analyzeShortestDistance,
-  resolveBondCutoffAndRule, verifyStoichiometryAndDensity,
+  resolveBondCutoffAndRule, resolveSpeciesCompositionAndMass,
+  maybePromoteCoarseMolecularSpecies, verifyStoichiometryAndDensity,
 };
