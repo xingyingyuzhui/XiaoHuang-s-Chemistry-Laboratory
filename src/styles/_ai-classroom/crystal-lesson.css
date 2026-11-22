@@ -1,4 +1,4 @@
-/* 课堂 · 晶体探究分区（认识晶体 + 晶体的性质）无遮挡布局与横向课程条样式 */
+/* 课堂 · 晶体探究控制台（课前备课态 Prep Mode <-> 沉浸授课态 Teach Mode） */
 
 #aiSectionCrystal,
 .ai-section-crystal {
@@ -20,9 +20,7 @@
 }
 
 #aiSectionCrystal[hidden],
-#aiSectionCrystal [hidden] {
-  display: none !important;
-}
+#aiSectionCrystal [hidden] { display: none !important; }
 
 .stage-ai:has(#aiSectionCrystal:not([hidden])) {
   display: flex;
@@ -32,7 +30,9 @@
   min-height: min(78vh, 820px);
 }
 
-.crystal-lesson-shell {
+.crystal-lesson-shell,
+.cl-prep-host,
+.cl-teach-host {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
@@ -40,110 +40,181 @@
   height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   background: var(--stage-3d-bg, var(--paper));
 }
 
-/* Row 1: 46px 顶栏（左侧子模块分段切换 + 中右当前课程标题与状态） */
-.crystal-lesson-header {
-  flex: 0 0 46px;
-  height: 46px;
-  gap: 0.75rem;
-}
-
-.crystal-lesson-subseg { flex: 0 0 auto; }
-.crystal-lesson-info { justify-content: flex-end; }
-
-.crystal-lesson-subbtn.is-active {
-  background: var(--accent);
-  border-color: var(--border-ink);
-  color: #ffffff;
-}
-
-/* Row 2: 紧凑单行横向课程胶囊条（避免课堂出现双侧边栏） */
-.crystal-lesson-strip {
+/* Prep Mode Top Bar */
+.cl-prep-bar {
   flex: 0 0 auto;
-  min-width: 0;
-  background: var(--surface, var(--card-elevated));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-height: 48px;
+  padding: 0.42rem 0.85rem;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
-.crystal-lesson-strip .crystal-drawer-list {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.4rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.42rem 0.85rem;
-  scrollbar-width: thin;
-  scrollbar-gutter: auto;
-}
+.cl-lesson-pills { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.36rem; overflow-x: auto; scrollbar-width: thin; }
 
-.crystal-lesson-strip .crystal-drawer-item {
+.cl-lesson-pill {
   flex: 0 0 auto;
-  width: auto;
-  flex-direction: row;
+  display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.72rem;
+  gap: 0.28rem;
+  min-height: 30px;
+  padding: 0.22rem 0.68rem;
   border-radius: var(--radius-pill, 999px);
   border: 1px solid var(--border);
-  background: var(--surface-2, var(--paper));
-  box-shadow: none;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: 700 0.78rem/1.25 var(--font-main);
+  cursor: pointer;
+  white-space: nowrap;
   transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
 }
+.cl-lesson-pill:hover { border-color: var(--border-ink); background: var(--diagram-soft, var(--surface)); }
+.cl-lesson-pill.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; box-shadow: var(--shadow-print-sm); }
 
-.crystal-lesson-strip .crystal-drawer-item:hover {
-  transform: none;
-  border-color: var(--border-ink);
-  background: var(--diagram-soft, var(--surface));
-  box-shadow: none;
+.cl-mini-ai { font-style: normal; font: 800 0.62rem/1.2 var(--font-mono); padding: 0.04rem 0.28rem; border-radius: var(--radius-xs); background: var(--accent-soft); color: var(--accent); }
+.cl-lesson-pill.is-active .cl-mini-ai { background: rgba(255, 255, 255, 0.22); color: inherit; }
+
+.cl-prep-actions { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.4rem; }
+.cl-btn-ai.is-active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.cl-btn-start { font-weight: 800; padding-inline: 0.9rem; }
+
+/* AI One-Click Lesson Planner Drawer */
+.cl-ai-drawer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 0.48rem; padding: 0.68rem 0.9rem; background: var(--diagram-soft, var(--surface-2)); border-bottom: 1px solid var(--border); }
+.cl-ai-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: var(--ink); }
+.cl-ai-form { display: flex; align-items: center; gap: 0.45rem; }
+
+.cl-ai-input,
+.cl-ai-count,
+.cl-lesson-title-input,
+.cl-field-input,
+.cl-field-textarea { border: 1px solid var(--border-ink); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink); font-family: var(--font-main); font-size: 0.82rem; }
+.cl-ai-input { flex: 1 1 auto; min-width: 0; padding: 0.38rem 0.65rem; }
+.cl-ai-count { flex: 0 0 auto; padding: 0.36rem 0.5rem; font-weight: 700; }
+
+.cl-ai-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 0.34rem; font-size: 0.74rem; color: var(--muted); }
+.cl-preset-chip { padding: 0.18rem 0.54rem; border-radius: var(--radius-pill, 999px); border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft); font: 600 0.73rem/1.3 var(--font-main); cursor: pointer; }
+.cl-preset-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.cl-ai-status { font-size: 0.78rem; font-weight: 700; color: var(--accent); }
+.cl-ai-status.is-error { color: var(--bad, #dc2626); }
+
+/* Prep 2-Panel Workspace */
+.cl-prep-grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: minmax(268px, 330px) minmax(0, 1fr); overflow: hidden; }
+.cl-prep-left { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
+
+.cl-lesson-meta { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); }
+.cl-lesson-title-input { width: 100%; padding: 0.34rem 0.55rem; font-weight: 800; font-size: 0.86rem; }
+.cl-lesson-tools { display: flex; align-items: center; gap: 0.32rem; }
+
+.cl-mini-btn { padding: 0.16rem 0.48rem; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--surface-2); color: var(--ink-soft); font: 700 0.72rem/1.25 var(--font-main); cursor: pointer; }
+.cl-mini-btn:hover:not(:disabled) { border-color: var(--border-ink); color: var(--ink); }
+.cl-mini-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.cl-mini-btn.is-danger { background: var(--bad, #dc2626); border-color: var(--bad, #dc2626); color: #ffffff; }
+
+.cl-step-list { flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.36rem; padding: 0.6rem 0.7rem; }
+
+.cl-step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.46rem 0.52rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+.cl-step-row:hover { border-color: var(--border-ink); }
+.cl-step-row.is-selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: var(--shadow-print-sm); }
+
+.cl-step-num { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border-ink); font: 800 0.72rem/1 var(--font-mono); color: var(--ink); }
+.cl-step-row.is-selected .cl-step-num { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+
+.cl-step-main { flex: 1 1 auto; min-width: 0; }
+.cl-step-title { font-size: 0.81rem; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-step-sub { font-size: 0.71rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cl-step-ops { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.16rem; }
+.cl-icon-btn { width: 24px; height: 24px; padding: 0; display: grid; place-items: center; border-radius: var(--radius-xs); border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft); font: 800 0.75rem/1 var(--font-mono); cursor: pointer; }
+.cl-icon-btn:hover:not(:disabled) { border-color: var(--border-ink); color: var(--ink); }
+.cl-icon-btn.is-del:hover:not(:disabled) { border-color: var(--bad, #dc2626); color: var(--bad, #dc2626); }
+.cl-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.cl-picker-bar { padding: 0.45rem 0.7rem 0.65rem; border-top: 1px solid var(--border); }
+.cl-add-step-btn { width: 100%; }
+
+.cl-stage-picker { padding: 0 0.7rem 0.75rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.cl-picker-label { font-size: 0.72rem; font-weight: 800; color: var(--muted); margin-bottom: 0.25rem; }
+.cl-picker-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.cl-picker-chip { display: inline-flex; align-items: center; gap: 0.24rem; padding: 0.24rem 0.52rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--ink); font: 700 0.74rem/1.25 var(--font-main); cursor: pointer; }
+.cl-picker-chip:hover { border-color: var(--accent); background: var(--accent-soft); }
+.cl-picker-chip em { font-style: normal; font-size: 0.66rem; color: var(--accent); font-family: var(--font-mono); }
+
+/* Prep Right Detail & Optional Preview */
+.cl-prep-right { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.9rem 1.1rem; overflow-y: auto; min-height: 0; }
+.cl-detail-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.cl-detail-tags, .cl-detail-btns { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.cl-detail-stage-name { font-size: 0.88rem; font-weight: 800; color: var(--ink); }
+.cl-detail-summary { margin: 0; font-size: 0.83rem; line-height: 1.5; color: var(--ink-soft); }
+
+.cl-preview-wrap { display: flex; flex-direction: column; height: 320px; border-radius: var(--radius-md); border: var(--ui-stroke) solid var(--border-ink); overflow: hidden; background: var(--stage-3d-bg, var(--paper)); }
+.cl-preview-viewport { flex: 1 1 0; min-height: 240px; }
+
+.cl-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.cl-field > span { font-size: 0.76rem; font-weight: 800; color: var(--muted); }
+.cl-field-input, .cl-field-textarea { width: 100%; padding: 0.48rem 0.65rem; }
+.cl-field-textarea { resize: vertical; line-height: 1.5; min-height: 76px; }
+
+.cl-qa-preview { display: flex; align-items: baseline; gap: 0.48rem; padding: 0.55rem 0.75rem; border-radius: var(--radius-sm); background: var(--note-soft, var(--accent-soft)); border: 1px solid var(--border); font-size: 0.8rem; color: var(--ink); }
+.cl-qa-preview strong { flex-shrink: 0; color: var(--accent); }
+.cl-empty-hint, .cl-empty-panel { padding: 1.4rem 0.8rem; text-align: center; color: var(--muted); font-size: 0.84rem; }
+
+/* Immersive Teach Mode */
+.cl-teach-bar {
+  flex: 0 0 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0 0.75rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
-.crystal-lesson-strip .crystal-drawer-item.is-active {
-  border-color: var(--border-ink);
-  background: var(--accent);
-  box-shadow: var(--shadow-print-sm);
-}
+.cl-teach-heading { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 0.48rem; overflow: hidden; white-space: nowrap; }
+.cl-teach-progress { flex-shrink: 0; padding: 0.12rem 0.5rem; border-radius: var(--radius-pill, 999px); background: var(--accent-soft); color: var(--accent); font: 800 0.73rem/1.25 var(--font-mono); }
+.cl-teach-title { font-size: 0.88rem; font-weight: 800; color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.cl-teach-right { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.4rem; }
+.cl-teach-status { max-width: 240px; padding: 0.14rem 0.52rem; border-radius: var(--radius-pill, 999px); background: var(--surface-2); border: 1px solid var(--border); color: var(--ink-soft); font-size: 0.73rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-cue-toggle.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; }
 
-.crystal-lesson-strip .crystal-drawer-item-title {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1.25;
-}
+.cl-cue-strip { flex: 0 0 auto; display: flex; align-items: center; gap: 0.55rem; padding: 0.42rem 0.85rem; background: var(--note-soft, var(--accent-soft)); border-bottom: 1px solid var(--border); }
+.cl-cue-badge { flex-shrink: 0; padding: 0.1rem 0.44rem; border-radius: var(--radius-xs); background: var(--accent); color: #ffffff; font-size: 0.71rem; font-weight: 800; }
+.cl-cue-text { flex: 1 1 auto; margin: 0; font-size: 0.81rem; line-height: 1.45; color: var(--ink); }
 
-.crystal-lesson-strip .crystal-drawer-item.is-active .crystal-drawer-item-title { color: #ffffff; }
-.crystal-lesson-strip .crystal-drawer-item-sub { display: none; }
+.cl-teach-viewport { flex: 1 1 0; min-height: 440px; background: var(--stage-3d-bg, var(--paper)); }
 
-/* Row 3 & 4: 无遮挡开放交互舞台 + 底部专有操作栏 */
-.crystal-lesson-viewport {
-  flex: 1 1 0;
-  min-height: 440px;
-  background: var(--stage-3d-bg, var(--paper));
-}
+.cl-teach-footer { justify-content: space-between; flex-wrap: nowrap; gap: 0.5rem; padding: 7px 12px; }
+.cl-stage-controls { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4rem; }
+.cl-nav-btn { flex: 0 0 auto; }
 
-.crystal-lesson-actionbar { flex: 0 0 auto; }
-
-/* 黑板主题高对比主强调文字 */
-html[data-theme='blackboard'] .crystal-lesson-subbtn.is-active,
-html[data-theme='blackboard'] .crystal-lesson-strip .crystal-drawer-item.is-active .crystal-drawer-item-title {
-  color: #132e26;
-}
+html[data-theme='blackboard'] .cl-lesson-pill.is-active,
+html[data-theme='blackboard'] .cl-step-row.is-selected .cl-step-num,
+html[data-theme='blackboard'] .cl-cue-toggle.is-active,
+html[data-theme='blackboard'] .cl-cue-badge { color: #132e26; }
 
 @media (max-width: 900px) {
-  .crystal-lesson-header {
-    height: auto;
-    min-height: 46px;
-    flex-basis: auto;
-    flex-wrap: wrap;
-    padding: 0.35rem 0.65rem;
-  }
-
-  .crystal-lesson-info { justify-content: flex-start; }
-  .crystal-lesson-viewport { min-height: 360px; }
+  .cl-prep-bar { flex-wrap: wrap; }
+  .cl-prep-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); overflow-y: auto; }
+  .cl-prep-left { border-right: 0; border-bottom: 1px solid var(--border); max-height: 300px; }
+  .cl-teach-bar { height: auto; min-height: 42px; flex-wrap: wrap; padding: 0.32rem 0.6rem; }
+  .cl-teach-viewport { min-height: 360px; }
+  .cl-teach-footer { flex-wrap: wrap; justify-content: center; }
 }

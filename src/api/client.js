@@ -303,6 +303,14 @@ export const aiApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  /** AI 一键排课：生成晶体探究教学课例 */
+  async generateCrystalLesson(payload) {
+    return request('/ai/crystal-lesson', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 /**
