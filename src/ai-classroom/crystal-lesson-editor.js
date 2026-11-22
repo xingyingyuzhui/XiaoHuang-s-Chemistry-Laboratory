@@ -1,243 +1,230 @@
 /**
- * 晶体探究 · 课前备课态（Prep Mode）控制器
- * 负责：课例胶囊栏、✨ AI 一键排课抽屉、左侧环节排序与舞台选择器、右侧步骤编辑与按需实时预览。
+ * 晶体探究 · 侧滑备课与 AI 生成抽屉（默认隐藏，点击顶栏「备课 / AI」按需滑出）
+ * 两个清晰页签：「编排本课」与「✨ AI 一键生成课例」。
  */
 
+import { STAGE_PRESETS, normalizeLessonPlan } from '../crystal/stage-spec/schema.js';
+
 const AI_PRESETS = [
-  '高二离子晶体一课时，重点讲脆性与导电性',
-  '晶体与非晶体入门一课时，突出有序与固定熔点',
-  '四大晶体类型熔点对比与氢键反常专题',
+  '对比金刚石与石墨，再对比 NaCl、KCl、MgO、SiO₂ 熔点',
+  '高二离子晶体一课时，重点讲受力脆裂与三态导电',
+  '晶体与非晶体入门，突出有序结构、自范性与固定熔点',
 ];
+
+const STAGE_TYPE_LABELS = {
+  'dual-3d-compare': '双3D对照',
+  'lattice-stress': '3D剪切受力',
+  'particle-field': '3D粒子场',
+  'thermal-phase': '热成像相变',
+  'cell-extract': '3D晶胞提取',
+};
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export function createCrystalLessonEditor({ hostEl, store, stageCatalog, mountStage, aiApi, onStartTeach, onContextChange }) {
-  const stageMap = new Map(stageCatalog.map((s) => [s.id, s]));
-  let selectedStepId = '', aiOpen = false, aiBusy = false, aiStatus = '', aiError = false, aiTopic = '', aiStepCount = 4;
-  let pickerOpen = false, previewOpen = false, resetArmed = false, resetTimer = 0, previewInstance = null;
+export function createCrystalLessonDrawer({
+  hostEl, store, aiApi, presets = STAGE_PRESETS, normalizePlan = normalizeLessonPlan,
+  getActiveSlideIndex = () => 0, onSelectSlide, onLessonChanged, onMetaChanged, onClose,
+}) {
+  let activeTab = 'arrange', pickerOpen = false, resetArmed = false, resetTimer = 0;
+  let aiTopic = '', aiStepCount = 4, aiBusy = false, aiStatus = '', aiError = false;
 
   const activeLesson = () => store.getActiveLesson();
+  const clampedIdx = (lesson) => {
+    const len = lesson?.slides?.length || 0;
+    return len ? Math.max(0, Math.min(Number(getActiveSlideIndex()) || 0, len - 1)) : 0;
+  };
 
-  function ensureSelectedStep() {
-    const lesson = activeLesson();
-    if (!lesson?.steps?.length) { selectedStepId = ''; return null; }
-    const hit = lesson.steps.find((s) => s.id === selectedStepId);
-    if (hit) return hit;
-    selectedStepId = lesson.steps[0].id;
-    return lesson.steps[0];
+  function renderPickerGroup(label, category) {
+    const items = (Array.isArray(presets) ? presets : []).filter((p) => p.category === category);
+    if (!items.length) return '';
+    return `<div class="cl-d-picker-group"><div class="cl-d-sublabel">${label}</div><div class="cl-d-chips">${
+      items.map((p) => `<button type="button" class="cl-d-chip" data-add-preset="${esc(p.presetId)}" title="${esc(p.summary)}"><span>${esc(p.title)}</span>${p.badge ? `<em>${esc(p.badge)}</em>` : ''}</button>`).join('')
+    }</div></div>`;
   }
 
-  function destroyPreview() {
-    if (!previewInstance) return;
-    try { previewInstance.destroy?.(); } catch { /* ignore */ }
-    previewInstance = null;
-  }
-
-  function mountPreviewIfOpen() {
-    destroyPreview();
-    if (!previewOpen) return;
-    const step = ensureSelectedStep();
-    const vp = hostEl.querySelector('.cl-preview-viewport');
-    const bar = hostEl.querySelector('.cl-preview-actionbar');
-    if (step && vp && bar) previewInstance = mountStage(step.stageId, vp, bar, {});
-  }
-
-  const renderPickerGroup = (label, cat) => `<div class="cl-picker-group"><div class="cl-picker-label">${label}</div><div class="cl-picker-chips">${
-    stageCatalog.filter((s) => s.category === cat).map((s) =>
-      `<button type="button" class="cl-picker-chip" data-add-stage="${esc(s.id)}" title="${esc(s.summary)}"><span>${esc(s.title)}</span>${s.badge ? `<em>${esc(s.badge)}</em>` : ''}</button>`
-    ).join('')
-  }</div></div>`;
-
-  function renderStepRows(lesson) {
-    if (!lesson.steps.length) return '<div class="cl-empty-hint">暂无环节，请点击下方「+ 添加互动环节」</div>';
-    return lesson.steps.map((s, i) => {
-      const meta = stageMap.get(s.stageId);
-      const sel = s.id === selectedStepId;
-      return `<div class="cl-step-row${sel ? ' is-selected' : ''}" data-step-id="${esc(s.id)}" role="option" aria-selected="${sel}">
-        <span class="cl-step-num">${i + 1}</span>
-        <div class="cl-step-main"><div class="cl-step-title">${esc(s.title)}</div><div class="cl-step-sub">${esc(meta?.title || s.stageId)}${meta?.badge ? ` · ${esc(meta.badge)}` : ''}</div></div>
-        <div class="cl-step-ops">
-          <button type="button" class="cl-icon-btn" data-step-up="${esc(s.id)}" ${i === 0 ? 'disabled' : ''} title="上移" aria-label="上移">↑</button>
-          <button type="button" class="cl-icon-btn" data-step-down="${esc(s.id)}" ${i === lesson.steps.length - 1 ? 'disabled' : ''} title="下移" aria-label="下移">↓</button>
-          <button type="button" class="cl-icon-btn is-del" data-step-del="${esc(s.id)}" title="移除" aria-label="移除">×</button>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  function renderDetail(step) {
-    if (!step) return '<div class="cl-empty-panel">请从左侧添加互动环节，或点击「✨ AI 一键排课」自动生成整节晶体课例。</div>';
-    const stage = stageMap.get(step.stageId);
-    const qa = step.qa || stage?.qa || null;
+  function renderArrangeTab(lesson, lessons) {
+    const idx = clampedIdx(lesson), slides = lesson.slides || [], cur = slides[idx] || null;
+    const canDel = slides.length > 1;
     return `
-      <div class="cl-detail-head">
-        <div class="cl-detail-tags">
-          <span class="crystal-tag">${stage?.category === 'properties' ? '晶体性质' : '认识晶体'}</span>
-          ${stage?.badge ? `<span class="crystal-tag crystal-tag-qa">${esc(stage.badge)}</span>` : ''}
-          <span class="cl-detail-stage-name">${esc(stage?.title || step.stageId)}</span>
-        </div>
-        <div class="cl-detail-btns">
-          <button type="button" class="crystal-btn crystal-btn-sm crystal-btn-ghost${previewOpen ? ' is-active' : ''}" data-action="toggle-preview">${previewOpen ? '收起实时预览' : '实时预览舞台'}</button>
-          <button type="button" class="crystal-btn crystal-btn-sm crystal-btn-primary" data-action="start-here">从此步上课</button>
+      <div class="cl-d-block">
+        <label class="cl-d-field"><span>当前课例名称</span>
+          <input type="text" class="cl-d-input" data-drawer-field="lesson-title" maxlength="60" value="${esc(lesson.title)}" />
+        </label>
+        <div class="cl-d-toolrow">
+          <button type="button" class="cl-d-mini" data-d-act="new-lesson">+ 新建</button>
+          <button type="button" class="cl-d-mini" data-d-act="dup-lesson">复制</button>
+          <button type="button" class="cl-d-mini" data-d-act="del-lesson" ${lessons.length > 1 ? '' : 'disabled'}>删除</button>
+          <button type="button" class="cl-d-mini${resetArmed ? ' is-danger' : ''}" data-d-act="reset-lessons">${resetArmed ? '再点确认' : '恢复默认'}</button>
         </div>
       </div>
-      ${stage?.summary ? `<p class="cl-detail-summary">${esc(stage.summary)}</p>` : ''}
-      <div class="cl-preview-wrap"${previewOpen ? '' : ' hidden'}>
-        <div class="crystal-stage-viewport cl-preview-viewport"></div>
-        <div class="crystal-actionbar cl-preview-actionbar"></div>
+      <div class="cl-d-block">
+        <div class="cl-d-sec-head">
+          <span>探究环节（${slides.length}）</span>
+          <button type="button" class="cl-d-link" data-d-act="toggle-picker">${pickerOpen ? '收起环节库' : '+ 添加探究环节'}</button>
+        </div>
+        <div class="cl-d-picker"${pickerOpen ? '' : ' hidden'}>${renderPickerGroup('认识晶体', 'basics')}${renderPickerGroup('晶体性质', 'properties')}</div>
+        <div class="cl-d-slide-list" role="listbox" aria-label="本课探究环节">${slides.map((s, i) => `
+          <div class="cl-d-slide-row${i === idx ? ' is-active' : ''}" data-pick-slide="${i}" role="option" aria-selected="${i === idx}">
+            <span class="cl-d-num">${i + 1}</span>
+            <div class="cl-d-slide-meta">
+              <div class="cl-d-slide-name">${esc(s.title)}</div>
+              <div class="cl-d-slide-kind">${esc(STAGE_TYPE_LABELS[s.stage?.type] || s.stage?.type || '3D 舞台')}</div>
+            </div>
+            <div class="cl-d-ops">
+              <button type="button" class="cl-d-icon" data-slide-move="${esc(s.id)}:-1" ${i === 0 ? 'disabled' : ''} title="上移" aria-label="上移">↑</button>
+              <button type="button" class="cl-d-icon" data-slide-move="${esc(s.id)}:1" ${i === slides.length - 1 ? 'disabled' : ''} title="下移" aria-label="下移">↓</button>
+              <button type="button" class="cl-d-icon is-del" data-slide-del="${esc(s.id)}" ${canDel ? '' : 'disabled'} title="删除" aria-label="删除">×</button>
+            </div>
+          </div>`).join('')}
+        </div>
       </div>
-      <label class="cl-field"><span>步骤标题（授课时显示在顶部进度条）</span>
-        <input type="text" class="cl-field-input" data-field="title" maxlength="48" value="${esc(step.title)}" />
+      ${cur ? `<div class="cl-d-block">
+        <div class="cl-d-sec-head"><span>编辑当前环节（第 ${idx + 1} 步）</span></div>
+        <label class="cl-d-field"><span>环节标题</span>
+          <input type="text" class="cl-d-input" data-drawer-field="slide-title" maxlength="48" value="${esc(cur.title)}" />
+        </label>
+        <label class="cl-d-field"><span>教师讲授提词（顶栏「提词」可见）</span>
+          <textarea class="cl-d-textarea" data-drawer-field="slide-cue" rows="3" maxlength="280" placeholder="写下停顿提问时机或观察引导…">${esc(cur.cue)}</textarea>
+        </label>
+        ${cur.qa?.question ? `<div class="cl-d-qa"><strong>思考题</strong><span>${esc(cur.qa.question)}</span></div>` : ''}
+      </div>` : ''}`;
+  }
+
+  function renderAiTab() {
+    return `<form class="cl-d-ai-form">
+      <p class="cl-d-ai-desc">描述你想上的晶体探究主题或指定对比物质，AI 将直接编排可交互 3D 舞台与热成像对比实验，并立即放映。</p>
+      <label class="cl-d-field"><span>教学主题 / 探究目标</span>
+        <textarea class="cl-d-textarea" name="topic" rows="3" maxlength="180" placeholder="例如：对比金刚石与石墨，再对比 NaCl、KCl、MgO、SiO₂ 熔点" ${aiBusy ? 'disabled' : ''}>${esc(aiTopic)}</textarea>
       </label>
-      <label class="cl-field"><span>教师讲授提词（课前备忘：什么时候停下来提问）</span>
-        <textarea class="cl-field-textarea" data-field="teacherNote" rows="3" maxlength="260" placeholder="例如：点击敲击后暂停，请学生对比金属滑移与食盐碎裂的微观原因…">${esc(step.teacherNote)}</textarea>
-      </label>
-      ${qa ? `<div class="cl-qa-preview"><strong>随堂思考题</strong><span>${esc(qa.question)}</span></div>` : ''}`;
+      <div class="cl-d-step-row">
+        <span>探究步数</span>
+        <div class="cl-d-step-pills">${[3, 4, 5].map((n) => `<button type="button" class="cl-d-step-pill${n === aiStepCount ? ' is-active' : ''}" data-ai-count="${n}" ${aiBusy ? 'disabled' : ''}>${n} 步</button>`).join('')}</div>
+      </div>
+      <button type="submit" class="cl-d-primary" ${aiBusy ? 'disabled' : ''}>${aiBusy ? '正在生成 3D 课例…' : '✨ AI 一键生成并放映'}</button>
+      ${aiStatus ? `<div class="cl-d-status${aiError ? ' is-error' : ''}" aria-live="polite">${esc(aiStatus)}</div>` : ''}
+      <div class="cl-d-presets">
+        <div class="cl-d-sublabel">一键示例主题</div>
+        ${AI_PRESETS.map((p) => `<button type="button" class="cl-d-preset" data-ai-preset="${esc(p)}" ${aiBusy ? 'disabled' : ''}>${esc(p)}</button>`).join('')}
+      </div>
+    </form>`;
   }
 
   function render() {
-    destroyPreview();
-    const lessons = store.getLessons();
-    const lesson = activeLesson();
-    const step = ensureSelectedStep();
-
+    const lessons = store.getLessons(), lesson = activeLesson();
     hostEl.innerHTML = `
-      <header class="cl-prep-bar">
-        <div class="cl-lesson-pills" role="tablist" aria-label="晶体探究课例列表">
-          ${lessons.map((l) => `<button type="button" class="cl-lesson-pill${l.id === lesson.id ? ' is-active' : ''}" data-lesson-id="${esc(l.id)}" role="tab" aria-selected="${l.id === lesson.id}">${l.aiGenerated ? '<em class="cl-mini-ai">AI</em>' : ''}<span>${esc(l.title)}</span></button>`).join('')}
+      <div class="cl-drawer-head">
+        <div class="cl-drawer-tabs" role="tablist">
+          <button type="button" class="cl-d-tab${activeTab === 'arrange' ? ' is-active' : ''}" data-d-tab="arrange" role="tab" aria-selected="${activeTab === 'arrange'}">编排本课</button>
+          <button type="button" class="cl-d-tab${activeTab === 'ai' ? ' is-active' : ''}" data-d-tab="ai" role="tab" aria-selected="${activeTab === 'ai'}">✨ AI 一键生成课例</button>
         </div>
-        <div class="cl-prep-actions">
-          <button type="button" class="crystal-btn crystal-btn-sm crystal-btn-ghost cl-btn-ai${aiOpen ? ' is-active' : ''}" data-action="toggle-ai">✨ AI 一键排课</button>
-          <button type="button" class="crystal-btn crystal-btn-sm crystal-btn-ghost" data-action="new-lesson">+ 新建课例</button>
-          <button type="button" class="crystal-btn crystal-btn-sm crystal-btn-primary cl-btn-start" data-action="start-teach" ${lesson.steps.length ? '' : 'disabled'}>▶ 开始上课</button>
-        </div>
-      </header>
-      <section class="cl-ai-drawer"${aiOpen ? '' : ' hidden'} aria-label="AI 一键排课">
-        <div class="cl-ai-head"><strong>✨ AI 一键排课 · 自动匹配内置 3D 晶体互动环节</strong><button type="button" class="cl-icon-btn" data-action="close-ai" aria-label="关闭">×</button></div>
-        <form class="cl-ai-form">
-          <input type="text" class="cl-ai-input" name="topic" maxlength="160" value="${esc(aiTopic)}" placeholder="输入本节主题或重点，如：高二离子晶体一课时，重点讲脆性与导电性" ${aiBusy ? 'disabled' : ''} />
-          <select class="cl-ai-count" name="stepCount" aria-label="环节数量" ${aiBusy ? 'disabled' : ''}>${[3, 4, 5].map((n) => `<option value="${n}"${n === aiStepCount ? ' selected' : ''}>${n} 步</option>`).join('')}</select>
-          <button type="submit" class="crystal-btn crystal-btn-sm crystal-btn-primary" ${aiBusy ? 'disabled' : ''}>${aiBusy ? '排课中…' : '生成课例'}</button>
-        </form>
-        <div class="cl-ai-presets"><span>快捷选题：</span>${AI_PRESETS.map((p) => `<button type="button" class="cl-preset-chip" data-ai-preset="${esc(p)}" ${aiBusy ? 'disabled' : ''}>${esc(p)}</button>`).join('')}</div>
-        ${aiStatus ? `<div class="cl-ai-status${aiError ? ' is-error' : ''}" aria-live="polite">${esc(aiStatus)}</div>` : ''}
-      </section>
-      <div class="cl-prep-grid">
-        <aside class="cl-prep-left">
-          <div class="cl-lesson-meta">
-            <input type="text" class="cl-lesson-title-input" value="${esc(lesson.title)}" maxlength="60" aria-label="课例名称" />
-            <div class="cl-lesson-tools">
-              <button type="button" class="cl-mini-btn" data-action="dup-lesson">复制</button>
-              <button type="button" class="cl-mini-btn" data-action="del-lesson" ${lessons.length > 1 ? '' : 'disabled'}>删除</button>
-              <button type="button" class="cl-mini-btn${resetArmed ? ' is-danger' : ''}" data-action="reset-lessons">${resetArmed ? '再点确认' : '恢复默认'}</button>
-            </div>
-          </div>
-          <div class="cl-step-list" role="listbox" aria-label="课堂环节顺序">${renderStepRows(lesson)}</div>
-          <div class="cl-picker-bar"><button type="button" class="crystal-btn crystal-btn-sm crystal-btn-ghost cl-add-step-btn" data-action="toggle-picker">${pickerOpen ? '收起环节库' : '+ 添加互动环节'}</button></div>
-          <div class="cl-stage-picker"${pickerOpen ? '' : ' hidden'}>${renderPickerGroup('认识晶体 (6)', 'basics')}${renderPickerGroup('晶体性质 (4)', 'properties')}</div>
-        </aside>
-        <section class="cl-prep-right">${renderDetail(step)}</section>
-      </div>`;
-
-    mountPreviewIfOpen();
-    onContextChange?.();
+        <button type="button" class="cl-d-close" data-d-act="close" aria-label="关闭抽屉">×</button>
+      </div>
+      <div class="cl-drawer-body">${activeTab === 'ai' ? renderAiTab() : renderArrangeTab(lesson, lessons)}</div>`;
   }
 
-  async function runAiGenerate(topicText, stepCount) {
+  async function runAiGenerate(topicText) {
     aiTopic = String(topicText || '').trim();
-    aiStepCount = Number(stepCount) || 4;
-    if (!aiTopic) { aiStatus = '请先输入本节课的主题或教学重点'; aiError = true; render(); return; }
-    aiBusy = true; aiError = false; aiStatus = '小黄正在结合 10 个 3D 晶体舞台为您排课…';
-    render();
+    if (!aiTopic) { aiError = true; aiStatus = '请先输入教学主题或对比物质'; render(); return; }
+    aiBusy = true; aiError = false; aiStatus = '正在生成可交互 3D 舞台与教学节奏…'; render();
     try {
-      const plan = await aiApi.generateCrystalLesson({ topic: aiTopic, stepCount: aiStepCount });
-      const created = store.createLesson({ title: plan.title, steps: plan.steps, aiGenerated: true });
-      selectedStepId = created.steps[0]?.id || '';
-      aiOpen = false; aiBusy = false; aiStatus = ''; aiTopic = ''; pickerOpen = false; previewOpen = false;
-      render();
+      const raw = await aiApi.generateCrystalLesson({ topic: aiTopic, stepCount: aiStepCount });
+      store.importAiLesson(normalizePlan ? normalizePlan(raw) : raw);
+      aiBusy = false; aiStatus = ''; aiError = false; aiTopic = ''; pickerOpen = false; activeTab = 'arrange';
+      onLessonChanged?.({ closeDrawer: true, slideIdx: 0 });
     } catch (err) {
-      aiBusy = false; aiError = true; aiStatus = err?.message || 'AI 一键排课失败，请检查 AI 配置后重试';
-      render();
+      aiBusy = false; aiError = true; aiStatus = err?.message || 'AI 生成课例失败，请检查模型配置后重试'; render();
     }
   }
 
   const onClick = (e) => {
-    const lessonId = e.target.closest('[data-lesson-id]')?.dataset.lessonId;
-    if (lessonId) { store.setActiveLesson(lessonId); selectedStepId = ''; previewOpen = false; render(); return; }
-    const preset = e.target.closest('[data-ai-preset]')?.dataset.aiPreset;
-    if (preset && !aiBusy) { runAiGenerate(preset, hostEl.querySelector('.cl-ai-count')?.value || 4); return; }
-    const stageId = e.target.closest('[data-add-stage]')?.dataset.addStage;
-    if (stageId) {
-      const added = store.addStep(activeLesson().id, stageMap.get(stageId) || stageId);
-      if (added) { selectedStepId = added.id; pickerOpen = false; render(); }
+    const tab = e.target.closest('[data-d-tab]')?.dataset.dTab;
+    if (tab && tab !== activeTab) { activeTab = tab; aiError = false; render(); return; }
+    const count = e.target.closest('[data-ai-count]')?.dataset.aiCount;
+    if (count && !aiBusy) { aiStepCount = Number(count) || 4; render(); return; }
+    const presetTopic = e.target.closest('[data-ai-preset]')?.dataset.aiPreset;
+    if (presetTopic && !aiBusy) { runAiGenerate(presetTopic); return; }
+
+    const addPresetId = e.target.closest('[data-add-preset]')?.dataset.addPreset;
+    if (addPresetId) {
+      const lesson = activeLesson();
+      const preset = (Array.isArray(presets) ? presets : []).find((p) => p.presetId === addPresetId) || addPresetId;
+      if (store.addSlide(lesson.id, preset)) {
+        pickerOpen = false; onLessonChanged?.({ closeDrawer: false, slideIdx: lesson.slides.length - 1 }); render();
+      }
       return;
     }
-    const up = e.target.closest('[data-step-up]')?.dataset.stepUp;
-    if (up) { store.reorderStep(activeLesson().id, up, -1); render(); return; }
-    const down = e.target.closest('[data-step-down]')?.dataset.stepDown;
-    if (down) { store.reorderStep(activeLesson().id, down, 1); render(); return; }
-    const del = e.target.closest('[data-step-del]')?.dataset.stepDel;
-    if (del) { store.removeStep(activeLesson().id, del); if (selectedStepId === del) selectedStepId = ''; render(); return; }
-    const row = e.target.closest('[data-step-id]');
-    if (row && !e.target.closest('.cl-step-ops')) {
-      if (selectedStepId !== row.dataset.stepId) { selectedStepId = row.dataset.stepId; render(); }
+
+    const moveSpec = e.target.closest('[data-slide-move]')?.dataset.slideMove;
+    if (moveSpec) {
+      const sep = moveSpec.lastIndexOf(':');
+      const slideId = moveSpec.slice(0, sep), delta = Number(moveSpec.slice(sep + 1));
+      const lesson = activeLesson(), curId = lesson.slides[clampedIdx(lesson)]?.id;
+      if (store.reorderSlide(lesson.id, slideId, delta)) {
+        onSelectSlide?.(Math.max(0, lesson.slides.findIndex((s) => s.id === curId)), { keepStageIfSame: true });
+        render();
+      }
       return;
     }
-    const act = e.target.closest('[data-action]')?.dataset.action;
+
+    const delId = e.target.closest('[data-slide-del]')?.dataset.slideDel;
+    if (delId) {
+      const lesson = activeLesson(), prevIdx = clampedIdx(lesson);
+      if (store.removeSlide(lesson.id, delId)) {
+        onLessonChanged?.({ closeDrawer: false, slideIdx: Math.min(prevIdx, lesson.slides.length - 1) }); render();
+      }
+      return;
+    }
+
+    const pickRow = e.target.closest('[data-pick-slide]');
+    if (pickRow && !e.target.closest('.cl-d-ops')) {
+      const nextIdx = Number(pickRow.dataset.pickSlide);
+      if (Number.isFinite(nextIdx)) { onSelectSlide?.(nextIdx); render(); }
+      return;
+    }
+
+    const act = e.target.closest('[data-d-act]')?.dataset.dAct;
     if (!act) return;
-    if (act === 'toggle-ai') { aiOpen = !aiOpen; aiError = false; render(); }
-    else if (act === 'close-ai') { aiOpen = false; render(); }
-    else if (act === 'new-lesson') {
-      const created = store.createLesson({ title: '自定义晶体探究课例' });
-      selectedStepId = created.steps[0]?.id || ''; previewOpen = false; render();
-      hostEl.querySelector('.cl-lesson-title-input')?.select?.();
-    } else if (act === 'dup-lesson') {
-      const copy = store.duplicateLesson(activeLesson().id);
-      if (copy) { selectedStepId = copy.steps[0]?.id || ''; render(); }
-    } else if (act === 'del-lesson') {
-      if (store.deleteLesson(activeLesson().id)) { selectedStepId = ''; previewOpen = false; render(); }
+    if (act === 'close') { onClose?.(); return; }
+    if (act === 'toggle-picker') { pickerOpen = !pickerOpen; render(); return; }
+    if (act === 'new-lesson') {
+      store.createLesson({ title: '自定义晶体探究课例' }); pickerOpen = false;
+      onLessonChanged?.({ closeDrawer: false, slideIdx: 0 }); render();
+      hostEl.querySelector('[data-drawer-field="lesson-title"]')?.select?.();
+    } else if (act === 'dup-lesson' && store.duplicateLesson(activeLesson().id)) {
+      onLessonChanged?.({ closeDrawer: false, slideIdx: 0 }); render();
+    } else if (act === 'del-lesson' && store.deleteLesson(activeLesson().id)) {
+      onLessonChanged?.({ closeDrawer: false, slideIdx: 0 }); render();
     } else if (act === 'reset-lessons') {
       clearTimeout(resetTimer);
-      if (!resetArmed) {
-        resetArmed = true;
-        resetTimer = setTimeout(() => { resetArmed = false; render(); }, 3500);
-        render();
-      } else {
-        resetArmed = false; store.resetDefaults(); selectedStepId = ''; previewOpen = false; render();
-      }
-    } else if (act === 'toggle-picker') { pickerOpen = !pickerOpen; render(); }
-    else if (act === 'toggle-preview') { previewOpen = !previewOpen; render(); }
-    else if (act === 'start-teach' || act === 'start-here') {
-      const idx = act === 'start-here' ? Math.max(0, activeLesson().steps.findIndex((s) => s.id === selectedStepId)) : 0;
-      destroyPreview(); previewOpen = false; onStartTeach?.(idx);
+      if (!resetArmed) { resetArmed = true; resetTimer = setTimeout(() => { resetArmed = false; render(); }, 3500); render(); }
+      else { resetArmed = false; store.resetDefaults(); onLessonChanged?.({ closeDrawer: false, slideIdx: 0 }); render(); }
     }
   };
 
   const onInput = (e) => {
+    if (e.target.name === 'topic') { aiTopic = e.target.value; return; }
+    const field = e.target.dataset?.drawerField;
+    if (!field) return;
     const lesson = activeLesson();
-    if (e.target.classList.contains('cl-lesson-title-input')) {
-      if (store.renameLesson(lesson.id, e.target.value)) {
-        const span = hostEl.querySelector(`.cl-lesson-pill[data-lesson-id="${lesson.id}"] span`);
-        if (span) span.textContent = lesson.title;
+    if (field === 'lesson-title') { if (store.renameLesson(lesson.id, e.target.value)) onMetaChanged?.(); return; }
+    const idx = clampedIdx(lesson), slide = lesson.slides[idx];
+    if (!slide) return;
+    if (field === 'slide-title') {
+      const updated = store.updateSlide(lesson.id, slide.id, { title: e.target.value });
+      if (updated) {
+        const el = hostEl.querySelector(`.cl-d-slide-row[data-pick-slide="${idx}"] .cl-d-slide-name`);
+        if (el) el.textContent = updated.title;
+        onMetaChanged?.();
       }
-      return;
-    }
-    const field = e.target.dataset?.field;
-    if (!field || !selectedStepId) return;
-    const updated = store.updateStep(lesson.id, selectedStepId, { [field]: e.target.value });
-    if (updated && field === 'title') {
-      const el = hostEl.querySelector(`.cl-step-row[data-step-id="${selectedStepId}"] .cl-step-title`);
-      if (el) el.textContent = updated.title;
-      onContextChange?.();
+    } else if (field === 'slide-cue' && store.updateSlide(lesson.id, slide.id, { cue: e.target.value })) {
+      onMetaChanged?.();
     }
   };
 
   const onSubmit = (e) => {
-    if (!e.target.classList.contains('cl-ai-form')) return;
+    if (!e.target.classList.contains('cl-d-ai-form')) return;
     e.preventDefault();
-    if (aiBusy) return;
-    const fd = new FormData(e.target);
-    runAiGenerate(fd.get('topic'), fd.get('stepCount'));
+    if (!aiBusy) runAiGenerate(new FormData(e.target).get('topic'));
   };
 
   hostEl.addEventListener('click', onClick);
@@ -246,15 +233,9 @@ export function createCrystalLessonEditor({ hostEl, store, stageCatalog, mountSt
 
   return {
     render,
-    getSelectedStep: () => ensureSelectedStep(),
-    getSelectedIndex: () => Math.max(0, activeLesson().steps.findIndex((s) => s.id === selectedStepId)),
-    pausePreview: () => previewInstance?.pause?.(),
-    resumePreview: () => { previewInstance?.resume?.(); previewInstance?.resize?.(); },
-    closePreview: () => { previewOpen = false; destroyPreview(); },
-    resizePreview: () => previewInstance?.resize?.(),
+    setTab(tab) { activeTab = tab === 'ai' ? 'ai' : 'arrange'; render(); },
     destroy() {
       clearTimeout(resetTimer);
-      destroyPreview();
       hostEl.removeEventListener('click', onClick);
       hostEl.removeEventListener('input', onInput);
       hostEl.removeEventListener('submit', onSubmit);
@@ -262,3 +243,5 @@ export function createCrystalLessonEditor({ hostEl, store, stageCatalog, mountSt
     },
   };
 }
+
+export { createCrystalLessonDrawer as createCrystalLessonEditor };
