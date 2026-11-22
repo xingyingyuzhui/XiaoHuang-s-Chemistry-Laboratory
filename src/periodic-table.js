@@ -14,6 +14,7 @@ import {
   groupLabelRow,
 } from './data/elements.js';
 import { getElectronConfigHtml } from './data/electronConfigs.js';
+import { notifyPageContextChange } from './assistant/page-context.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -170,6 +171,7 @@ export function selectElement(z) {
       <p>${tip}</p>
     </div>
   `;
+  notifyPageContextChange('table');
 }
 
 /** 中学向趋势 / 误区提示（本地模板，非百科） */

@@ -17,6 +17,11 @@ const TEXT_WATCH_SELECTORS = [
   '#electronSymbol',
   '#electronTitle',
   '#electronConfig',
+  '#molarResult',
+  '#balanceResult',
+  '#balanceStatus',
+  '#stoichResult',
+  '#stoichStatus',
 ];
 
 const HIDDEN_WATCH_SELECTORS = [
@@ -24,7 +29,7 @@ const HIDDEN_WATCH_SELECTORS = [
   '#panel-molar .molar-section',
 ];
 
-const NAV_WATCH_SELECTORS = ['.tabs', '#aiNavList'];
+const NAV_WATCH_SELECTORS = ['.tabs', '#aiNavList', '#molarNavList'];
 
 function textOf(doc, sel) {
   return doc?.querySelector?.(sel)?.textContent?.replace(/\s+/g, ' ').trim() || '';
@@ -83,22 +88,26 @@ function introspectTab(tabKey, doc) {
     return { title, formula: '', module: 'molecule', summary, quickQuestions };
   }
   if (tabKey === 'crystal') {
-    const title = textOf(doc, '.crystal-corner-info h3') || textOf(doc, '.crystal-stage-title') || '3D 晶胞结构库';
+    const title = textOf(doc, '.crystal-corner-info .crystal-corner-title') || textOf(doc, '.crystal-stage-title') || '3D 晶胞结构库';
+    const formula = textOf(doc, '.crystal-corner-info .crystal-corner-formula');
     const hasItem = title !== '3D 晶胞结构库';
     const quickQuestions = hasItem
       ? [`${title}晶胞里各微粒怎么用均摊法数？`, `${title}的配位数和最短距离怎么看？`, `${title}在高考中常考哪些变式？`]
       : ['晶胞中各位置微粒怎么用均摊法计数？', '配位数和最短距离公式如何推导？', '晶胞密度公式计算容易在哪出错？'];
-    return { title, formula: '', module: 'library', summary: '晶体微粒排布、均摊法、配位数与密度计算', quickQuestions };
+    return { title, formula, module: 'library', summary: '晶体微粒排布、均摊法、配位数与密度计算', quickQuestions };
   }
   if (tabKey === 'molar') {
     const heading = textOf(doc, '#panel-molar .molar-section:not([hidden]) h3') || '化学计算';
     const expr = valOf(doc, '#panel-molar .molar-section:not([hidden]) input, #panel-molar .molar-section:not([hidden]) textarea');
-    const tag = expr ? `「${expr.slice(0, 20)}」` : heading;
+    const resLine = textOf(doc, '#panel-molar .molar-section:not([hidden]) .molar-balance-eq')
+      || textOf(doc, '#panel-molar .molar-section:not([hidden]) .molar-total');
+    const shortExpr = expr.slice(0, 32);
+    const tag = shortExpr ? `「${shortExpr.slice(0, 20)}」` : heading;
     return {
-      title: heading,
+      title: shortExpr ? `${heading} · ${shortExpr}` : heading,
       formula: expr.slice(0, 40),
       module: 'molar',
-      summary: expr ? `${heading}：${expr}` : '摩尔质量、方程式配平与化学计量',
+      summary: resLine ? `${heading}：${resLine.slice(0, 80)}` : (expr ? `${heading}：${expr.slice(0, 80)}` : '摩尔质量、方程式配平与化学计量'),
       quickQuestions: [`${tag}这步计算最容易在哪出错？`, `${heading}的核心解题思路是什么？`, '怎么快速检验计算或配平结果是否正确？'],
     };
   }
@@ -123,7 +132,11 @@ function introspectTab(tabKey, doc) {
     };
   }
   if (tabKey === 'ai') {
-    const secTitle = textOf(doc, '#panel-ai .ai-section:not([hidden]) h3') || textOf(doc, '#aiNavList .ai-nav-card.active') || '化学课堂';
+    const secTitle = textOf(doc, '#panel-ai .ai-section:not([hidden]) > :not([hidden]) h3')
+      || textOf(doc, '#panel-ai .ai-section:not([hidden]) h3')
+      || textOf(doc, '#aiNavList .ai-nav-card.is-active .ai-nav-card-title')
+      || textOf(doc, '#aiNavList .ai-nav-card.active')
+      || '化学课堂';
     return {
       title: secTitle,
       formula: '',
@@ -196,12 +209,20 @@ export function observeActivePageChanges(cb, opts = {}) {
 
   const offNotify = onPageContextChange((tabKey) => fireNow(tabKey || 'notify'));
 
-  const onTabClick = (e) => {
+  const onDocClick = (e) => {
     const tabBtn = e?.target?.closest?.('.tab[data-tab]');
-    if (!tabBtn) return;
-    schedule(`tab:${tabBtn.dataset?.tab || tabBtn.getAttribute?.('data-tab') || ''}`);
+    if (tabBtn) {
+      schedule(`tab:${tabBtn.dataset?.tab || tabBtn.getAttribute?.('data-tab') || ''}`);
+      return;
+    }
+    if (e?.target?.closest?.('#panel-molar')) schedule('molar:click');
   };
-  doc?.addEventListener?.('click', onTabClick, true);
+  const onMolarField = (e) => {
+    if (e?.target?.closest?.('#panel-molar')) schedule('molar:input');
+  };
+  doc?.addEventListener?.('click', onDocClick, true);
+  doc?.addEventListener?.('input', onMolarField, true);
+  doc?.addEventListener?.('change', onMolarField, true);
 
   let observer = null;
   if (doc && ObserverCtor) {
@@ -234,7 +255,9 @@ export function observeActivePageChanges(cb, opts = {}) {
       timer = 0;
     }
     offNotify();
-    doc?.removeEventListener?.('click', onTabClick, true);
+    doc?.removeEventListener?.('click', onDocClick, true);
+    doc?.removeEventListener?.('input', onMolarField, true);
+    doc?.removeEventListener?.('change', onMolarField, true);
     observer?.disconnect?.();
   };
 }

@@ -9,8 +9,9 @@ import { mountChemKeypads } from './chem-keypad.js';
 import { getAnnotateStateMarkers } from './settings.js';
 import { formulaHtml } from './chem/formula-html.js';
 import { ELEMENTS_BY_SYMBOL, blockZoneId } from './data/elements.js';
+import { registerPageAssistant, notifyPageContextChange } from './assistant/page-context.js';
 
-const $ = (sel) => document.querySelector(sel);
+const $ = (sel) => (typeof document !== 'undefined' ? document.querySelector(sel) : null);
 
 const formulaInput = $('#formulaInput');
 const molarResult = $('#molarResult');
@@ -23,6 +24,109 @@ const MOLAR_SECTIONS = [
 ];
 
 let currentMolarSection = 'mass';
+let lastBalanceCtx = null;
+let lastStoichCtx = null;
+let molarNotifyTimer = 0;
+
+const SUB_DIGITS = '₀₁₂₃₄₅₆₇₈₉';
+const toSubFormula = (raw) =>
+  String(raw || '').trim().replace(/\./g, '·').replace(/(?<=[A-Za-z)\]])\d+/g, (m) => m.replace(/\d/g, (d) => SUB_DIGITS[d]));
+
+function notifyMolarNow() {
+  if (molarNotifyTimer) { clearTimeout(molarNotifyTimer); molarNotifyTimer = 0; }
+  notifyPageContextChange('molar');
+}
+
+function scheduleMolarNotify(delayMs = 250) {
+  if (molarNotifyTimer) clearTimeout(molarNotifyTimer);
+  molarNotifyTimer = setTimeout(() => { molarNotifyTimer = 0; notifyPageContextChange('molar'); }, delayMs);
+}
+
+/** 生成「计算」页实时随堂小黄上下文（摩尔质量 / 方程式配平 / 分步计量） */
+export function buildMolarContext({
+  section = currentMolarSection,
+  formulaRaw = formulaInput?.value?.trim() || '',
+  balanceRaw = $('#balanceInput')?.value?.trim() || '',
+  stoichRaw = $('#stoichInput')?.value?.trim() || '',
+  balanceState = lastBalanceCtx,
+  stoichState = lastStoichCtx,
+} = {}) {
+  if (section === 'balance') {
+    const matched = balanceState?.equation && (balanceState.input === balanceRaw || balanceState.equation === balanceRaw);
+    const activeEq = matched ? balanceState.equation : balanceRaw;
+    if (!activeEq) {
+      return {
+        title: '方程式配平', formula: '', module: 'molar',
+        summary: '化学方程式系数配平、原子守恒校验与气体沉淀标注',
+        quickQuestions: ['氧化还原方程式配平的基本步骤是什么？', '什么时候需要标注气体 ↑ 和沉淀 ↓ 符号？', '如何用原子守恒与电荷守恒检验配平是否正确？'],
+      };
+    }
+    const eqDisp = toSubFormula(activeEq);
+    const statusText = matched ? balanceState.status || (balanceState.ok ? '已配平并校验守恒' : '待校验') : '编辑中 / 待配平';
+    return {
+      title: `方程式配平 · ${eqDisp}`, formula: eqDisp, module: 'molar',
+      summary: `${eqDisp}（${statusText}）`,
+      quickQuestions: [
+        `「${eqDisp}」是不是氧化还原反应？化合价如何变化？`,
+        `配平「${eqDisp}」时各元素原子守恒怎么快速核对？`,
+        `「${eqDisp}」中各物质化学计量数之比有何意义？`,
+      ],
+    };
+  }
+
+  if (section === 'stoich') {
+    const prompt = String(stoichRaw || '').trim();
+    if (!prompt) {
+      return {
+        title: '分步计量', formula: '', module: 'molar',
+        summary: '依据化学方程式进行质量、物质的量与气体体积分步计算',
+        quickQuestions: ['化学计量题中「质量—物质的量—气体体积」怎么建立关系式？', '过量计算题如何快速判定哪一种反应物完全消耗？', '守恒法与差量法分别适用于哪类化学计算题？'],
+      };
+    }
+    const shortQ = prompt.length > 26 ? `${prompt.slice(0, 26)}…` : prompt;
+    const matched = stoichState && stoichState.prompt === prompt;
+    const eqDisp = matched && stoichState.equation ? toSubFormula(stoichState.equation) : '';
+    return {
+      title: eqDisp ? `分步计量 · ${eqDisp}` : `分步计量 · ${shortQ}`,
+      formula: eqDisp, module: 'molar',
+      summary: matched && stoichState.answer ? `题目：${shortQ}｜结果：${stoichState.answer}` : `化学计量题目：${prompt.slice(0, 80)}`,
+      quickQuestions: [
+        `「${shortQ}」中已知量与目标量的物质的量比例怎么列？`,
+        `解「${shortQ}」时要不要先判断是否存在过量反应物？`,
+        `「${shortQ}」这类题在单位换算与有效数字上容易在哪出错？`,
+      ],
+    };
+  }
+
+  const raw = String(formulaRaw || '').trim();
+  if (!raw) {
+    return {
+      title: '摩尔质量计算', formula: '', module: 'molar',
+      summary: '按化学式计算摩尔质量与各元素质量分数',
+      quickQuestions: ['摩尔质量与相对分子质量在数值和单位上有什么区别？', '含括号或结晶水的化学式摩尔质量怎么拆算？', '如何由各元素质量分数反推实验式与分子式？'],
+    };
+  }
+  const disp = toSubFormula(normalizeFormulaInput(raw) || raw);
+  try {
+    const { rows, total } = calcMolarMass(raw);
+    const els = rows.map((r) => r.symbol).join('、');
+    return {
+      title: `摩尔质量 · ${disp}`, formula: disp, module: 'molar',
+      summary: `M = ${total.toFixed(2)} g/mol（含 ${els}）`,
+      quickQuestions: [
+        `${disp} 中各元素的质量分数怎么快速估算？`,
+        `${disp} 常见于哪些高中化学反应或重要性质？`,
+        `计算 ${disp} 的物质的量或微粒数目时容易在哪出错？`,
+      ],
+    };
+  } catch {
+    return {
+      title: `摩尔质量 · ${disp}`, formula: disp, module: 'molar',
+      summary: `当前输入：${disp}（等待完整化学式）`,
+      quickQuestions: [`${disp} 这类化学式的书写与原子个数怎么统计？`, '含括号或结晶水的化学式摩尔质量怎么拆算？', '物质的量、摩尔质量与微粒数之间如何换算？'],
+    };
+  }
+}
 
 /** 上一次显示的总质量：新结果从这里滚动过去 */
 let shownTotal = 0;
@@ -189,6 +293,7 @@ export function runMolar() {
       });
     });
   }
+  notifyMolarNow();
 }
 
 /**
@@ -277,6 +382,7 @@ function selectMolarSection(id) {
   if (mass) mass.hidden = currentMolarSection !== 'mass';
   if (bal) bal.hidden = currentMolarSection !== 'balance';
   if (st) st.hidden = currentMolarSection !== 'stoich';
+  notifyMolarNow();
 }
 
 /**
@@ -328,10 +434,12 @@ function runBalanceLocal() {
   const status = $('#balanceStatus');
   const box = $('#balanceResult');
   if (!input) {
+    lastBalanceCtx = null;
     if (status) {
       status.textContent = '请输入方程式';
       status.className = 'quiz-status is-err';
     }
+    notifyMolarNow();
     return;
   }
   try {
@@ -346,16 +454,20 @@ function runBalanceLocal() {
           steps: result.steps,
         })
       : checkConservation(result.equation);
+    const statusText = check.ok ? '已配平并校验守恒' : '配平后校验异常';
+    lastBalanceCtx = { input, equation: result.equation, ok: check.ok, status: statusText };
     if (status) {
-      status.textContent = check.ok ? '已配平并校验守恒' : '配平后校验异常';
+      status.textContent = statusText;
       status.className = 'quiz-status ' + (check.ok ? 'is-ok' : 'is-err');
     }
   } catch (err) {
+    lastBalanceCtx = null;
     if (status) {
       status.textContent = err.message || '配平失败';
       status.className = 'quiz-status is-err';
     }
   }
+  notifyMolarNow();
 }
 
 async function runBalanceAi() {
@@ -363,10 +475,12 @@ async function runBalanceAi() {
   const status = $('#balanceStatus');
   const box = $('#balanceResult');
   if (!input) {
+    lastBalanceCtx = null;
     if (status) {
       status.textContent = '请输入方程式';
       status.className = 'quiz-status is-err';
     }
+    notifyMolarNow();
     return;
   }
   if (status) {
@@ -403,12 +517,15 @@ async function runBalanceAi() {
           steps: Array.isArray(data?.steps) ? data.steps : local.steps || [],
         })
       : checkConservation(equation);
+    const statusText = check.ok
+      ? '已配平并校验守恒（含 AI 建议）'
+      : '配平后校验异常';
+    lastBalanceCtx = { input: equation, equation, ok: check.ok, status: statusText };
     if (status) {
-      status.textContent = check.ok
-        ? '已配平并校验守恒（含 AI 建议）'
-        : '配平后校验异常';
+      status.textContent = statusText;
       status.className = 'quiz-status ' + (check.ok ? 'is-ok' : 'is-err');
     }
+    notifyMolarNow();
   } catch (err) {
     // 无 Key / 失败：降级本地配平
     try {
@@ -418,11 +535,15 @@ async function runBalanceAi() {
           (status.textContent || '已本地配平') +
           `（AI：${err.message || '不可用'}）`;
       }
+      if (lastBalanceCtx && status) lastBalanceCtx.status = status.textContent;
+      notifyMolarNow();
     } catch {
+      lastBalanceCtx = null;
       if (status) {
         status.textContent = err.message || 'AI 建议失败，可直接本地配平';
         status.className = 'quiz-status is-err';
       }
+      notifyMolarNow();
     }
   }
 }
@@ -432,10 +553,12 @@ async function runStoich() {
   const status = $('#stoichStatus');
   const box = $('#stoichResult');
   if (!prompt) {
+    lastStoichCtx = null;
     if (status) {
       status.textContent = '请输入题目';
       status.className = 'quiz-status is-err';
     }
+    notifyMolarNow();
     return;
   }
   if (status) {
@@ -461,16 +584,23 @@ async function runStoich() {
         <p class="rxn-muted">示意教学步骤，数值请与计算过程交叉核对。</p>
       `;
     }
+    lastStoichCtx = {
+      prompt,
+      equation: String(data?.equation || '').trim(),
+      answer: String(data?.answer || '').trim(),
+    };
     if (status) {
       status.textContent = '已生成';
       status.className = 'quiz-status is-ok';
     }
   } catch (err) {
+    lastStoichCtx = null;
     if (status) {
       status.textContent = err.message || '生成失败';
       status.className = 'quiz-status is-err';
     }
   }
+  notifyMolarNow();
 }
 
 function setupMolarChemKeypads() {
@@ -481,6 +611,7 @@ function setupMolarChemKeypads() {
 }
 
 export function initMolarUI() {
+  registerPageAssistant('molar', () => buildMolarContext());
   renderMolarNav();
   selectMolarSection('mass');
   refreshMolarPresets();
@@ -495,6 +626,7 @@ export function initMolarUI() {
     molarResult.innerHTML = `<div class="molar-empty">输入化学式后点击计算</div>`;
     shownTotal = 0;
     syncPresetActive();
+    notifyMolarNow();
     formulaInput.focus();
   });
 
@@ -505,6 +637,7 @@ export function initMolarUI() {
   formulaInput?.addEventListener('input', () => {
     formulaInput.classList.remove('is-invalid');
     syncPresetActive();
+    scheduleMolarNotify(250);
   });
 
   $('#btnBalance')?.addEventListener('click', runBalanceLocal);
@@ -513,4 +646,6 @@ export function initMolarUI() {
   $('#balanceInput')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') runBalanceLocal();
   });
+  $('#balanceInput')?.addEventListener('input', () => scheduleMolarNotify(250));
+  $('#stoichInput')?.addEventListener('input', () => scheduleMolarNotify(250));
 }

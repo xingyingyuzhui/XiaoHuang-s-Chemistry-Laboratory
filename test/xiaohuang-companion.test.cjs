@@ -185,8 +185,13 @@ test('page-context.js supports provider registration, live DOM observation, and 
   assert.equal(provided.qa.question, 'Q1');
 
   unreg();
-  const afterUnreg = getActivePageContext(makeMockDoc('crystal', { '.crystal-stage-title': '金刚石' }));
+  const afterUnreg = getActivePageContext(makeMockDoc('crystal', {
+    '.crystal-corner-info h3': '当前晶胞',
+    '.crystal-corner-info .crystal-corner-title': '金刚石',
+    '.crystal-corner-info .crystal-corner-formula': 'C',
+  }));
   assert.equal(afterUnreg.title, '金刚石');
+  assert.equal(afterUnreg.formula, 'C');
   assert.equal(afterUnreg.module, 'library');
 
   const molCtx = getActivePageContext(makeMockDoc('molecule', { '#moleculeTitle': '氧气（O₂）', '#moleculeDesc': '双原子非极性分子' }));
@@ -274,4 +279,71 @@ test('companion CSS, brand-tip abort fix, molecule notify, and unified panel con
   const clientJs = fs.readFileSync(path.join(root, 'src/api/client.js'), 'utf8');
   assert.match(clientJs, /thinkingQuestion\s*\(/);
   assert.match(clientJs, /\/ai\/thinking-question/);
+});
+
+test('molar live provider, composite context-key invalidation, and table/electron notify hooks', async () => {
+  const { registerPageAssistant, getActivePageContext, observeActivePageChanges } = await import(pathToFileURL(path.join(root, 'src/assistant/page-context.js')).href);
+  const { buildContextKey } = await import(pathToFileURL(path.join(root, 'src/assistant/xiaohuang-panel.js')).href);
+  const { buildMolarContext } = await import(pathToFileURL(path.join(root, 'src/molar-ui.js')).href);
+
+  // 1. 摩尔质量：H2O vs H2SO4 生成精确标题、摘要、3 题，且复合上下文键必变
+  const cH2O = buildMolarContext({ section: 'mass', formulaRaw: 'H2O' });
+  const cH2SO4 = buildMolarContext({ section: 'mass', formulaRaw: 'H2SO4' });
+  assert.equal(cH2O.title, '摩尔质量 · H₂O');
+  assert.equal(cH2SO4.title, '摩尔质量 · H₂SO₄');
+  assert.equal(cH2SO4.formula, 'H₂SO₄');
+  assert.match(cH2SO4.summary, /98\.0\d\s*g\/mol（含 H、O、S）/);
+  assert.equal(cH2SO4.quickQuestions.length, 3);
+  assert.match(cH2SO4.quickQuestions[0], /H₂SO₄/);
+  assert.notEqual(buildContextKey({ tab: 'molar', ...cH2O }), buildContextKey({ tab: 'molar', ...cH2SO4 }));
+  assert.equal(buildContextKey({ tab: 'molar', ...cH2SO4 }), buildContextKey({ tab: 'molar', ...buildMolarContext({ section: 'mass', formulaRaw: 'H₂SO₄' }) }));
+
+  // 2. 方程式配平 & 分步计量：子模块切换与配平前后上下文键均变更
+  const cBalRaw = buildMolarContext({ section: 'balance', balanceRaw: 'Fe + O2 = Fe3O4' });
+  const cBalDone = buildMolarContext({
+    section: 'balance',
+    balanceRaw: 'Fe + O2 = Fe3O4',
+    balanceState: { input: 'Fe + O2 = Fe3O4', equation: '3Fe + 2O2 = Fe3O4', ok: true, status: '已配平并校验守恒' },
+  });
+  assert.equal(cBalDone.title, '方程式配平 · 3Fe + 2O₂ = Fe₃O₄');
+  assert.equal(cBalDone.quickQuestions.length, 3);
+  assert.notEqual(buildContextKey({ tab: 'molar', ...cBalRaw }), buildContextKey({ tab: 'molar', ...cBalDone }));
+
+  const cStoich = buildMolarContext({
+    section: 'stoich',
+    stoichRaw: '2.5 g 氢气完全燃烧需要多少克氧气？',
+    stoichState: { prompt: '2.5 g 氢气完全燃烧需要多少克氧气？', equation: '2H2 + O2 = 2H2O', answer: '20 g' },
+  });
+  assert.equal(cStoich.title, '分步计量 · 2H₂ + O₂ = 2H₂O');
+  assert.match(cStoich.summary, /20 g/);
+
+  // 3. registerPageAssistant('molar') 与 #panel-molar input 兜底监听
+  const unreg = registerPageAssistant('molar', () => cH2SO4);
+  const live = getActivePageContext(makeMockDoc('molar'));
+  unreg();
+  assert.equal(live.tab, 'molar');
+  assert.equal(live.title, '摩尔质量 · H₂SO₄');
+
+  const evMap = new Map();
+  const molarDoc = {
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    addEventListener(ev, fn) { evMap.set(ev, fn); },
+    removeEventListener(ev, fn) { if (evMap.get(ev) === fn) evMap.delete(ev); },
+  };
+  const hits = [];
+  const stop = observeActivePageChanges((r) => hits.push(r), { doc: molarDoc, debounceMs: 0, Observer: null });
+  evMap.get('input')?.({ target: { closest: (s) => (s === '#panel-molar' ? {} : null) } });
+  await new Promise((r) => setTimeout(r, 10));
+  stop();
+  assert.ok(hits.includes('molar:input'));
+  assert.equal(evMap.size, 0);
+
+  // 4. 全站模块通知契约：molar / periodic-table / electron-list / xiaohuang-panel
+  const molarSrc = fs.readFileSync(path.join(root, 'src/molar-ui.js'), 'utf8');
+  assert.match(molarSrc, /registerPageAssistant\('molar'/);
+  assert.match(molarSrc, /notifyPageContextChange\('molar'\)/);
+  assert.match(fs.readFileSync(path.join(root, 'src/periodic-table.js'), 'utf8'), /notifyPageContextChange\('table'\)/);
+  assert.match(fs.readFileSync(path.join(root, 'src/electron-list.js'), 'utf8'), /notifyPageContextChange\('electron'\)/);
+  assert.match(fs.readFileSync(path.join(root, 'src/assistant/xiaohuang-panel.js'), 'utf8'), /observeActivePageChanges\(\(\) => syncContext\(false\)\)/);
 });

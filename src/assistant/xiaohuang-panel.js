@@ -26,7 +26,14 @@ const FALLBACK_CHIPS = [
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const isKeyErr = (err) => /key|密钥|未配置|api\s*key/i.test(String(err?.message || ''));
 const normKey = (q) => String(q || '').replace(/\s+/g, '').toLowerCase();
-const ctxKeyOf = (c) => `${c?.tab || ''}|${c?.module || ''}|${c?.formula || ''}|${c?.title || ''}|${c?.qa?.question || ''}`;
+export const buildContextKey = (c) => [
+  c?.tab || '',
+  c?.module || '',
+  c?.title || '',
+  c?.formula || '',
+  c?.summary || '',
+  c?.qa?.question || '',
+].join('|');
 
 function makeItem(raw = {}) {
   return {
@@ -99,7 +106,7 @@ export function createXiaohuangPanel({ onClose } = {}) {
   let reqSeq = 0;
 
   function ensureState(c) {
-    const key = ctxKeyOf(c);
+    const key = buildContextKey(c);
     let st = stateCache.get(key);
     if (!st) {
       const choices = buildInitialChoices(c);
@@ -312,7 +319,7 @@ export function createXiaohuangPanel({ onClose } = {}) {
     onClose?.();
   }
 
-  const unsubChanges = observeActivePageChanges(() => syncContext(true));
+  const unsubChanges = observeActivePageChanges(() => syncContext(false));
   const onKey = (e) => { if (e.key === 'Escape' && isOpen) close(); };
   window.addEventListener('keydown', onKey);
 

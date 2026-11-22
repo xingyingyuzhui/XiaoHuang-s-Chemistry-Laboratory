@@ -6,6 +6,7 @@
 import { ELECTRON_ELEMENTS } from './data/electron-configs.js';
 import { settingsApi } from './api/client.js';
 import { patchCachedElectronOrder } from './settings.js';
+import { notifyPageContextChange } from './assistant/page-context.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -179,6 +180,7 @@ export function loadElement(z) {
   if (viewerRef && typeof viewerRef.load === 'function') {
     viewerRef.load(el);
   }
+  notifyPageContextChange('electron');
 }
 
 function escapeHtml(s) {
@@ -285,4 +287,5 @@ export async function initElectronList() {
     if (configEl) configEl.textContent = el.config;
   }
   renderElectronList();
+  notifyPageContextChange('electron');
 }
