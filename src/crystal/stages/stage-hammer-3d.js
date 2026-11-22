@@ -1,310 +1,280 @@
 /**
- * 旗舰 3D 舞台 #2：金属 Cu vs 食盐 NaCl 同时敲一下（真 3D 金属滑移 vs 离子错位爆裂）
- * 适配全站 5 主题（RoomEnvironment + viewer-style + stage-theme）。
+ * ChemStage Engine 2: lattice-stress
+ * Cinema-grade side-by-side 3D 5x4x3 crystal shear-stress engine.
+ * Sleek glowing cyan shear-force plane + 3D arrow (ZERO cartoon toys).
+ * Supports metallic (ductile slip), ionic (like-charge repulsion cleavage), and covalent (brittle fracture).
  */
 
 import * as THREE from 'three';
-import { getViewerStyle, currentThemeId } from '../../molecule/viewer-style.js';
-import {
-  createStudioStage, observeCrystalTheme, createGroundShadow,
-  attachOutline, disposeObjectTree, easeOutCubic,
-} from '../scene/scene-helpers.js';
-import { getStagePalette } from '../modules/stage-theme.js';
+import { createCinemaStage, makeBondCylinder, CPK_STUDIO } from './render-kit.js';
 
-const SIDE_X = 2.38;
-const STEP = 0.56;
-const CAM_HOME = new THREE.Vector3(0, 2.55, 8.8);
+const SIDE_X = 3.1, FLOOR_Y = -2.05;
+const NX = 5, NY = 4, NZ = 3, STEP = 0.56;
 
-function makeCopperMat(style, isDark) {
-  const hex = isDark ? 0xf59e0b : 0xd97736;
-  if (style.id === 'blackboard' || style.id === 'stationery') return style.atomMaterial(hex, 'Cu');
-  if (style.id === 'pixel') return new THREE.MeshLambertMaterial({ color: hex, flatShading: true });
-  if (style.id === 'reagent') return new THREE.MeshStandardMaterial({ color: hex, roughness: 0.42, metalness: 0.55 });
-  return new THREE.MeshPhysicalMaterial({ color: hex, metalness: 0.78, roughness: 0.22, clearcoat: 0.45, clearcoatRoughness: 0.18 });
-}
+const easeOut = (t) => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+const easeInOut = (t) => {
+  const x = Math.max(0, Math.min(1, t));
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+};
 
-function buildHammer(style, isDark) {
-  const pivot = new THREE.Group();
-  const handle = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.055, 0.065, 1.45, 12),
-    style.atomMaterial(isDark ? 0xd97706 : 0xb45309, 'C'),
-  );
-  handle.position.set(-0.72, 0.1, 0); handle.rotation.z = Math.PI / 2;
-  const head = new THREE.Mesh(
-    new THREE.BoxGeometry(0.36, 0.58, 0.42),
-    style.atomMaterial(isDark ? 0xe2e8f0 : 0x475569, 'Fe'),
-  );
-  head.position.set(0, 0.1, 0);
-  if (style.outline) attachOutline(head, head.geometry, 0.3, style);
-  pivot.add(handle, head);
-  return pivot;
-}
-
-function buildShockwave(isDark) {
-  const mesh = new THREE.Mesh(
-    new THREE.TorusGeometry(0.28, 0.032, 10, 32),
-    new THREE.MeshBasicMaterial({ color: isDark ? 0xfef08a : 0xf59e0b, transparent: true, opacity: 0, depthWrite: false }),
-  );
-  mesh.rotation.y = Math.PI / 2;
-  mesh.position.set(-STEP * 2.05, STEP * 0.9, 0);
-  mesh.visible = false;
-  return mesh;
-}
-
-function buildRig(style, isDark) {
-  const root = new THREE.Group();
-  const cuGeo = style.atomGeometry(0.23), naGeo = style.atomGeometry(0.185), clGeo = style.atomGeometry(0.245);
-  const eGeo = new THREE.SphereGeometry(0.052, 10, 8), seaGeo = new THREE.BoxGeometry(STEP * 4.2, STEP * 2.05, STEP * 2.1);
-  const repGeo = new THREE.CylinderGeometry(0.055, 0.055, STEP * 0.92, 10), sparkGeo = new THREE.OctahedronGeometry(0.12, 0);
-
-  const cuMat = makeCopperMat(style, isDark);
-  const naMat = style.atomMaterial(isDark ? 0xa78bfa : 0x7c3aed, 'Na');
-  const clMat = style.atomMaterial(isDark ? 0x34d399 : 0x10b981, 'Cl');
-  const eMat = new THREE.MeshBasicMaterial({ color: isDark ? 0xfde047 : 0xf59e0b, transparent: true, opacity: 0.85 });
-  const seaMat = new THREE.MeshBasicMaterial({ color: isDark ? 0xfbbf24 : 0xf59e0b, transparent: true, opacity: isDark ? 0.16 : 0.13, depthWrite: false });
-  const repMat = new THREE.MeshBasicMaterial({ color: isDark ? 0xff5a5f : 0xef4444, transparent: true, opacity: 0, depthWrite: false });
-
-  const makeShared = (geo, mat, x, y, z, outR) => {
-    const m = new THREE.Mesh(geo, mat);
-    m.userData.sharedGeometry = true; m.userData.sharedMaterial = true;
-    m.position.set(x, y, z);
-    if (outR && style.outline) attachOutline(m, geo, outR, style);
-    return m;
-  };
-
-  // 左：金属铜 Cu (4×4×2) + 自由电子海光晕 + 24 自由电子
-  const cuRoot = new THREE.Group(); cuRoot.position.set(-SIDE_X, -0.15, 0);
-  const cuBot = new THREE.Group(), cuTop = new THREE.Group();
-  for (let iy = 0; iy < 4; iy++) {
-    const host = iy < 2 ? cuBot : cuTop;
-    for (let ix = 0; ix < 4; ix++) {
-      for (let iz = 0; iz < 2; iz++) {
-        host.add(makeShared(cuGeo, cuMat, (ix - 1.5) * STEP, (iy - 1.5) * STEP, (iz - 0.5) * STEP, 0.23));
-      }
-    }
+function toHex(val, fallback) {
+  if (typeof val === 'number' && Number.isFinite(val)) return val;
+  if (typeof val === 'string' && val.trim()) {
+    try { return new THREE.Color(val.trim()).getHex(); } catch { /* fallback */ }
   }
-  cuBot.add(makeShared(seaGeo, seaMat, 0, -STEP, 0));
-  cuTop.add(makeShared(seaGeo, seaMat, 0, STEP, 0));
+  return fallback;
+}
 
-  const electrons = Array.from({ length: 24 }, (_, i) => {
-    const em = makeShared(eGeo, eMat, 0, 0, 0);
-    cuRoot.add(em);
-    return { mesh: em, phase: (i / 24) * Math.PI * 2, speed: 1.4 + (i % 5) * 0.35, rx: 0.72 + (i % 4) * 0.14, ry: (i % 6 - 2.5) * 0.36, rz: ((i % 3) - 1) * 0.34 };
+function buildShearIndicator() {
+  const group = new THREE.Group();
+  const planeGeo = new THREE.BoxGeometry(0.045, STEP * 2.1, STEP * 2.68);
+  const planeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.24, depthWrite: false });
+  const plane = new THREE.Mesh(planeGeo, planeMat);
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.9 });
+  plane.add(new THREE.LineSegments(new THREE.EdgesGeometry(planeGeo), edgeMat));
+
+  const arrowMat = new THREE.MeshPhysicalMaterial({
+    color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.75,
+    roughness: 0.2, metalness: 0.25, clearcoat: 0.8, transparent: true, opacity: 0.94,
   });
-  const cuHammer = buildHammer(style, isDark), cuWave = buildShockwave(isDark);
-  const cuShadow = createGroundShadow(style, 3.2, -STEP * 2.25);
-  cuRoot.add(cuBot, cuTop, cuHammer, cuWave);
-  if (cuShadow) cuRoot.add(cuShadow);
-  root.add(cuRoot);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.78, 16), arrowMat);
+  shaft.rotation.z = -Math.PI / 2; shaft.position.set(-0.56, 0, 0);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 18), arrowMat);
+  head.rotation.z = -Math.PI / 2; head.position.set(-0.08, 0, 0);
 
-  // 右：食盐 NaCl (4×4×2) + 3 块解理碎片 + 同号静电斥力光柱
-  const naclRoot = new THREE.Group(); naclRoot.position.set(SIDE_X, -0.15, 0);
-  const naclBot = new THREE.Group(), naclTop = new THREE.Group();
-  const shards = [
-    { vel: new THREE.Vector3(1.15, 1.85, 0.55), spin: new THREE.Vector3(2.2, 1.5, -2.8) },
-    { vel: new THREE.Vector3(2.15, 2.35, -0.65), spin: new THREE.Vector3(-1.8, 2.4, -3.4) },
-    { vel: new THREE.Vector3(-0.35, 1.45, 0.85), spin: new THREE.Vector3(1.6, -2.1, 2.5) },
-  ].map((meta) => { const g = new THREE.Group(); naclTop.add(g); return { group: g, ...meta }; });
+  group.add(plane, shaft, head);
+  group.position.set(-STEP * 2.75, STEP, 0);
+  return { group, planeMat, edgeMat, arrowMat };
+}
 
-  for (let iy = 0; iy < 4; iy++) {
-    for (let ix = 0; ix < 4; ix++) {
-      for (let iz = 0; iz < 2; iz++) {
-        const isNa = (ix + iy + iz) % 2 === 0;
-        const m = makeShared(isNa ? naGeo : clGeo, isNa ? naMat : clMat, (ix - 1.5) * STEP, (iy - 1.5) * STEP, (iz - 0.5) * STEP, isNa ? 0.185 : 0.245);
-        if (iy < 2) naclBot.add(m);
-        else shards[ix <= 1 ? (iz === 0 ? 0 : 2) : 1].group.add(m);
+function buildCrystalBlock(cfg) {
+  const root = new THREE.Group(), bondType = cfg.bondType || 'metallic';
+  const bot = new THREE.Group(), top = new THREE.Group(), crossBonds = new THREE.Group(), repGroup = new THREE.Group();
+  root.add(bot, top, crossBonds, repGroup);
+
+  const slipMat = new THREE.MeshBasicMaterial({
+    color: bondType === 'metallic' ? 0x38bdf8 : 0xf43f5e,
+    transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false,
+  });
+  const slipSheet = new THREE.Mesh(new THREE.PlaneGeometry(STEP * 5.6, STEP * 2.9), slipMat);
+  slipSheet.rotation.x = -Math.PI / 2;
+  root.add(slipSheet);
+
+  const colA = toHex(cfg.colorA, bondType === 'ionic' ? CPK_STUDIO.Na : bondType === 'covalent' ? CPK_STUDIO.C : CPK_STUDIO.Cu);
+  const colB = toHex(cfg.colorB, bondType === 'ionic' ? CPK_STUDIO.Cl : 0xfbbf24);
+
+  const matA = bondType === 'metallic'
+    ? new THREE.MeshPhysicalMaterial({ color: colA, metalness: 0.78, roughness: 0.22, clearcoat: 0.35, clearcoatRoughness: 0.18 })
+    : bondType === 'ionic'
+      ? new THREE.MeshPhysicalMaterial({ color: colA, metalness: 0.08, roughness: 0.18, clearcoat: 0.7, clearcoatRoughness: 0.12 })
+      : new THREE.MeshPhysicalMaterial({ color: colA, metalness: 0.18, roughness: 0.24, clearcoat: 0.62, clearcoatRoughness: 0.16 });
+  const matB = new THREE.MeshPhysicalMaterial({ color: colB, metalness: 0.08, roughness: 0.18, clearcoat: 0.7, clearcoatRoughness: 0.12 });
+  const strutMat = bondType === 'covalent'
+    ? new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x0c4a6e, emissiveIntensity: 0.4, roughness: 0.28, metalness: 0.35 })
+    : new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.2, transparent: true, opacity: 0.42 });
+  const crossMat = strutMat.clone();
+  crossMat.transparent = true;
+
+  const geoA = new THREE.SphereGeometry(bondType === 'metallic' ? 0.24 : bondType === 'ionic' ? 0.195 : 0.215, 22, 16);
+  const geoB = new THREE.SphereGeometry(0.248, 22, 16);
+
+  const shards = bondType === 'metallic' ? null : [
+    { group: new THREE.Group(), vel: new THREE.Vector3(0.55, 1.05, 0.38), spin: new THREE.Vector3(0.32, 0.24, -0.45) },
+    { group: new THREE.Group(), vel: new THREE.Vector3(1.45, 1.38, -0.32), spin: new THREE.Vector3(-0.26, 0.36, -0.58) },
+  ];
+  if (shards) shards.forEach((s) => top.add(s.group));
+
+  const posOf = (ix, iy, iz) => [(ix - 2) * STEP + (bondType === 'covalent' && iy % 2 ? 0.14 : 0), (iy - 1.5) * STEP, (iz - 1) * STEP];
+  const hostFor = (ix, iy) => (iy < 2 ? bot : (shards ? shards[ix < 2 ? 0 : 1].group : top));
+
+  for (let iy = 0; iy < NY; iy++) for (let ix = 0; ix < NX; ix++) for (let iz = 0; iz < NZ; iz++) {
+    const p = posOf(ix, iy, iz), isA = bondType !== 'ionic' || (ix + iy + iz) % 2 === 0;
+    const m = new THREE.Mesh(isA ? geoA : geoB, isA ? matA : matB);
+    m.position.set(p[0], p[1], p[2]);
+    hostFor(ix, iy).add(m);
+    if (bondType !== 'metallic') {
+      const r = bondType === 'covalent' ? 0.044 : 0.025;
+      if (ix < NX - 1 && (iy < 2 || !shards || ix !== 1)) hostFor(ix, iy).add(makeBondCylinder(p, posOf(ix + 1, iy, iz), r, strutMat));
+      if (iz < NZ - 1) hostFor(ix, iy).add(makeBondCylinder(p, posOf(ix, iy, iz + 1), r, strutMat));
+      if (iy === 0 || iy === 2) hostFor(ix, iy).add(makeBondCylinder(p, posOf(ix, iy + 1, iz), r, strutMat));
+      if (iy === 1) crossBonds.add(makeBondCylinder(p, posOf(ix, iy + 1, iz), r, crossMat));
+    }
+  }
+
+  let electrons = [];
+  if (bondType === 'metallic') {
+    const seaGeo = new THREE.BoxGeometry(STEP * 4.85, STEP * 1.95, STEP * 2.75);
+    const seaMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.1, depthWrite: false });
+    const sBot = new THREE.Mesh(seaGeo, seaMat); sBot.position.y = -STEP; bot.add(sBot);
+    const sTop = new THREE.Mesh(seaGeo, seaMat); sTop.position.y = STEP; top.add(sTop);
+
+    const eGeo = new THREE.SphereGeometry(0.046, 10, 8);
+    const eMat = new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.92 });
+    electrons = Array.from({ length: 34 }, (_, i) => {
+      const mesh = new THREE.Mesh(eGeo, eMat);
+      root.add(mesh);
+      return {
+        mesh, phase: (i / 34) * Math.PI * 2, speed: 1.25 + (i % 5) * 0.32,
+        rx: 0.95 + (i % 4) * 0.18, ry: ((i % 7) - 3) * 0.32, rz: ((i % 3) - 1) * 0.56,
+      };
+    });
+  }
+
+  const repRings = [];
+  const repRingMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0, depthWrite: false });
+  const repArcMat = new THREE.MeshBasicMaterial({ color: 0xff3b5c, transparent: true, opacity: 0, depthWrite: false });
+  if (bondType !== 'metallic') {
+    const ringGeo = new THREE.TorusGeometry(0.22, 0.024, 8, 24);
+    const arcGeo = new THREE.CylinderGeometry(0.038, 0.038, STEP * 0.88, 10);
+    for (let ix = 0; ix < NX - 1; ix++) for (let iz = 0; iz < NZ; iz++) {
+      const x = (ix - 1) * STEP, z = (iz - 1) * STEP;
+      const ring = new THREE.Mesh(ringGeo, repRingMat);
+      ring.rotation.x = Math.PI / 2; ring.position.set(x, 0, z); repGroup.add(ring); repRings.push(ring);
+      const arc = new THREE.Mesh(arcGeo, repArcMat);
+      arc.position.set(x, 0, z); repGroup.add(arc);
+    }
+  }
+
+  const shear = buildShearIndicator();
+  root.add(shear.group);
+  return {
+    cfg, bondType, root, bot, top, crossBonds, crossMat, shards,
+    electrons, repRings, repRingMat, repArcMat, slipMat, shear,
+  };
+}
+
+function statusFor(block, t) {
+  const { label, sublabel } = block.cfg;
+  if (t < 0.06) return `${label} · ${sublabel}`;
+  if (block.bondType === 'metallic') {
+    return t < 0.48 ? `${label} · 上层沿滑移面平稳错动 1 格…` : `✓ ${label} · 自由电子海维系金属键，延展不断裂`;
+  }
+  if (block.bondType === 'ionic') {
+    if (t < 0.44) return `${label} · 错位 1 格，同号离子正对…`;
+    if (t < 0.68) return `⚡ ${label} · 同号离子正对，强烈静电排斥！`;
+    return `✕ ${label} · 同号相斥，沿解理面瞬间脆裂`;
+  }
+  if (t < 0.48) return `${label} · 强方向性共价键承受高剪切应力…`;
+  return t < 0.68 ? `⚡ ${label} · 达到断裂极限，共价键断裂！` : `✕ ${label} · 刚性共价键断裂，呈脆性解理`;
+}
+
+export function mountStress3DStage(spec, stageEl, actionbarEl, { onCaption, onDualLabels } = {}) {
+  const leftCfg = { label: '金属铜 Cu', sublabel: '金属键 · 自由电子海', bondType: 'metallic', colorA: CPK_STUDIO.Cu, colorB: 0xfbbf24, ...(spec?.left || {}) };
+  const rightCfg = { label: '氯化钠 NaCl', sublabel: '离子键 · 正负交替', bondType: 'ionic', colorA: CPK_STUDIO.Na, colorB: CPK_STUDIO.Cl, ...(spec?.right || {}) };
+
+  const cinema = createCinemaStage(stageEl, {
+    cameraPos: [0, 3.05, 11.4], target: [0, -0.06, 0], fov: 38, minDist: 5, maxDist: 24, floorY: FLOOR_Y,
+  });
+
+  const leftBlock = buildCrystalBlock(leftCfg), rightBlock = buildCrystalBlock(rightCfg);
+  leftBlock.root.position.set(-SIDE_X, -0.08, 0);
+  rightBlock.root.position.set(SIDE_X, -0.08, 0);
+  cinema.root.add(leftBlock.root, rightBlock.root);
+
+  for (const x of [-SIDE_X, SIDE_X]) {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(1.52, 1.58, 64),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }),
+    );
+    ring.rotation.x = -Math.PI / 2; ring.position.set(x, FLOOR_Y + 0.01, 0); cinema.root.add(ring);
+  }
+
+  const bar = actionbarEl || document.createElement('div');
+  bar.innerHTML = `<div class="crystal-dock-group"><button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="shear">施加剪切力</button><button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="slow">慢动作 0.35×</button><button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复原</button></div>`;
+  const btnShear = bar.querySelector('[data-act="shear"]');
+  const btnSlow = bar.querySelector('[data-act="slow"]');
+  const btnReset = bar.querySelector('[data-act="reset"]');
+
+  let playing = false, slowMo = false, prog = 0;
+
+  function applyBlockPose(b, t, time) {
+    const contact = easeOut(t / 0.15);
+    const slipFrac = easeInOut((t - 0.14) / 0.36);
+    const shiftX = slipFrac * STEP * (b.bondType === 'covalent' ? 0.32 : 1.0);
+    const shearFade = t < 0.72 ? 1 : Math.max(0.18, 1 - (t - 0.72) / 0.28);
+
+    b.shear.group.position.x = -STEP * 2.85 + contact * STEP * 0.42 + shiftX;
+    b.shear.planeMat.opacity = (0.16 + 0.24 * Math.sin(Math.min(1, t / 0.65) * Math.PI)) * shearFade;
+    b.shear.edgeMat.opacity = 0.9 * shearFade;
+    b.shear.arrowMat.opacity = 0.92 * shearFade;
+    b.shear.arrowMat.emissiveIntensity = 0.45 + (playing ? 0.85 : 0.25);
+    b.slipMat.opacity = t > 0.12 && t < 0.82 ? 0.2 : 0.07;
+
+    if (b.bondType === 'metallic') {
+      b.top.position.set(shiftX, 0, 0); b.bot.position.set(0, 0, 0); return;
+    }
+
+    const repPhase = t < 0.42 ? 0 : t < 0.72 ? Math.sin(((t - 0.42) / 0.3) * Math.PI) : 0;
+    const pulse = 0.85 + 0.35 * Math.sin(time * 24);
+    b.repRingMat.opacity = repPhase * 0.95; b.repArcMat.opacity = repPhase * 0.92;
+    for (const r of b.repRings) r.scale.setScalar(0.85 + repPhase * 0.45 * pulse);
+
+    const shake = t > 0.44 && t < 0.68 ? Math.sin(t * 140) * 0.032 : 0;
+    b.top.position.set(shiftX + shake, 0, 0);
+
+    const cleave = t <= 0.68 ? 0 : easeOut((t - 0.68) / 0.32);
+    const crossFade = b.bondType === 'ionic' ? Math.max(0, 1 - slipFrac * 2.4) : (cleave < 0.04 ? 1 : 0);
+    b.crossBonds.visible = crossFade > 0.02;
+    b.crossMat.opacity = crossFade * (b.bondType === 'covalent' ? 1 : 0.42);
+    if (b.bondType === 'covalent') b.crossMat.emissive.setHex(t > 0.35 ? 0xf43f5e : 0x0c4a6e);
+
+    b.bot.position.set(-cleave * 0.12, -cleave * 0.05, 0);
+    if (b.shards) {
+      for (const sh of b.shards) {
+        sh.group.position.set(sh.vel.x * cleave, sh.vel.y * cleave - 0.55 * cleave * cleave, sh.vel.z * cleave);
+        sh.group.rotation.set(sh.spin.x * cleave, sh.spin.y * cleave, sh.spin.z * cleave);
       }
     }
   }
 
-  const repGroup = new THREE.Group();
-  for (let ix = 0; ix < 3; ix++) {
-    for (let iz = 0; iz < 2; iz++) {
-      repGroup.add(makeShared(repGeo, repMat, (ix - 0.5) * STEP, 0, (iz - 0.5) * STEP));
-      repGroup.add(makeShared(sparkGeo, repMat, (ix - 0.5) * STEP, 0, (iz - 0.5) * STEP));
-    }
-  }
-  repGroup.visible = false;
-
-  const naclHammer = buildHammer(style, isDark), naclWave = buildShockwave(isDark);
-  const naclShadow = createGroundShadow(style, 3.2, -STEP * 2.25);
-  naclRoot.add(naclBot, naclTop, repGroup, naclHammer, naclWave);
-  if (naclShadow) naclRoot.add(naclShadow);
-  root.add(naclRoot);
-
-  root.userData._extra = [cuGeo, naGeo, clGeo, eGeo, seaGeo, repGeo, sparkGeo, cuMat, naMat, clMat, eMat, seaMat, repMat];
-  return { root, cuTop, cuHammer, cuWave, electrons, naclBot, naclTop, shards, repGroup, repMat, naclHammer, naclWave };
-}
-
-export function mountHammer3DStage(stageEl, actionbarEl, { onCaption } = {}) {
-  stageEl.innerHTML = '';
-  const stage = createStudioStage(stageEl);
-  const { scene, camera, renderer, controls } = stage;
-  camera.position.copy(CAM_HOME);
-  controls.minDistance = 4.6; controls.maxDistance = 17;
-
-  const labelLayer = document.createElement('div');
-  labelLayer.className = 'crystal-label-layer';
-  labelLayer.innerHTML = '<span class="crystal-badge" data-side="left"></span><span class="crystal-badge" data-side="right"></span>';
-  stageEl.appendChild(labelLayer);
-  const badgeL = labelLayer.querySelector('[data-side="left"]');
-  const badgeR = labelLayer.querySelector('[data-side="right"]');
-
-  actionbarEl.innerHTML = `
-    <div class="crystal-dock-group">
-      <button type="button" class="crystal-btn crystal-btn-primary" data-act="hit">同时敲一下</button>
-      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="slow">慢动作 0.35×</button>
-      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复原</button>
-    </div>
-  `;
-
-  const btnHit = actionbarEl.querySelector('[data-act="hit"]');
-  const btnSlow = actionbarEl.querySelector('[data-act="slow"]');
-  const btnReset = actionbarEl.querySelector('[data-act="reset"]');
-
-  let rig = null, playing = false, slowMo = false, prog = 0, clock = 0;
-  let paused = false, destroyed = false, rafId = 0, lastTs = 0;
-
-  function disposeRig() {
-    if (!rig) return;
-    rig.root.userData._extra?.forEach((x) => x?.dispose?.());
-    disposeObjectTree(rig.root); scene.remove(rig.root); rig = null;
-  }
-
-  function applyPose(t) {
-    if (!rig) return;
-    let hAng = 0.62, hx = -STEP * 2.75, hy = STEP * 1.55;
-    if (t > 0 && t < 0.22) {
-      const k = t / 0.22, sw = Math.max(0, (k - 0.35) / 0.65);
-      hAng = k < 0.35 ? 0.62 + (k / 0.35) * 0.35 : 0.97 - easeOutCubic(sw) * 1.05;
-      hx = -STEP * (2.75 - sw * 0.62); hy = STEP * (1.55 - sw * 0.62);
-    } else if (t >= 0.22) {
-      const ret = easeOutCubic(Math.min(1, (t - 0.22) / 0.25));
-      hAng = -0.08 + ret * 0.65; hx = -STEP * (2.13 + ret * 0.62); hy = STEP * (0.93 + ret * 0.62);
-    }
-    for (const hm of [rig.cuHammer, rig.naclHammer]) { hm.position.set(hx, hy, 0); hm.rotation.z = hAng; }
-
-    const wActive = t >= 0.20 && t <= 0.44, wk = wActive ? (t - 0.20) / 0.24 : 0;
-    for (const wv of [rig.cuWave, rig.naclWave]) {
-      wv.visible = wActive;
-      if (wActive) { wv.scale.setScalar(0.6 + wk * 2.6); wv.material.opacity = (1 - wk) * 0.85; }
-    }
-
-    const slip = t <= 0.22 ? 0 : easeOutCubic(Math.min(1, (t - 0.22) / 0.28));
-    rig.cuTop.position.set(slip * STEP, 0, 0);
-
-    const repActive = t >= 0.49 && t <= 0.72;
-    rig.repGroup.visible = repActive;
-    if (repActive) rig.repMat.opacity = (0.55 + 0.45 * Math.sin((t - 0.49) * 58)) * (1 - Math.max(0, (t - 0.66) / 0.06));
-    const shake = t >= 0.50 && t < 0.68 ? Math.sin(t * 210) * 0.045 : 0;
-    rig.naclTop.position.set(slip * STEP + shake, 0, 0);
-
-    const b = t <= 0.68 ? 0 : (t - 0.68) / 0.32;
-    rig.naclBot.position.set(-b * 0.14, -b * 0.06, 0);
-    for (const sh of rig.shards) {
-      sh.group.position.set(sh.vel.x * b, sh.vel.y * b - 2.4 * b * b, sh.vel.z * b);
-      sh.group.rotation.set(sh.spin.x * b, sh.spin.y * b, sh.spin.z * b);
-    }
-
-    if (t < 0.22) {
-      badgeL.textContent = '金属 Cu · 自由电子海（待敲击）';
-      badgeR.textContent = '食盐 NaCl · Na⁺/Cl⁻ 离子晶格';
-    } else if (t < 0.5) {
-      badgeL.textContent = '金属 Cu · 上层沿滑移面平稳错动';
-      badgeR.textContent = '食盐 NaCl · 错位 1 格，同号离子正对…';
-    } else if (t < 0.68) {
-      badgeL.textContent = '✓ Cu 金属键不断裂（延展形变）';
-      badgeR.textContent = '⚡ Na⁺↔Na⁺ / Cl⁻↔Cl⁻ 强烈静电斥力！';
-    } else {
-      badgeL.textContent = '✓ Cu 发生形变不断裂（延展性）';
-      badgeR.textContent = '✕ NaCl 同号相斥，瞬间沿解理面碎裂';
-    }
-  }
-
-  function rebuildTheme() {
-    if (destroyed) return;
-    const style = getViewerStyle(currentThemeId()), p = getStagePalette();
-    stage.applyStyle(style);
-    disposeRig();
-    rig = buildRig(style, p.isDark);
-    scene.add(rig.root);
-    applyPose(prog);
+  function applyPose(t, time = 0) {
+    applyBlockPose(leftBlock, t, time);
+    applyBlockPose(rightBlock, t, time);
+    onDualLabels?.(statusFor(leftBlock, t), statusFor(rightBlock, t));
   }
 
   function resetAll() {
-    playing = false; prog = 0; applyPose(0);
-    btnHit.textContent = '同时敲一下';
-    onCaption?.('点击「同时敲一下」，对比金属铜滑移与食盐爆裂');
+    playing = false; prog = 0; applyPose(0, 0);
+    btnShear.textContent = '施加剪切力';
+    onCaption?.('点击「施加剪切力」，同步观察金属滑移延展与离子/共价晶格解理');
   }
 
-  btnHit.addEventListener('click', () => {
+  btnShear.addEventListener('click', () => {
     if (prog >= 0.99) prog = 0;
-    playing = true; btnHit.textContent = '冲击演示中…';
-    onCaption?.('铁锤同步撞击！观察铜层滑移与 NaCl 同号斥力');
+    playing = true; btnShear.textContent = '剪切演示中…';
+    onCaption?.('同步施加横向剪切力 · 观察上层晶面滑移与排斥解理差异');
   });
   btnSlow.addEventListener('click', () => {
     slowMo = !slowMo;
     btnSlow.classList.toggle('crystal-btn-primary', slowMo);
     btnSlow.classList.toggle('crystal-btn-ghost', !slowMo);
   });
-  btnReset.addEventListener('click', () => {
-    resetAll(); camera.position.copy(CAM_HOME); controls.target.set(0, 0, 0); controls.update();
-  });
+  btnReset.addEventListener('click', () => { resetAll(); cinema.resetView(); });
 
-  function resize() {
-    const r = stageEl.getBoundingClientRect();
-    const w = Math.max(300, Math.floor(r.width || 640)), h = Math.max(260, Math.floor(r.height || 420));
-    camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h);
-  }
-
-  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
-  ro?.observe(stageEl);
-  const stopTheme = observeCrystalTheme(rebuildTheme);
-
-  const proj = new THREE.Vector3();
-  const placeBadge = (el, x) => {
-    const w = stageEl.clientWidth || 640, h = stageEl.clientHeight || 420;
-    proj.set(x, -1.78, 0).project(camera);
-    const sx = Math.max(115, Math.min(w - 115, (proj.x * 0.5 + 0.5) * w));
-    const sy = Math.max(26, Math.min(h - 24, (-proj.y * 0.5 + 0.5) * h));
-    el.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -50%)`;
-  };
-
-  function frame(ts) {
-    if (destroyed || paused) { rafId = 0; return; }
-    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
-    lastTs = ts; clock += dt;
+  resetAll();
+  cinema.start((dt, elapsed) => {
     if (playing) {
-      prog = Math.min(1, prog + dt * (slowMo ? 0.14 : 0.40));
-      applyPose(prog);
-      if (prog >= 1) { playing = false; btnHit.textContent = '再敲一次'; onCaption?.('结论：Cu 靠自由电子海延展不断；NaCl 同号相斥瞬间脆裂'); }
+      prog = Math.min(1, prog + dt * (slowMo ? 0.12 : 0.34));
+      applyPose(prog, elapsed);
+      if (prog >= 1) {
+        playing = false; btnShear.textContent = '再次施加剪切力';
+        onCaption?.(`对比结论：${leftCfg.label} 与 ${rightCfg.label} 键型差异决定延展性与脆性`);
+      }
+    } else if (prog > 0.42 && prog < 0.72) {
+      applyPose(prog, elapsed);
     }
-    if (rig) {
-      const slipShift = rig.cuTop.position.x * 0.5;
-      for (const e of rig.electrons) {
-        const a = clock * e.speed + e.phase, yOff = e.ry + Math.sin(a * 0.8) * 0.25;
-        e.mesh.position.set(Math.cos(a) * e.rx + (yOff > 0 ? slipShift * 1.4 : 0), yOff, Math.sin(a) * 0.52 + e.rz * 0.4);
+    for (const b of [leftBlock, rightBlock]) {
+      if (!b.electrons.length) continue;
+      const topX = b.top.position.x;
+      for (const e of b.electrons) {
+        const a = elapsed * e.speed + e.phase, yOff = e.ry + Math.sin(a * 0.85) * 0.22;
+        e.mesh.position.set(Math.cos(a) * e.rx + (yOff > 0 ? topX : 0), yOff, Math.sin(a) * 0.52 + e.rz * 0.45);
       }
     }
-    controls.update(); renderer.render(scene, camera);
-    placeBadge(badgeL, -SIDE_X); placeBadge(badgeR, SIDE_X);
-    rafId = requestAnimationFrame(frame);
-  }
-
-  rebuildTheme(); resize(); resetAll();
-  rafId = requestAnimationFrame(frame);
+  });
 
   return {
-    pause() { paused = true; if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } },
-    resume() { if (destroyed || !paused) return; paused = false; lastTs = 0; rafId = requestAnimationFrame(frame); },
-    resize,
-    destroy() {
-      if (destroyed) return;
-      destroyed = true; paused = true;
-      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-      stopTheme(); ro?.disconnect(); disposeRig();
-      controls.dispose(); stage.disposeEnv(); renderer.dispose();
-      stageEl.innerHTML = ''; actionbarEl.innerHTML = '';
-    },
+    pause: cinema.pause, resume: cinema.resume, resize: cinema.resize,
+    destroy() { cinema.dispose(); bar.innerHTML = ''; },
   };
 }
