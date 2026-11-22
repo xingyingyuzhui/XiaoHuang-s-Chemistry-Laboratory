@@ -1,6 +1,7 @@
 'use strict';
 
 const { query, queryOne, run, runBatch } = require('../db/sqlite');
+const { ensureLabExperimentsSchema } = require('../db/migrations');
 const { LABS_BUILTIN } = require('./labs-builtin');
 const { validateLab } = require('../utils/lab-schema');
 
@@ -9,20 +10,7 @@ function uid(prefix) {
 }
 
 function ensureLabTable() {
-  run(`CREATE TABLE IF NOT EXISTS lab_experiments (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    type TEXT DEFAULT '',
-    equation TEXT DEFAULT '',
-    safety TEXT DEFAULT '',
-    phenomena TEXT DEFAULT '',
-    steps_json TEXT DEFAULT '[]',
-    prestudy_json TEXT DEFAULT 'null',
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    source TEXT DEFAULT 'custom',
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-  )`);
+  ensureLabExperimentsSchema();
 }
 
 function rowToLab(row) {
@@ -104,21 +92,23 @@ function ensureLabsSeeded() {
   const now = Date.now();
   let inserted = 0;
   let updated = 0;
-  for (const lab of LABS_BUILTIN) {
-    const existing = queryOne('SELECT id, source FROM lab_experiments WHERE id = ?', [lab.id]);
-    if (!existing) {
-      insertLab({ ...lab, source: 'builtin', createdAt: now, updatedAt: now }, now);
-      inserted += 1;
-    } else if (String(existing.source || '') === 'builtin') {
-      const row = queryOne('SELECT sort_order FROM lab_experiments WHERE id = ?', [lab.id]);
-      updateLabRow({
-        ...lab,
-        sortOrder: Number(row?.sort_order) || lab.sortOrder || 0,
-        source: 'builtin',
-      }, now);
-      updated += 1;
+  runBatch(() => {
+    for (const lab of LABS_BUILTIN) {
+      const existing = queryOne('SELECT id, source FROM lab_experiments WHERE id = ?', [lab.id]);
+      if (!existing) {
+        insertLab({ ...lab, source: 'builtin', createdAt: now, updatedAt: now }, now);
+        inserted += 1;
+      } else if (String(existing.source || '') === 'builtin') {
+        const row = queryOne('SELECT sort_order FROM lab_experiments WHERE id = ?', [lab.id]);
+        updateLabRow({
+          ...lab,
+          sortOrder: Number(row?.sort_order) || lab.sortOrder || 0,
+          source: 'builtin',
+        }, now);
+        updated += 1;
+      }
     }
-  }
+  });
   const count = queryOne('SELECT COUNT(*) AS c FROM lab_experiments');
   return { seeded: inserted > 0 || updated > 0, inserted, updated, count: Number(count?.c) || 0 };
 }
@@ -127,14 +117,16 @@ function ensureLabsSeeded() {
 function resetBuiltinLabs() {
   ensureLabTable();
   const now = Date.now();
-  for (const lab of LABS_BUILTIN) {
-    const existing = queryOne('SELECT id FROM lab_experiments WHERE id = ?', [lab.id]);
-    if (!existing) {
-      insertLab({ ...lab, source: 'builtin', createdAt: now, updatedAt: now }, now);
-    } else {
-      updateLabRow({ ...lab, source: 'builtin' }, now);
+  runBatch(() => {
+    for (const lab of LABS_BUILTIN) {
+      const existing = queryOne('SELECT id FROM lab_experiments WHERE id = ?', [lab.id]);
+      if (!existing) {
+        insertLab({ ...lab, source: 'builtin', createdAt: now, updatedAt: now }, now);
+      } else {
+        updateLabRow({ ...lab, source: 'builtin' }, now);
+      }
     }
-  }
+  });
   return { reset: LABS_BUILTIN.length };
 }
 

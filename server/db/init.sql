@@ -102,6 +102,14 @@ CREATE TABLE IF NOT EXISTS ai_quiz_assist_calls (
   called_at INTEGER NOT NULL
 );
 
+-- 出题快照（服务端保存标准答案，交卷时以服务端答案为准）
+CREATE TABLE IF NOT EXISTS quiz_papers (
+  id TEXT PRIMARY KEY,
+  created_at INTEGER NOT NULL,
+  meta_json TEXT DEFAULT '{}',
+  items_json TEXT NOT NULL
+);
+
 -- 实验探究（脚本 + 预习配置，可编辑 / 可重置内置）
 CREATE TABLE IF NOT EXISTS lab_experiments (
   id TEXT PRIMARY KEY,
@@ -112,6 +120,34 @@ CREATE TABLE IF NOT EXISTS lab_experiments (
   phenomena TEXT DEFAULT '',
   steps_json TEXT DEFAULT '[]',
   prestudy_json TEXT DEFAULT 'null',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  source TEXT DEFAULT 'custom',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+-- 备课包
+CREATE TABLE IF NOT EXISTS lesson_packs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  grade TEXT DEFAULT '',
+  topics TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  contents_json TEXT DEFAULT '{}',
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+-- 分步配平脚本
+CREATE TABLE IF NOT EXISTS balance_scripts (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  grade TEXT DEFAULT '',
+  difficulty TEXT DEFAULT '',
+  start_equation TEXT NOT NULL,
+  target_equation TEXT NOT NULL,
+  species_json TEXT NOT NULL,
+  steps_json TEXT NOT NULL,
   sort_order INTEGER NOT NULL DEFAULT 0,
   source TEXT DEFAULT 'custom',
   created_at INTEGER NOT NULL,

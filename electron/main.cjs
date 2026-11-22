@@ -28,6 +28,7 @@ const ZOOM_STORE = 'ui-zoom.json';
 let mainWindow = null;
 let httpServer = null;
 let shutdownServer = null;
+let cleanedUp = false;
 
 function getServerEntry() {
   if (app.isPackaged) {
@@ -242,6 +243,7 @@ async function startBackend() {
   }
   // eslint-disable-next-line import/no-dynamic-require, global-require
   const { startServer, shutdown } = require(serverEntry);
+  cleanedUp = false;
   shutdownServer = shutdown;
   const result = await startServer({ openBrowser: false, host: '127.0.0.1' });
   httpServer = result.server;
@@ -333,16 +335,23 @@ async function bootstrap() {
 }
 
 function cleanup() {
+  if (cleanedUp) return;
+  cleanedUp = true;
+
+  const serverToClose = httpServer;
+  httpServer = null;
+  const shutdownToRun = shutdownServer;
+  shutdownServer = null;
+
   try {
-    if (httpServer) {
-      httpServer.close();
-      httpServer = null;
+    if (serverToClose) {
+      serverToClose.close();
     }
   } catch (_) {
     /* ignore */
   }
   try {
-    if (typeof shutdownServer === 'function') shutdownServer();
+    if (typeof shutdownToRun === 'function') shutdownToRun();
   } catch (_) {
     /* ignore */
   }

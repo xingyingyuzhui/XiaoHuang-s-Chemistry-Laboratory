@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { query, queryOne, run } = require('../db/sqlite');
+const { ensureLessonPacksSchema } = require('../db/migrations');
 const { success, error, badRequest, notFound } = require('../utils/response');
 const { getLab, listLabs, ensureLabsSeeded, importLabsSafe } = require('../seed/import-labs');
 
@@ -17,16 +18,7 @@ function uid(prefix) {
 
 function ensureTable() {
   try {
-    run(`CREATE TABLE IF NOT EXISTS lesson_packs (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      grade TEXT DEFAULT '',
-      topics TEXT DEFAULT '',
-      notes TEXT DEFAULT '',
-      contents_json TEXT DEFAULT '{}',
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
-    )`);
+    ensureLessonPacksSchema();
   } catch (e) {
     console.warn('ensureTable lesson_packs', e.message);
   }

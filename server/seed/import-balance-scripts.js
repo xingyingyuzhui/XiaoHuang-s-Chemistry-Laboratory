@@ -1,6 +1,7 @@
 'use strict';
 
 const { query, queryOne, run, runBatch } = require('../db/sqlite');
+const { ensureBalanceScriptsSchema } = require('../db/migrations');
 const { BALANCE_BUILTIN } = require('./balance-builtin');
 const { validateBalanceScript } = require('../utils/balance-script-schema');
 
@@ -9,20 +10,7 @@ function uid(prefix) {
 }
 
 function ensureBalanceTable() {
-  run(`CREATE TABLE IF NOT EXISTS balance_scripts (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    grade TEXT DEFAULT '',
-    difficulty TEXT DEFAULT '',
-    start_equation TEXT NOT NULL,
-    target_equation TEXT NOT NULL,
-    species_json TEXT NOT NULL,
-    steps_json TEXT NOT NULL,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    source TEXT DEFAULT 'custom',
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-  )`);
+  ensureBalanceScriptsSchema();
 }
 
 function rowToScript(row) {
@@ -102,22 +90,24 @@ function ensureBalanceScriptsSeeded() {
   const now = Date.now();
   let inserted = 0;
   let updated = 0;
-  for (const script of BALANCE_BUILTIN) {
-    const existing = queryOne('SELECT id, source FROM balance_scripts WHERE id = ?', [script.id]);
-    if (!existing) {
-      insertScript({ ...script, source: 'builtin', createdAt: now, updatedAt: now }, now);
-      inserted += 1;
-    } else if (String(existing.source || '') === 'builtin') {
-      // 保留原 sort_order
-      const row = queryOne('SELECT sort_order FROM balance_scripts WHERE id = ?', [script.id]);
-      updateScriptRow({
-        ...script,
-        sortOrder: Number(row?.sort_order) || script.sortOrder || 0,
-        source: 'builtin',
-      }, now);
-      updated += 1;
+  runBatch(() => {
+    for (const script of BALANCE_BUILTIN) {
+      const existing = queryOne('SELECT id, source FROM balance_scripts WHERE id = ?', [script.id]);
+      if (!existing) {
+        insertScript({ ...script, source: 'builtin', createdAt: now, updatedAt: now }, now);
+        inserted += 1;
+      } else if (String(existing.source || '') === 'builtin') {
+        // 保留原 sort_order
+        const row = queryOne('SELECT sort_order FROM balance_scripts WHERE id = ?', [script.id]);
+        updateScriptRow({
+          ...script,
+          sortOrder: Number(row?.sort_order) || script.sortOrder || 0,
+          source: 'builtin',
+        }, now);
+        updated += 1;
+      }
     }
-  }
+  });
   const count = queryOne('SELECT COUNT(*) AS c FROM balance_scripts');
   return { seeded: inserted > 0 || updated > 0, inserted, updated, count: Number(count?.c) || 0 };
 }
@@ -126,14 +116,16 @@ function ensureBalanceScriptsSeeded() {
 function resetBuiltinBalanceScripts() {
   ensureBalanceTable();
   const now = Date.now();
-  for (const script of BALANCE_BUILTIN) {
-    const existing = queryOne('SELECT id FROM balance_scripts WHERE id = ?', [script.id]);
-    if (existing) {
-      updateScriptRow({ ...script, source: 'builtin' }, now);
-    } else {
-      insertScript({ ...script, source: 'builtin', createdAt: now, updatedAt: now }, now);
+  runBatch(() => {
+    for (const script of BALANCE_BUILTIN) {
+      const existing = queryOne('SELECT id FROM balance_scripts WHERE id = ?', [script.id]);
+      if (existing) {
+        updateScriptRow({ ...script, source: 'builtin' }, now);
+      } else {
+        insertScript({ ...script, source: 'builtin', createdAt: now, updatedAt: now }, now);
+      }
     }
-  }
+  });
   return { reset: BALANCE_BUILTIN.length };
 }
 
