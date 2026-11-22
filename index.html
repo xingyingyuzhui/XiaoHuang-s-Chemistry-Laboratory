@@ -48,6 +48,9 @@
             <button class="tab" data-tab="molecule" role="tab" aria-selected="false">
               3D 分子
             </button>
+            <button class="tab" data-tab="crystal" role="tab" aria-selected="false">
+              晶胞
+            </button>
             <button class="tab" data-tab="molar" role="tab" aria-selected="false">
               计算
             </button>
@@ -159,6 +162,7 @@
                 <select id="settingDefaultPage">
                   <option value="table">元素周期表</option>
                   <option value="molecule">3D 分子</option>
+                  <option value="crystal">晶胞</option>
                   <option value="molar">计算</option>
                   <option value="electron">电子排布</option>
                   <option value="battle">元素乱斗</option>
@@ -550,6 +554,11 @@
               <button type="button" class="mol-ctrl" data-act="reset" title="复位">⌂</button>
             </div>
           </div>
+        </section>
+
+        <!-- Crystal / Unit Cell -->
+        <section id="panel-crystal" class="panel" role="tabpanel" hidden>
+          <div id="crystal-root" class="crystal-root"></div>
         </section>
 
         <!-- 计算：摩尔 / 配平 / 分步计量 -->

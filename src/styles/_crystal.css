@@ -1,0 +1,900 @@
+/**
+ * 晶胞（3D 晶体与晶胞实验室）样式
+ * 包裹在 @layer components 中，与 5 套主题 skin 兼容且不覆盖主题层。
+ */
+
+@layer components {
+  /* ── 顶层面板与外壳 ── */
+  #panel-crystal.active {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .crystal-root {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .crystal-shell {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    overflow: hidden;
+  }
+
+  /* ── 顶部 3 模块切换轨（01 认识晶体 | 02 晶体结构库 | 03 晶体的性质）── */
+  .crystal-topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0 0.1rem;
+  }
+
+  .crystal-mod-rail {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem;
+    background: var(--card-bg, var(--surface, #ffffff));
+    border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+    border-radius: var(--radius-lg, 14px);
+    box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.08));
+  }
+
+  .crystal-mod-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 38px;
+    padding: 0.42rem 0.95rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 10px);
+    background: transparent;
+    color: var(--ink-soft, var(--muted, #475569));
+    font-family: var(--font-main, system-ui, sans-serif);
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background var(--dur-fast, 0.15s) ease,
+      color var(--dur-fast, 0.15s) ease,
+      border-color var(--dur-fast, 0.15s) ease,
+      transform var(--dur-fast, 0.15s) ease;
+    white-space: nowrap;
+  }
+
+  .crystal-mod-tab:hover {
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-mod-tab.is-active {
+    background: var(--accent, #3b82f6);
+    color: #ffffff;
+    box-shadow: var(--shadow-sm, 0 2px 6px rgba(59, 130, 246, 0.25));
+  }
+
+  .crystal-mod-num {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.85;
+  }
+
+  .crystal-module-host {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 通用 3 栏工作台布局（左导航 | 中 3D/互动舞台 | 右参数与思考题）── */
+  .crystal-workbench {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(290px, 340px);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+
+  /* ── 左侧晶体分类与目录 ── */
+  .crystal-lib-sidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--card-bg, var(--surface, #ffffff));
+    border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.06));
+    overflow: hidden;
+  }
+
+  .crystal-cat-tabs {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.22rem;
+    padding: 0.5rem;
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    border-bottom: 1px solid var(--border, #e2e8f0);
+  }
+
+  .crystal-cat-tab {
+    min-height: 34px;
+    padding: 0.3rem 0.2rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm, 8px);
+    background: transparent;
+    color: var(--ink-soft, var(--muted, #475569));
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background var(--dur-fast, 0.15s) ease,
+      color var(--dur-fast, 0.15s) ease;
+  }
+
+  .crystal-cat-tab:hover {
+    background: var(--card-bg, #ffffff);
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-cat-tab.is-active {
+    background: var(--accent, #3b82f6);
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .crystal-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.55rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+  }
+
+  .crystal-list-item {
+    width: 100%;
+    text-align: left;
+    padding: 0.65rem 0.78rem;
+    border: var(--ui-stroke, 1.5px) solid var(--border-soft, var(--border, #e2e8f0));
+    border-radius: var(--radius-md, 12px);
+    background: var(--paper, var(--surface-2, #f8fafc));
+    color: var(--ink, #1e293b);
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast, 0.15s) ease,
+      background var(--dur-fast, 0.15s) ease,
+      transform var(--dur-fast, 0.15s) ease;
+  }
+
+  .crystal-list-item:hover {
+    border-color: var(--accent, #3b82f6);
+    background: var(--card-elevated, var(--card-bg, #ffffff));
+  }
+
+  .crystal-list-item.is-active {
+    border-color: var(--accent, #3b82f6);
+    background: var(--accent-soft, #eff6ff);
+    box-shadow: var(--shadow-sm, 0 2px 6px rgba(59, 130, 246, 0.15));
+  }
+
+  .crystal-list-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.18rem;
+  }
+
+  .crystal-list-formula {
+    font-family: var(--font-formula, 'Times New Roman', serif);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-list-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+  }
+
+  .crystal-swatch-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.25);
+    flex-shrink: 0;
+  }
+
+  .crystal-list-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink, #1e293b);
+    line-height: 1.3;
+  }
+
+  .crystal-list-sub {
+    margin-top: 0.14rem;
+    font-size: 0.76rem;
+    color: var(--text-muted, var(--muted, #64748b));
+    line-height: 1.3;
+  }
+
+  /* ── 中间 3D 暗棚舞台 ── */
+  .crystal-stage-wrap {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    border-radius: var(--radius-lg, 16px);
+    border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+    background: #0d1322;
+    overflow: hidden;
+    box-shadow: var(--shadow-md, 0 6px 20px rgba(15, 23, 42, 0.18));
+  }
+
+  .crystal-stage-canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+    background: #0d1322;
+  }
+
+  .crystal-webgl-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .crystal-webgl-canvas:active {
+    cursor: grabbing;
+  }
+
+  /* 2D 投影标签层 */
+  .crystal-label-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 4;
+  }
+
+  .crystal-badge {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.18rem 0.48rem;
+    border-radius: 999px;
+    background: rgba(13, 19, 34, 0.86);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    color: #f8fafc;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    will-change: transform, opacity;
+  }
+
+  .crystal-badge-fraction::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--badge-dot, #38bdf8);
+    flex-shrink: 0;
+  }
+
+  .crystal-badge-fraction.site-interior {
+    border-color: rgba(251, 191, 36, 0.85);
+    background: rgba(30, 27, 16, 0.92);
+    color: #fde68a;
+  }
+
+  .crystal-badge-distance {
+    padding: 0.32rem 0.72rem;
+    border-color: rgba(244, 63, 94, 0.88);
+    background: rgba(36, 12, 24, 0.92);
+    color: #ffe4e6;
+    font-size: 0.84rem;
+  }
+
+  .crystal-badge-coord {
+    padding: 0.32rem 0.72rem;
+    border-color: rgba(56, 189, 248, 0.88);
+    background: rgba(12, 28, 46, 0.92);
+    color: #e0f2fe;
+    font-size: 0.84rem;
+  }
+
+  .crystal-badge-hex {
+    padding: 0.35rem 0.8rem;
+    border-color: rgba(251, 191, 36, 0.9);
+    background: rgba(40, 28, 8, 0.92);
+    color: #fef3c7;
+    font-size: 0.84rem;
+  }
+
+  .crystal-badge-sub {
+    font-family: var(--font-main, system-ui, sans-serif);
+    font-size: 0.74rem;
+    font-weight: 500;
+    opacity: 0.88;
+  }
+
+  /* 左上物种图例 */
+  .crystal-legend {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 6;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    pointer-events: none;
+  }
+
+  .crystal-legend-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.36rem;
+    padding: 0.28rem 0.62rem;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: #f1f5f9;
+    font-size: 0.82rem;
+    backdrop-filter: blur(6px);
+  }
+
+  .crystal-legend-sym {
+    font-family: var(--font-formula, serif);
+    font-weight: 700;
+  }
+
+  .crystal-legend-cnt {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.76rem;
+    color: #93c5fd;
+  }
+
+  /* 右上视角按钮 */
+  .crystal-stage-tools {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 6;
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .crystal-stage-btn {
+    min-height: 34px;
+    padding: 0.3rem 0.72rem;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.78);
+    color: #e2e8f0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .crystal-stage-btn:hover {
+    background: rgba(30, 41, 59, 0.92);
+    border-color: rgba(125, 211, 252, 0.65);
+  }
+
+  .crystal-stage-btn.is-active {
+    background: rgba(59, 130, 246, 0.85);
+    border-color: #93c5fd;
+    color: #ffffff;
+  }
+
+  /* 底部状态字幕 */
+  .crystal-stage-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 0.85rem;
+    transform: translateX(-50%);
+    z-index: 6;
+    max-width: calc(100% - 1.5rem);
+    padding: 0.45rem 1.05rem;
+    border-radius: 999px;
+    background: rgba(13, 19, 34, 0.86);
+    border: 1px solid rgba(125, 211, 252, 0.35);
+    color: #f8fafc;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+
+  /* ── 右侧参数与教学工具面板 ── */
+  .crystal-inspector {
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding-right: 0.12rem;
+  }
+
+  .crystal-card {
+    background: var(--card-bg, var(--surface, #ffffff));
+    border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
+    border-radius: var(--radius-lg, 14px);
+    padding: 0.82rem 0.9rem;
+    box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.05));
+    display: flex;
+    flex-direction: column;
+    gap: 0.58rem;
+  }
+
+  .crystal-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .crystal-card-title {
+    margin: 0;
+    font-family: var(--font-heading, var(--font-main, system-ui));
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.14rem 0.5rem;
+    border-radius: var(--radius-pill, 999px);
+    background: var(--accent-soft, #eff6ff);
+    color: var(--accent, #2563eb);
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+
+  .crystal-tag-qa {
+    background: var(--flame-soft, #fffbeb);
+    color: var(--flame, #d97706);
+  }
+
+  /* 晶胞头信息卡 */
+  .crystal-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .crystal-header-formula {
+    margin: 0;
+    font-family: var(--font-formula, 'Times New Roman', serif);
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-header-name {
+    margin: 0.2rem 0 0;
+    font-size: 0.84rem;
+    color: var(--ink-soft, var(--muted, #475569));
+  }
+
+  .crystal-sys-badge {
+    flex-shrink: 0;
+    padding: 0.2rem 0.56rem;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    border: 1px solid var(--border, #e2e8f0);
+    color: var(--ink-soft, #475569);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .crystal-param-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .crystal-param-pill {
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-xs, 6px);
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    color: var(--ink, #1e293b);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  /* 按钮与分段切换（大触控区适配教室一体机） */
+  .crystal-seg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.3rem;
+    padding: 0.24rem;
+    border-radius: var(--radius-md, 10px);
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    border: 1px solid var(--border, #e2e8f0);
+  }
+
+  .crystal-seg-btn {
+    min-height: 38px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm, 8px);
+    background: transparent;
+    color: var(--ink-soft, #475569);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .crystal-seg-btn.is-active {
+    background: var(--card-bg, #ffffff);
+    border-color: var(--border, #cbd5e1);
+    color: var(--accent, #2563eb);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+  }
+
+  .crystal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 40px;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-md, 10px);
+    border: var(--ui-stroke, 1.5px) solid transparent;
+    font-family: var(--font-main, system-ui, sans-serif);
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.1s ease,
+      opacity 0.15s ease;
+  }
+
+  .crystal-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  .crystal-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .crystal-btn-primary {
+    background: var(--btn-primary, var(--accent, #3b82f6));
+    border-color: var(--btn-primary-border, var(--accent-hover, #2563eb));
+    color: #ffffff;
+  }
+
+  .crystal-btn-primary:hover:not(:disabled) {
+    background: var(--btn-primary-hover, var(--accent-hover, #2563eb));
+  }
+
+  .crystal-btn-ghost {
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    border-color: var(--border, #cbd5e1);
+    color: var(--ink, #1e293b);
+  }
+
+  .crystal-btn-ghost:hover:not(:disabled) {
+    border-color: var(--accent, #3b82f6);
+    color: var(--accent, #2563eb);
+  }
+
+  .crystal-btn-full {
+    width: 100%;
+  }
+
+  .crystal-btn-sm {
+    min-height: 32px;
+    padding: 0.28rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  /* 均摊法操作与算式 */
+  .crystal-slice-actions {
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  .crystal-slice-actions .crystal-btn {
+    flex: 1;
+  }
+
+  .crystal-avg-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.58rem 0.68rem;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--paper, var(--surface-2, #f8fafc));
+    border: 1px solid var(--border-soft, var(--border, #e2e8f0));
+  }
+
+  .crystal-avg-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.83rem;
+  }
+
+  .crystal-avg-species {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-avg-eq {
+    font-family: var(--font-mono, monospace);
+    font-weight: 700;
+    color: var(--accent, #2563eb);
+  }
+
+  .crystal-avg-note {
+    margin: 0.15rem 0 0;
+    padding-top: 0.35rem;
+    border-top: 1px dashed var(--border, #cbd5e1);
+    font-size: 0.78rem;
+    color: var(--ink-soft, var(--muted, #475569));
+    line-height: 1.45;
+  }
+
+  /* 拼晶胞操作与六棱柱提示 */
+  .crystal-tile-count {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--ink-soft, #475569);
+  }
+
+  .crystal-tile-actions {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr 0.9fr;
+    gap: 0.38rem;
+  }
+
+  .crystal-hex-banner {
+    padding: 0.55rem 0.68rem;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--paper, var(--surface-2, #f1f5f9));
+    border: 1px dashed var(--border-ink, #94a3b8);
+    color: var(--ink-soft, #475569);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .crystal-hex-banner.is-revealed {
+    background: var(--ok-soft, #dcfce7);
+    border: 1px solid var(--ok, #16a34a);
+    color: var(--ink, #0f172a);
+    font-weight: 600;
+  }
+
+  /* 高考考点工具 */
+  .crystal-exam-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.3rem;
+  }
+
+  .crystal-exam-tab {
+    min-height: 36px;
+    padding: 0.35rem 0.3rem;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border, #cbd5e1);
+    background: var(--paper, var(--surface-2, #f8fafc));
+    color: var(--ink-soft, #475569);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .crystal-exam-tab:hover {
+    border-color: var(--accent, #3b82f6);
+    color: var(--ink, #0f172a);
+  }
+
+  .crystal-exam-tab.is-active {
+    background: var(--accent, #3b82f6);
+    border-color: var(--accent, #3b82f6);
+    color: #ffffff;
+  }
+
+  .crystal-exam-body {
+    padding: 0.62rem 0.72rem;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--paper, var(--surface-2, #f8fafc));
+    border: 1px solid var(--border-soft, var(--border, #e2e8f0));
+  }
+
+  .crystal-exam-placeholder {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted, var(--muted, #64748b));
+    line-height: 1.5;
+  }
+
+  .crystal-exam-metric {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.32rem;
+  }
+
+  .crystal-exam-k {
+    font-size: 0.8rem;
+    color: var(--ink-soft, #475569);
+    font-weight: 600;
+  }
+
+  .crystal-exam-v {
+    font-family: var(--font-mono, monospace);
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: var(--accent, #2563eb);
+  }
+
+  .crystal-exam-submetric {
+    font-size: 0.82rem;
+    color: var(--ink, #1e293b);
+    margin-bottom: 0.28rem;
+  }
+
+  .crystal-exam-formula {
+    margin: 0.25rem 0 0.4rem;
+    padding: 0.38rem 0.55rem;
+    border-radius: var(--radius-xs, 6px);
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border, #e2e8f0);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    color: var(--ink, #0f172a);
+    word-break: break-word;
+  }
+
+  .crystal-density-meta {
+    display: flex;
+    gap: 0.8rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.78rem;
+    color: var(--ink-soft, #475569);
+  }
+
+  .crystal-exam-desc,
+  .crystal-exam-tip {
+    margin: 0.22rem 0 0;
+    font-size: 0.8rem;
+    color: var(--ink-soft, #475569);
+    line-height: 1.48;
+  }
+
+  /* ── 默认遮挡课堂思考题卡片 ── */
+  .crystal-qa-question {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--ink, #0f172a);
+    line-height: 1.5;
+  }
+
+  .crystal-qa-answer-box {
+    position: relative;
+    padding: 0.65rem 0.72rem;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--paper, var(--surface-2, #f8fafc));
+    border: 1px solid var(--border, #e2e8f0);
+    min-height: 68px;
+    overflow: hidden;
+  }
+
+  .crystal-qa-answer {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--ink, #1e293b);
+    line-height: 1.55;
+    transition: filter 0.22s ease, opacity 0.22s ease;
+  }
+
+  .crystal-qa-answer-box.is-covered .crystal-qa-answer {
+    filter: blur(7px);
+    opacity: 0.42;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .crystal-qa-cover {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--paper, #f8fafc) 58%, transparent);
+    backdrop-filter: blur(3px);
+  }
+
+  .crystal-qa-foot {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* ── 大屏 / 教室一体机 ── */
+  @media (min-width: 1600px) {
+    .crystal-workbench {
+      grid-template-columns: minmax(250px, 290px) minmax(0, 1fr) minmax(330px, 380px);
+    }
+  }
+
+  /* ── 窄屏自适应 ── */
+  @media (max-width: 1080px) {
+    .crystal-workbench {
+      grid-template-columns: minmax(190px, 220px) minmax(0, 1fr) minmax(260px, 300px);
+      gap: 0.55rem;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .crystal-workbench {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(340px, 1fr) auto;
+      overflow-y: auto;
+    }
+
+    .crystal-lib-sidebar {
+      max-height: 200px;
+    }
+  }
+}

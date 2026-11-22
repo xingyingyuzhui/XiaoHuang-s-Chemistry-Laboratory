@@ -29,6 +29,7 @@ const tabs = document.querySelectorAll('.tab');
 const panels = {
   table: $('#panel-table'),
   molecule: $('#panel-molecule'),
+  crystal: $('#panel-crystal'),
   molar: $('#panel-molar'),
   electron: $('#panel-electron'),
   battle: $('#panel-battle'),
@@ -42,6 +43,8 @@ const loader = createFeatureLoader();
 let molModule = null;    // molecule/list
 let molAIModule = null;  // molecule/ai
 let molRxnModule = null; // molecule/reactions
+let crystalModule = null; // crystal/index.js
+let crystalApi = null;
 let elecListModule = null; // electron-list.js
 let elecRendererModule = null; // electron-renderer.js
 let aiClassroomModule = null;  // ai-classroom.js
@@ -62,6 +65,9 @@ function throttledResize() {
     scheduleFit();
     if (molModule && !panels.molecule?.hidden) {
       molModule.getMolViewer()?.resize?.();
+    }
+    if (crystalApi && !panels.crystal?.hidden) {
+      crystalApi.resize?.();
     }
     if (electronViewer && !panels.electron?.hidden) {
       electronViewer.resize();
@@ -122,6 +128,18 @@ async function ensureMoleculeModules() {
     molModule.initMoleculeList();
     molAIModule.initMoleculeAI();
     molRxnModule.initMoleculeReactions();
+  }
+}
+
+// ── 晶胞 Tab 按需加载 ──
+
+async function ensureCrystalModule() {
+  const { mod } = await loader.load('crystal', () =>
+    import('./crystal/index.js'),
+  );
+  if (!crystalModule) {
+    crystalModule = mod;
+    crystalApi = crystalModule.initCrystalLab();
   }
 }
 
@@ -215,6 +233,9 @@ async function switchTab(name) {
   if (name !== 'molecule' && molModule) {
     molModule.getMolViewer()?.stop();
   }
+  if (name !== 'crystal' && crystalApi) {
+    crystalApi.onLeave?.();
+  }
   if (name !== 'electron' && electronViewer) {
     electronViewer.stop();
   }
@@ -234,6 +255,19 @@ async function switchTab(name) {
           viewer.start();
           viewer.resize();
         }
+      });
+    });
+  }
+
+  // ── 晶胞 ──
+  if (name === 'crystal') {
+    const ok = await runFeatureLoad('crystal', mySeq, ensureCrystalModule);
+    if (!ok || mySeq !== switchSeq) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (mySeq !== switchSeq || !crystalApi) return;
+        crystalApi.onEnter?.();
+        crystalApi.resize?.();
       });
     });
   }
@@ -308,6 +342,8 @@ async function init() {
   const defaultPage = await settingsApi.getDefaultPage();
   if (defaultPage === 'molecule') {
     switchTab('molecule');
+  } else if (defaultPage === 'crystal') {
+    switchTab('crystal');
   } else if (defaultPage === 'molar') {
     switchTab('molar');
     runMolar();

@@ -93,7 +93,7 @@ export async function loadSettings() {
         iconDataUrl: settings.brand?.iconDataUrl || null,
       },
       theme: normalizeTheme(settings.theme),
-      defaultPage: ['table', 'molecule', 'molar', 'electron', 'battle', 'ai'].includes(
+      defaultPage: ['table', 'molecule', 'crystal', 'molar', 'electron', 'battle', 'ai'].includes(
         settings.defaultPage,
       )
         ? settings.defaultPage

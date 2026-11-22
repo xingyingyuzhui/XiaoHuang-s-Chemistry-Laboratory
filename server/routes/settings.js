@@ -221,7 +221,7 @@ router.put('/', (req, res) => {
 
       if (key === 'defaultPage') {
         const page = String(patch.defaultPage || 'table');
-        const allowed = ['table', 'molecule', 'molar', 'electron', 'battle', 'ai'];
+        const allowed = ['table', 'molecule', 'crystal', 'molar', 'electron', 'battle', 'ai'];
         upsertSetting(
           'defaultPage',
           allowed.includes(page) ? page : 'table',
