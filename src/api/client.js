@@ -279,6 +279,22 @@ export const aiApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  /** AI 生成自定义 3D 晶胞 */
+  async generateCrystal(prompt) {
+    return request('/ai/crystal-generate', {
+      method: 'POST',
+      body: JSON.stringify({ prompt }),
+    });
+  },
+
+  /** AI 3D 晶体助教分步讲解 */
+  async crystalGuide(payload) {
+    return request('/ai/crystal-guide', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 /**
