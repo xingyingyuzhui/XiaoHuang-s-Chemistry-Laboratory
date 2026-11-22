@@ -10,6 +10,10 @@
   min-height: 0;
 }
 
+#panel-crystal [hidden] {
+  display: none !important;
+}
+
 .crystal-root {
   width: 100%;
   height: 100%;

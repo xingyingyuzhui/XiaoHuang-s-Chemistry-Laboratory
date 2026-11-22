@@ -43,12 +43,31 @@ export function formatNum(n, digits = 1) {
 
 export function buildSpeciesEquation(stat) {
   if (!stat) return '—';
+  const totalStr = formatNum(stat.total, 2);
+
+  if (Array.isArray(stat.items) && stat.items.length) {
+    const groups = new Map();
+    for (const item of stat.items) {
+      const label = item.fractionLabel || String(item.weight ?? '1');
+      const weight = Number.isFinite(item.weight) ? item.weight : 1;
+      const existing = groups.get(label);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        groups.set(label, { label, weight, count: 1 });
+      }
+    }
+    const parts = [...groups.values()]
+      .sort((a, b) => a.weight - b.weight)
+      .map((g) => `${g.count}×${g.label}`);
+    return parts.length ? `${parts.join(' + ')} = ${totalStr}` : `= ${totalStr}`;
+  }
+
   const parts = [];
   if (stat.vertex > 0) parts.push(`${stat.vertex}×1/8`);
   if (stat.edge > 0) parts.push(`${stat.edge}×1/4`);
   if (stat.face > 0) parts.push(`${stat.face}×1/2`);
   if (stat.interior > 0) parts.push(`${stat.interior}×1`);
-  const totalStr = formatNum(stat.total, 2);
   return parts.length ? `${parts.join(' + ')} = ${totalStr}` : `= ${totalStr}`;
 }
 
