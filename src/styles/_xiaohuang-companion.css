@@ -12,7 +12,10 @@
     70% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--stamp) 14%, transparent); }
   }
 
-  /* 拖拽虚线牵引绳 */
+  /* 拖拽虚线牵引绳与隐藏态保护（避免 display:grid/flex 盖掉 [hidden]） */
+  .xh-companion[hidden],
+  .xh-panel[hidden],
+  .xh-tether[hidden] { display: none !important; }
   .xh-tether { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 94; }
   .xh-tether-line { stroke: var(--stamp); stroke-width: 2; stroke-dasharray: 5 5; stroke-linecap: round; opacity: 0.55; }
 

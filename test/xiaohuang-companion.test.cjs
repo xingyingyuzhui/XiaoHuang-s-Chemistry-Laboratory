@@ -134,6 +134,9 @@ test('styles/index.css imports _xiaohuang-companion.css in layer(components) and
   const xhCss = fs.readFileSync(path.join(root, 'src/styles/_xiaohuang-companion.css'), 'utf8').trim();
   assert.match(xhCss, /^@layer\s+components\s*\{/);
   assert.match(xhCss, /\}$/);
+  assert.match(xhCss, /\.xh-companion\[hidden\]/);
+  assert.match(xhCss, /\.xh-panel\[hidden\]/);
+  assert.match(xhCss, /\.xh-tether\[hidden\]/);
 
   const brandTip = fs.readFileSync(path.join(root, 'src/brand-tip.js'), 'utf8');
   assert.match(brandTip, /initXiaohuangDock/);

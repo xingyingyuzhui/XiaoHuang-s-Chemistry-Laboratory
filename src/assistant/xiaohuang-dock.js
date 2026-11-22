@@ -44,20 +44,25 @@ function createTetherOverlay() {
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('class', 'xh-tether');
   svg.setAttribute('aria-hidden', 'true');
-  svg.hidden = true;
+  svg.setAttribute('hidden', '');
+  svg.style.display = 'none';
   const line = document.createElementNS(ns, 'line');
   line.setAttribute('class', 'xh-tether-line');
   svg.appendChild(line);
   document.body.appendChild(svg);
   return {
     show(x1, y1, x2, y2) {
-      svg.hidden = false;
+      svg.removeAttribute('hidden');
+      svg.style.display = '';
       line.setAttribute('x1', String(Math.round(x1)));
       line.setAttribute('y1', String(Math.round(y1)));
       line.setAttribute('x2', String(Math.round(x2)));
       line.setAttribute('y2', String(Math.round(y2)));
     },
-    hide: () => { svg.hidden = true; },
+    hide() {
+      svg.setAttribute('hidden', '');
+      svg.style.display = 'none';
+    },
   };
 }
 
