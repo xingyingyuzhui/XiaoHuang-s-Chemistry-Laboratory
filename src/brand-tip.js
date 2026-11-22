@@ -4,6 +4,7 @@
  */
 
 import { aiApi } from './api/client.js';
+import { initXiaohuangDock, consumeBrandTipSuppression } from './assistant/xiaohuang-dock.js';
 
 const AUTO_HIDE_MS = 7000;
 const MIN_LOADING_MS = 900;
@@ -321,6 +322,7 @@ async function onBrandClick(anchor) {
     mode: 'ready',
     text: tip,
     source,
+    note: '小贴士：长按左上角小黄拖到页面，可召唤随堂思考题与 AI 助教',
     duration: AUTO_HIDE_MS,
     showActions: false,
   });
@@ -334,16 +336,19 @@ export function initBrandTip() {
   icon.classList.add('brand-mark-clickable');
   icon.setAttribute('role', 'button');
   icon.setAttribute('tabindex', '0');
-  icon.setAttribute('title', '点我听一条化学小知识');
-  icon.setAttribute('aria-label', '点击获取化学小知识');
+  icon.setAttribute('title', '点我听化学小知识 · 长按拖下召唤 AI 助教');
+  icon.setAttribute('aria-label', '点击获取化学小知识，长按或下拉召唤小黄 AI 助教');
 
   const trigger = () => onBrandClick(icon);
 
   icon.addEventListener('click', (e) => {
+    if (e.defaultPrevented || consumeBrandTipSuppression()) return;
     e.preventDefault();
     e.stopPropagation();
     trigger();
   });
+
+  initXiaohuangDock({ onSummon: hideBrandTip });
 
   icon.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {

@@ -34,6 +34,7 @@
 @import './_settings.css' layer(components);
 @import './_molar.css' layer(components);
 @import './_app-dialog.css' layer(components);
+@import './_xiaohuang-companion.css' layer(components);
 
 @import './_responsive.css' layer(responsive);
 

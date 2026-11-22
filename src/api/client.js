@@ -295,6 +295,14 @@ export const aiApi = {
       body: JSON.stringify(payload),
     });
   },
+
+  /** AI 根据当前页面上下文生成随堂思考题 */
+  async thinkingQuestion(payload) {
+    return request('/ai/thinking-question', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 /**

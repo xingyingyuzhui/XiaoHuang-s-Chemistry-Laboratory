@@ -10,5 +10,6 @@ router.use(require('./ai/molecules'));
 router.use(require('./ai/quiz'));
 router.use(require('./ai/chemistry'));
 router.use(require('./ai/crystal'));
+router.use(require('./ai/assistant'));
 
 module.exports = router;
