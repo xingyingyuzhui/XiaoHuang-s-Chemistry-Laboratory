@@ -1,0 +1,345 @@
+/* Lab inquiry: title row, tools, sidebar nav cards, script & step editors */
+
+/* ── lab-shell / lab-views：标题行 + 预习|脚本 + 脚本内编辑 ── */
+.lab-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+.lab-title-block {
+  min-width: 0;
+  flex: 1;
+}
+.lab-title-block .lab-type {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+.lab-title-block .lab-detail-title {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+.lab-nav-brand {
+  font-size: 0.88rem;
+  font-family: var(--font-heading);
+  color: var(--ink);
+}
+.lab-nav-toolbar,
+.lab-step-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+.lab-tool-btn {
+  appearance: none;
+  min-height: 2.4rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  background: var(--card-elevated, var(--paper));
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+}
+.lab-tool-btn.lab-tool-add {
+  border-style: dashed;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.lab-tool-btn.lab-tool-edit.is-active {
+  background: var(--note-soft, var(--stamp-soft));
+  box-shadow: var(--shadow-print);
+}
+.lab-tool-btn.lab-tool-ai {
+  width: 100%;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  border-style: dashed;
+  background: var(--diagram-soft, var(--paper));
+}
+.lab-tool-btn.lab-tool-ai:hover {
+  border-style: solid;
+  background: var(--stamp-soft, var(--note-soft));
+}
+.lab-tool-btn:hover {
+  background: var(--diagram-soft);
+}
+.lab-nav-status {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin: 0.3rem 0 0;
+}
+.lab-nav-card {
+  position: relative;
+  min-width: 0;
+}
+.lab-nav-card.is-draft {
+  border: var(--ui-stroke) dashed var(--border-ink);
+  border-radius: var(--radius-md);
+}
+.lab-nav-card.is-editing {
+  cursor: grab;
+}
+.lab-nav-card.is-dragging,
+.lab-step-nav-card.is-dragging {
+  opacity: 0.45;
+}
+.lab-nav-card.drag-over,
+.lab-step-nav-card.drag-over {
+  outline: 2px dashed var(--stamp);
+}
+.lab-nav-item-main {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  text-align: left;
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 40%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  padding: 0.5rem 0.55rem;
+  cursor: pointer;
+  font: inherit;
+}
+.lab-nav-card.is-active .lab-nav-item-main {
+  border-color: var(--stamp);
+  background: color-mix(in srgb, var(--stamp) 10%, var(--paper));
+  box-shadow: inset 3px 0 0 var(--stamp);
+}
+.lab-nav-item-main:hover {
+  border-color: var(--border-ink);
+  /* 不向左位移，避免侧栏 overflow 裁切 */
+  transform: none;
+  box-shadow: var(--shadow-print-sm);
+}
+.lab-nav-del {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--stamp);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  place-items: center;
+  box-shadow: var(--shadow-print-sm);
+  transform: translate(-35%, -35%);
+}
+.lab-nav-list.is-edit-mode .lab-nav-del,
+.lab-step-nav-list.is-edit-mode .lab-nav-del {
+  display: grid;
+}
+/* 编辑态给列表留出叉号空间，避免 overflow 裁切 */
+.lab-nav-list.is-edit-mode,
+.lab-step-nav-list.is-edit-mode {
+  padding: 0.55rem 0.4rem 0.35rem 0.55rem;
+}
+/* 脚本编辑输入：对齐全局 .field input（forms.css），不要扁平 paper 款 */
+.lab-input,
+.lab-script-meta .field input,
+.lab-script-meta .field textarea,
+.lab-script-meta .field select,
+.lab-step-editor .field input,
+.lab-step-editor .field textarea,
+.lab-step-editor .field select {
+  width: 100%;
+  box-sizing: border-box;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  color: var(--text-primary);
+  border-radius: var(--radius-control);
+  padding: 0.65rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  outline: none;
+  box-shadow: var(--shadow-print-sm);
+  transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  min-height: 2.5rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+.lab-input:focus,
+.lab-script-meta .field input:focus,
+.lab-script-meta .field textarea:focus,
+.lab-script-meta .field select:focus,
+.lab-step-editor .field input:focus,
+.lab-step-editor .field textarea:focus,
+.lab-step-editor .field select:focus {
+  border-color: var(--border-ink);
+  box-shadow: var(--shadow-print);
+  transform: translate(-1px, -1px);
+  outline: none;
+}
+select.lab-input,
+.lab-step-editor .field select {
+  cursor: pointer;
+  appearance: auto;
+  resize: none;
+}
+.lab-script-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.75rem;
+}
+.lab-script-meta .field-span2 {
+  grid-column: 1 / -1;
+}
+
+.lab-script-meta .field {
+  display: grid;
+  gap: 0.2rem;
+}
+.lab-script-meta .field span,
+.lab-step-editor .field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lab-script-meta .field {
+  margin-bottom: 0;
+}
+.lab-step-editor .field {
+  margin-bottom: 0;
+}
+.lab-script-workspace {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  min-height: 16rem;
+}
+@media (max-width: 720px) {
+  .lab-script-workspace {
+    grid-template-columns: 1fr;
+  }
+  .lab-script-meta {
+    grid-template-columns: 1fr;
+  }
+}
+.lab-step-nav-panel {
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 40%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--diagram-soft, var(--paper));
+  padding: 0.55rem 0.5rem 0.5rem;
+  min-height: 0;
+  overflow: visible;
+}
+.lab-step-nav-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+.lab-step-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: min(48vh, 420px);
+  overflow: auto;
+}
+.lab-step-nav-card {
+  position: relative;
+}
+.lab-step-nav-card.is-editing {
+  cursor: grab;
+}
+.lab-step-nav-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: left;
+  border: var(--ui-stroke) solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  padding: 0.4rem 0.45rem;
+  cursor: pointer;
+  font: inherit;
+}
+.lab-step-nav-item:hover {
+  border-color: var(--border-ink);
+}
+.lab-step-nav-card.is-active .lab-step-nav-item {
+  border-color: var(--stamp);
+  background: color-mix(in srgb, var(--stamp) 10%, var(--paper));
+  box-shadow: inset 3px 0 0 var(--stamp);
+}
+.lab-step-nav-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.lab-step-editor {
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.9rem 0.95rem;
+  background: var(--paper);
+  display: grid;
+  gap: 0.45rem;
+}
+.lab-check {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lab-predict-editor {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--diagram-soft, #f5f3ef);
+  border: 1px dashed color-mix(in srgb, var(--border-ink) 35%, transparent);
+}
+.lab-opt-field span {
+  font-weight: 600 !important;
+}
+.lab-prestudy-meta {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 0.84rem;
+}
+.lab-prestudy-meta summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lab-script-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 14%, transparent);
+}
+/* 预习 / 脚本：与顶栏同一套 .tabs .tab，主题 skin 自动生效 */
+.lab-title-row .lab-mode-tabs {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.lab-detail-body {
+  margin-top: 0.35rem;
+}

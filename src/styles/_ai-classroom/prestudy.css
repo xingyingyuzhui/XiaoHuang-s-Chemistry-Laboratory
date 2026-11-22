@@ -1,0 +1,260 @@
+/* Lab inquiry: interactive prestudy (.prestudy-*) & inline edit form */
+
+.prestudy-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.55rem 0 0.65rem;
+}
+.prestudy-progress-row .prestudy-progress-bar {
+  flex: 1;
+  margin: 0;
+}
+.prestudy-progress-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.prestudy-page {
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.2rem 1.25rem;
+  background: var(--card-elevated, var(--paper));
+  min-height: 12rem;
+}
+.prestudy-page-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.85rem;
+  row-gap: 0.35rem;
+}
+.prestudy-page-head .prestudy-step-n {
+  flex-shrink: 0;
+  align-self: center;
+}
+.prestudy-page-title {
+  font-size: 1.12rem;
+  font-family: var(--font-heading);
+  color: var(--ink);
+  flex-shrink: 0;
+}
+/* 步骤名右侧空白：放操作提示描述 */
+.prestudy-page-tip {
+  flex: 1;
+  min-width: 8rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  text-align: right;
+}
+@media (max-width: 560px) {
+  .prestudy-page-tip {
+    flex-basis: 100%;
+    text-align: left;
+    padding-left: 2rem;
+  }
+}
+.prestudy-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+  justify-content: flex-end;
+}
+.prestudy-done-actions,
+.lab-detail-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+.lab-edit-form {
+  display: grid;
+  gap: 0.55rem;
+  max-width: 40rem;
+}
+.lab-edit-form .field {
+  display: grid;
+  gap: 0.25rem;
+}
+.lab-edit-form .field span {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lab-edit-form input,
+.lab-edit-form textarea {
+  font: inherit;
+  padding: 0.45rem 0.55rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* ── lab-shell：交互式预习 (.prestudy-*) ── */
+.prestudy-notice {
+  padding: 0.6rem 0.8rem;
+  border: var(--ui-stroke) dashed var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--note-soft);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.7rem;
+}
+.prestudy-info {
+  font-size: 0.82rem;
+  margin-bottom: 0.3rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+.prestudy-info strong { color: var(--ink); }
+/* 试剂 + 器材同一行，节省纵向空间 */
+.prestudy-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.45rem;
+}
+.prestudy-info-item {
+  min-width: 0;
+}
+.prestudy-info-sep {
+  color: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  user-select: none;
+}
+@media (max-width: 560px) {
+  .prestudy-info-row {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .prestudy-info-sep {
+    display: none;
+  }
+}
+.prestudy-progress-bar {
+  height: 4px;
+  background: var(--border-light, #e0e0e0);
+  border-radius: var(--radius-xs);
+  margin: 0.6rem 0;
+  overflow: hidden;
+}
+.prestudy-progress-fill {
+  height: 100%;
+  background: var(--stamp);
+  transition: width var(--dur) var(--ease-out);
+}
+.prestudy-steps {
+  display: grid;
+  gap: 0.5rem;
+}
+.prestudy-step {
+  border: var(--ui-stroke) solid var(--border-light, #e0e0e0);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 0.85rem;
+  background: var(--card-elevated);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.prestudy-step:hover { border-color: var(--border-ink); }
+.prestudy-step.is-current {
+  border-color: var(--border-ink);
+  background: var(--diagram-soft);
+  cursor: default;
+}
+.prestudy-step.is-done {
+  opacity: 0.7;
+}
+.prestudy-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.prestudy-step-n {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--stamp-soft);
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+.prestudy-step.is-done .prestudy-step-n {
+  background: var(--success-soft, #e8f5e9);
+  color: var(--success, #4caf50);
+}
+.prestudy-step-label {
+  font-size: 0.88rem;
+  font-family: var(--font-heading);
+}
+.prestudy-step-tip {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0.3rem 0 0.5rem;
+}
+.prestudy-predict {
+  margin-top: 0.25rem;
+}
+/* 预习题干放大，主视觉 */
+.prestudy-page .prestudy-predict-q,
+.prestudy-predict-q {
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  line-height: 1.5;
+  margin: 0 0 0.85rem;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.prestudy-page .quiz-options {
+  gap: 0.55rem;
+}
+.prestudy-page .quiz-opt {
+  padding: 0.7rem 0.9rem;
+  font-size: 0.95rem;
+}
+.prestudy-explain {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--note-soft);
+  border-radius: var(--radius-sm);
+}
+.prestudy-risk {
+  margin-top: 0.4rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--warning-soft, #fff3e0);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+.prestudy-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-xs);
+  background: var(--stamp-soft);
+  color: var(--ink);
+  margin-left: auto;
+}
+.prestudy-tag-read {
+  background: var(--note-soft);
+  color: var(--text-secondary);
+}
+.prestudy-summary {
+  margin-top: 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--note-soft);
+  font-size: 0.84rem;
+}

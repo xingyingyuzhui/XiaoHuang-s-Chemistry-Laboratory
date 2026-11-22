@@ -1,3 +1,4 @@
+@layer components {
 /* 3D 分子 · 常见反应（右上角入口 + 示意播放） */
 
 .mol-rxn-toggle {
@@ -240,12 +241,7 @@
   line-height: 1.55;
 }
 
-.rxn-muted {
-  margin: 0.35rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
+/* .rxn-muted 已提升至 _shared-ui.css（与计算页分步计量共用） */
 
 .rxn-error {
   color: #b91c1c;
@@ -892,4 +888,5 @@
   .rxn-atom-stage.is-on {
     animation: none;
   }
+}
 }

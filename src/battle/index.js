@@ -12,6 +12,7 @@
  * - battle/fx | sfx       视听
  */
 
+import '../styles/_element-battle.css';
 import { setRootEl, setBound, bound, rootEl } from './state.js';
 import { render, setBattleActionHandlers } from './ui.js';
 import {

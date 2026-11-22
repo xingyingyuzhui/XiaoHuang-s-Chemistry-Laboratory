@@ -1,0 +1,259 @@
+/* Cross-tab shared UI primitives used by eager tabs (#panel-molar, chem-keypad, #panel-molecule) and #panel-ai */
+
+.ai-nav-list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  /* 避免首卡 hover 阴影被父级裁切 */
+  padding: 2px 2px 4px 4px;
+}
+
+.ai-nav-card {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  background: var(--card-elevated);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.95rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.28rem;
+  box-shadow: var(--shadow-print-sm);
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.ai-nav-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.ai-nav-card strong {
+  font-size: 0.98rem;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  font-family: var(--font-heading);
+}
+
+.ai-nav-badge {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 800;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-sm);
+  display: inline-grid;
+  place-items: center;
+  background: var(--stamp);
+  color: #fff;
+  border: var(--ui-stroke) solid var(--border-ink);
+  box-shadow: 1px 1px 0 var(--border-ink);
+}
+
+.ai-nav-card span:last-child {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.ai-nav-card:hover {
+  background: var(--diagram-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-print);
+}
+
+.ai-nav-card.is-active {
+  border-color: var(--border-ink);
+  background: var(--stamp-soft);
+  box-shadow: var(--shadow-print);
+}
+
+.stage-ai {
+  min-height: 0;
+  overflow: auto;
+  border-radius: var(--radius-card);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-print);
+  padding: 1rem 1.15rem 1.25rem;
+}
+
+/* ── quiz-shell / quiz-views ── */
+.quiz-section-head {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px dashed color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.quiz-section-head h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+  font-family: var(--font-heading);
+  color: var(--ink);
+}
+
+.quiz-section-head p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.quiz-status {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.quiz-status.is-err {
+  color: var(--stamp);
+}
+
+.quiz-status.is-ok {
+  color: var(--diagram);
+}
+
+/* 方程式 Unicode 软键盘 */
+.lab-equation-field {
+  position: relative;
+}
+.chem-keypad {
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.55rem 0.55rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  background: var(--diagram-soft, var(--card-elevated));
+  box-shadow: var(--shadow-print-sm);
+}
+.chem-keypad[hidden] {
+  display: none !important;
+}
+
+/* 输入框右侧的「符号」开关（替代聚焦自动弹出） */
+.chem-input-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.chem-input-wrap > input,
+.chem-input-wrap > textarea {
+  width: 100%;
+  padding-right: 3.6rem;
+}
+
+.chem-keypad-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.18rem 0.5rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--card-elevated);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.chem-input-wrap.is-textarea .chem-keypad-toggle {
+  top: 0.4rem;
+  transform: none;
+}
+
+.chem-keypad-toggle:hover,
+.chem-keypad-toggle.is-on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-ink));
+}
+.chem-keypad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.chem-keypad-close {
+  appearance: none;
+  border: var(--ui-stroke) solid color-mix(in srgb, var(--border-ink) 45%, transparent);
+  background: var(--paper);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.chem-keypad-close:hover {
+  border-color: var(--border-ink);
+  color: var(--ink);
+}
+.chem-keypad-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-bottom: 0.3rem;
+}
+.chem-keypad-row:last-child {
+  margin-bottom: 0;
+}
+.chem-keypad-label {
+  flex: 0 0 2.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding-top: 0.35rem;
+}
+.chem-keypad-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  flex: 1;
+  min-width: 0;
+}
+.chem-key {
+  appearance: none;
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.35rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: var(--card-elevated, var(--paper));
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+}
+.chem-key:hover {
+  background: var(--stamp-soft, var(--note-soft));
+  transform: translate(-1px, -1px);
+}
+.chem-key:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+/* 跨 Tab 通用次要提示文案（计算页分步计量 & 3D 分子反应共用） */
+.rxn-muted {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}

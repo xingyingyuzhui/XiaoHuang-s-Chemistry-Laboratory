@@ -1,3 +1,4 @@
+@layer components {
 /*
  * Balance practice styles — owner: ai-classroom/balance-shell (+ balance-views / balance-model)
  *
@@ -339,4 +340,5 @@
   .balance-eq-line {
     font-size: clamp(1.35rem, 5vw, 1.85rem);
   }
+}
 }

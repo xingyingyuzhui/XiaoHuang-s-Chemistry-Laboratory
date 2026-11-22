@@ -1,0 +1,424 @@
+/* Knowledge mastery map (#aiSectionMastery, .mastery-*) */
+
+/* ── mastery-map ──
+ * 等级色取主题语义 token：掌握 --ok / 练习中 --mid / 起步 --bad / 未开始 --border-ink */
+#aiSectionMastery [data-level='mastered'] { --lv: var(--ok); }
+#aiSectionMastery [data-level='practicing'] { --lv: var(--mid); }
+#aiSectionMastery [data-level='beginner'] { --lv: var(--bad); }
+/* 未开始用淡墨色：深描边主题（文具 / 像素）里也不会抢眼 */
+#aiSectionMastery [data-level='unstarted'] { --lv: color-mix(in srgb, var(--ink) 20%, transparent); }
+
+.mastery-section {
+  margin-top: 1.1rem;
+}
+
+.mastery-section h4 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: var(--ink);
+  margin: 0 0 0.55rem;
+}
+
+.mastery-section h4 small {
+  font-family: var(--font-main);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* 顶部：统计卡 + 环形图 */
+.mastery-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .mastery-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mastery-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.mastery-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-lg);
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-print-sm);
+  animation: mastery-in var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.mastery-stat strong {
+  font-family: var(--font-mono);
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.mastery-stat em {
+  font-style: normal;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.mastery-stat.is-bad strong {
+  color: var(--bad);
+}
+
+.mastery-ring {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-lg);
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  box-shadow: var(--shadow-print-sm);
+}
+
+.mastery-ring svg {
+  width: 148px;
+  height: 148px;
+  flex: none;
+}
+
+.mastery-ring-track,
+.mastery-ring-seg {
+  fill: none;
+  stroke-width: 14;
+}
+
+.mastery-ring-track {
+  stroke: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.mastery-ring-seg {
+  stroke: var(--lv);
+  transition: stroke-dasharray var(--dur-reveal) var(--ease-reveal);
+}
+
+html[data-theme='pixel'] .mastery-ring-seg {
+  stroke-linecap: butt;
+}
+
+.mastery-ring-value {
+  text-anchor: middle;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 800;
+  fill: var(--ink);
+}
+
+.mastery-ring-caption {
+  text-anchor: middle;
+  font-size: 10px;
+  font-weight: 600;
+  fill: var(--text-muted);
+}
+
+.mastery-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.mastery-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mastery-legend i {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-xs);
+  background: var(--lv);
+}
+
+.mastery-legend b {
+  margin-left: auto;
+  padding-left: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+/* 空态、加载态与真实卡片使用相同的四槽网格，换行时也保留高度。 */
+#masteryWeak {
+  display: grid;
+}
+
+#masteryWeak > * {
+  grid-area: 1 / 1;
+  align-self: start;
+}
+
+.mastery-weak-reserve {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mastery-weak-reserve .mastery-weak-card {
+  animation: none;
+}
+
+/* 优先复习卡 */
+.mastery-weak {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.55rem;
+}
+
+.mastery-weak-card {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: var(--ui-stroke) solid var(--lv);
+  background: color-mix(in srgb, var(--lv) 10%, var(--card-elevated));
+  box-shadow: var(--shadow-print-sm);
+  animation: mastery-in var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(200ms + var(--i, 0) * 70ms);
+}
+
+.mastery-weak-rank {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: var(--radius-sm);
+  background: var(--lv);
+  color: var(--card-bg);
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.mastery-weak-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.mastery-weak-body strong {
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.mastery-weak-body span {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* 按年级分列；侧栏占宽后仍须给题数和「待复习」标记留足空间。 */
+.mastery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 0.9rem;
+}
+
+@media (max-width: 1000px) {
+  .mastery-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mastery-col h5 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 0 0 0.45rem;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.mastery-col h5 span {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.mastery-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: var(--ui-stroke) solid var(--border);
+  background: var(--card-elevated);
+}
+
+.mastery-tile[data-level='unstarted'] {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.mastery-tile-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: color-mix(in srgb, var(--lv) 28%, transparent);
+  border-right: 3px solid var(--lv);
+  transition: width var(--dur-reveal) var(--ease-reveal);
+  transition-delay: calc(var(--i, 0) * 30ms);
+}
+
+.mastery-tile-fill[data-w='0'] {
+  border-right: 0;
+}
+
+.mastery-tile-name,
+.mastery-tile-meta {
+  position: relative;
+}
+
+.mastery-tile-name {
+  min-width: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mastery-tile-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+}
+
+.mastery-tile-meta b {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.mastery-tile-wrong {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.05rem 0.35rem;
+  border-radius: var(--radius-xs);
+  background: var(--bad);
+  color: var(--card-bg);
+}
+
+/* 薄弱：描边转红，进场后只提醒一次（不做无限闪烁） */
+.mastery-tile.is-weak {
+  border-color: var(--bad);
+  animation: mastery-weak-ping 1.2s var(--ease-out) both;
+  animation-delay: calc(var(--dur-reveal) + 300ms);
+}
+
+.mastery-tile.is-weak .mastery-tile-meta b {
+  color: var(--bad);
+}
+
+/* 文具主题：薄弱知识点盖一枚「待复习」小红章（其他主题不显示） */
+.mastery-tile-stamp {
+  display: none;
+}
+
+html[data-theme='stationery'] .mastery-tile-stamp {
+  display: inline-block;
+  padding: 0 0.3rem;
+  border: 1.5px solid var(--stamp);
+  border-radius: var(--radius-xs);
+  color: var(--stamp);
+  font-style: normal;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  transform: rotate(-8deg);
+  opacity: 0.85;
+}
+
+@keyframes mastery-weak-ping {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 0%, transparent);
+  }
+  40% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--bad) 22%, transparent);
+  }
+}
+
+@keyframes mastery-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.mastery-suggestion-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mastery-suggestion-list li {
+  position: relative;
+  padding: 0.55rem 0.75rem 0.55rem 2rem;
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.mastery-suggestion-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0.75rem;
+  color: var(--stamp);
+  font-weight: 800;
+}
+
+html[data-theme='pixel'] .mastery-stat,
+html[data-theme='pixel'] .mastery-weak-card {
+  animation-timing-function: steps(4, end);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mastery-stat,
+  .mastery-weak-card,
+  .mastery-tile.is-weak {
+    animation: none;
+  }
+  .mastery-tile-fill,
+  .mastery-ring-seg {
+    transition: none;
+  }
+}

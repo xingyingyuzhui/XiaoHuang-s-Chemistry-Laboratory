@@ -98,6 +98,12 @@
   box-shadow: var(--shadow-print);
 }
 
+.btn-sm {
+  font-size: 0.78rem !important;
+  padding: 0.3rem 0.55rem !important;
+  min-height: 0 !important;
+}
+
 /* 摩尔质量等：示例化学式标签（主题 token，勿写死 #fff / 蓝） */
 .presets {
   display: flex;

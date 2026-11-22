@@ -1,0 +1,374 @@
+/* Quiz paper, options, chem-text formatting, feedback & report cards */
+
+/* ── quiz-views：试卷 / 题目卡片 ── */
+.quiz-paper-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: var(--ui-stroke-strong) solid var(--border-ink);
+}
+
+.quiz-paper-head h3 {
+  margin: 0 0 0.2rem;
+  font-size: 1.1rem;
+  font-family: var(--font-heading);
+}
+
+.quiz-paper-meta {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.quiz-paper-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.quiz-questions {
+  display: grid;
+  gap: 1rem;
+}
+
+.quiz-card {
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  background: var(--paper);
+  box-shadow: var(--shadow-print-sm);
+}
+
+.quiz-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.quiz-card-idx {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--stamp);
+  font-family: var(--font-mono);
+}
+
+.quiz-card-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.quiz-stem {
+  margin: 0 0 0.7rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.quiz-stem .quiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.quiz-stem .quiz-table th,
+.quiz-stem .quiz-table td {
+  border: 1px solid var(--border, #ccc);
+  padding: 0.3rem 0.5rem;
+  vertical-align: top;
+}
+.quiz-stem .quiz-table th {
+  background: var(--bg-secondary, #f5f5f5);
+  font-weight: 600;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+}
+
+.quiz-opt {
+  appearance: none;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  text-align: left;
+  width: 100%;
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--card-elevated);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 2.8rem 0.6rem 0.65rem;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.5;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-print-sm);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* 选项序号方块 A / B / C / D */
+.quiz-opt-key {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.06rem;
+  border-radius: var(--radius-sm);
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.quiz-opt-text {
+  min-width: 0;
+  padding-top: 0.06rem;
+}
+
+.quiz-opt.is-selected {
+  border-color: #8a3d00;
+  background: #fff0a8;
+  color: #432000;
+  outline: 2px solid #f0a100;
+  outline-offset: 1px;
+  box-shadow: 3px 3px 0 #8a3d00;
+}
+
+.quiz-opt.is-selected strong {
+  color: #9a3500;
+}
+
+.chem-math {
+  white-space: nowrap;
+  font-family: var(--font-formula);
+  letter-spacing: 0.01em;
+}
+
+.chem-math sub,
+.chem-math sup {
+  font-size: 0.75em;
+  line-height: 0;
+}
+
+.chem-isotope {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: 0.62em 0.62em;
+  margin-right: 0.06em;
+  vertical-align: -0.04em;
+}
+
+.chem-isotope sup,
+.chem-isotope sub {
+  grid-column: 1;
+  font-size: 0.62em;
+  line-height: 1;
+  text-align: right;
+}
+
+.chem-isotope sup { grid-row: 1; }
+.chem-isotope sub { grid-row: 2; }
+.chem-isotope-symbol {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+
+.quiz-opt:disabled {
+  cursor: default;
+}
+
+.quiz-card-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.quiz-card-tools .btn {
+  font-size: 0.82rem;
+  padding: 0.4rem 0.7rem;
+}
+
+.quiz-feedback {
+  margin: 0.55rem 0 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.quiz-feedback.is-ok {
+  color: var(--ok);
+}
+
+.quiz-feedback.is-err {
+  color: var(--bad);
+}
+
+.quiz-result-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.quiz-result-item {
+  border-radius: var(--radius-md);
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  background: var(--paper);
+  font-size: 0.88rem;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+  transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.quiz-result-item:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
+}
+
+.quiz-result-item.is-expanded {
+  border-color: var(--border-ink);
+  box-shadow: var(--shadow-print);
+  background: var(--card-elevated);
+}
+
+.quiz-result-item-summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem 0.75rem;
+  align-items: start;
+  padding: 0.7rem 0.85rem;
+}
+
+.quiz-result-item-text {
+  min-width: 0;
+}
+
+.quiz-result-brief {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.quiz-result-chevron {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition: transform var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+
+.quiz-result-item.is-expanded .quiz-result-chevron {
+  color: var(--stamp);
+  transform: rotate(90deg);
+}
+
+/* 题库预览是只读索引，使用更紧凑的列表节奏，避免卡片阴影形成过大间隔。 */
+.offline-quiz-bank-list {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.offline-quiz-bank-list .quiz-result-item {
+  box-shadow: none;
+}
+
+.offline-quiz-bank-list .quiz-result-item-summary {
+  gap: 0.35rem 0.65rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.offline-quiz-bank-list .quiz-result-brief {
+  margin-top: 0.08rem;
+  line-height: 1.3;
+}
+
+.quiz-result-detail {
+  padding: 0 0.9rem 0.9rem;
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink) 18%, transparent);
+  animation: quiz-detail-in 0.28s var(--ease-out);
+}
+
+.quiz-result-detail[hidden] {
+  display: none;
+}
+
+@keyframes quiz-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quiz-result-detail .quiz-stem {
+  margin-top: 0.65rem;
+  font-size: 0.95rem;
+}
+
+.quiz-result-detail .quiz-opt {
+  cursor: default;
+  pointer-events: none;
+}
+
+.quiz-result-keys {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.quiz-result-explain {
+  margin: 0.5rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: var(--diagram-soft);
+  border: var(--ui-stroke) solid var(--border-ink);
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* 报告区若有 */
+.quiz-report,
+.quiz-summary-card {
+  border: var(--ui-stroke-strong) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  background: var(--note-soft);
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow-print-sm);
+  margin-bottom: 0.85rem;
+}
+
+.quiz-report h4,
+.quiz-summary-card h4 {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-heading);
+  color: var(--ink);
+}

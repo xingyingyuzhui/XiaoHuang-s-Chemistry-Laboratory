@@ -2,6 +2,9 @@
  * 课堂：侧栏二级导航 + 分区宿主（出题 / 错题 / 点名 / 实验…）
  */
 
+import './styles/_ai-classroom.css';
+import './styles/_classroom-extra.css';
+import './styles/_balance-script.css';
 import { aiApi, quizApi, offlineQuizApi, masteryApi, lessonPackApi, labsApi, balanceScriptsApi } from './api/client.js';
 import { showAppBubble, hideBrandTip } from './brand-tip.js';
 import { initRollcall, onRollcallSectionEnter } from './classroom-rollcall.js';

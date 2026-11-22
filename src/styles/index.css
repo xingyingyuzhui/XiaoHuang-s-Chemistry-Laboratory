@@ -1,39 +1,48 @@
-/* —— 分层 ——
- * 1. tokens（shared + themes 下各主题 tokens）
- * 2. 组件（消费变量，少写死色）
- * 3. themes 下各主题 skin（氛围/结构，覆盖组件）
+/* —— 级联分层 ——
+ * 显式声明 @layer 顺序，确保运行时动态注入的按需 Tab CSS（layer(components)）
+ * 永远不会覆盖 themes 下各主题 skin.css（layer(themes)）与响应式布局（layer(responsive)）。
+ *
+ * 1. tokens     （shared + themes 下各主题 tokens）
+ * 2. base       （重置 / 动效基础）
+ * 3. components （首屏组件 + 动态 Tab 按需注入的组件样式）
+ * 4. responsive （全局断点布局）
+ * 5. themes     （themes 下各主题 skin，氛围/结构覆盖组件）
+ * 6. overrides  （跨主题语义状态覆盖：判题正误 / 分区色 / 阶梯线 / 危险按钮）
  */
-@import './tokens/_shared.css';
-@import './themes/default/tokens.css';
-@import './themes/stationery/tokens.css';
-@import './themes/reagent/tokens.css';
-@import './themes/blackboard/tokens.css';
-@import './themes/pixel/tokens.css';
+@layer tokens, base, components, responsive, themes, overrides;
 
-@import './_base.css';
-@import './_motion.css';
-@import './_topbar.css';
-@import './_layout.css';
-@import './_side-drawer.css';
-@import './_periodic-table.css';
-@import './_detail-card.css';
-@import './_molecule.css';
-@import './_molecule-3d.css';
-@import './_molecule-reactions.css';
-@import './_electron.css';
-@import './_element-battle.css';
-@import './_forms.css';
-@import './_settings.css';
-@import './_molar.css';
-@import './_ai-classroom.css';
-@import './_classroom-extra.css';
-@import './_balance-script.css';
-@import './_app-dialog.css';
-@import './_responsive.css';
+@import './tokens/_shared.css' layer(tokens);
+@import './themes/default/tokens.css' layer(tokens);
+@import './themes/stationery/tokens.css' layer(tokens);
+@import './themes/reagent/tokens.css' layer(tokens);
+@import './themes/blackboard/tokens.css' layer(tokens);
+@import './themes/pixel/tokens.css' layer(tokens);
 
-/* 主题 skin 最后加载，保证 Tab/顶栏等结构差异生效 */
-@import './themes/default/skin.css';
-@import './themes/stationery/skin.css';
-@import './themes/reagent/skin.css';
-@import './themes/blackboard/skin.css';
-@import './themes/pixel/skin.css';
+@import './_base.css' layer(base);
+@import './_motion.css' layer(base);
+
+@import './_topbar.css' layer(components);
+@import './_layout.css' layer(components);
+@import './_side-drawer.css' layer(components);
+@import './_periodic-table.css' layer(components);
+@import './_detail-card.css' layer(components);
+@import './_molecule.css' layer(components);
+@import './_molecule-3d.css' layer(components);
+@import './_electron.css' layer(components);
+@import './_forms.css' layer(components);
+@import './_shared-ui.css' layer(components);
+@import './_settings.css' layer(components);
+@import './_molar.css' layer(components);
+@import './_app-dialog.css' layer(components);
+
+@import './_responsive.css' layer(responsive);
+
+/* 主题 skin 落在 themes 层，始终高于首屏及按需加载的 components 层 */
+@import './themes/default/skin.css' layer(themes);
+@import './themes/stationery/skin.css' layer(themes);
+@import './themes/reagent/skin.css' layer(themes);
+@import './themes/blackboard/skin.css' layer(themes);
+@import './themes/pixel/skin.css' layer(themes);
+
+/* 跨主题语义状态覆盖 */
+@import './_overrides.css' layer(overrides);

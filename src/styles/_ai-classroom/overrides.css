@@ -1,0 +1,47 @@
+/* Cross-theme semantic state overrides for classroom (imported into @layer overrides) */
+
+.quiz-opt:hover:not(:disabled):not(.is-selected) {
+  background: var(--diagram-soft);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-print);
+}
+
+/* 判题状态：:root 前缀抬高优先级，压过主题 skin 对 .quiz-opt / .is-selected 的整体覆盖 */
+:root .quiz-options .quiz-opt.is-correct {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ink);
+  outline: none;
+  box-shadow: var(--shadow-print-sm);
+}
+
+:root .quiz-options .quiz-opt.is-wrong {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+  color: var(--ink);
+  outline: none;
+  box-shadow: var(--shadow-print-sm);
+}
+
+:root .quiz-options .quiz-opt.is-correct .quiz-opt-key {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: var(--card-bg);
+}
+
+:root .quiz-options .quiz-opt.is-wrong .quiz-opt-key {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: var(--card-bg);
+}
+
+.lab-title-row .lab-mode-tabs .tab {
+  font-size: 0.8rem;
+  padding: 0.38rem 0.75rem;
+}
+.lab-title-row .lab-mode-tabs .tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

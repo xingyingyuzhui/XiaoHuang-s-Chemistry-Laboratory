@@ -95,16 +95,7 @@
   justify-content: flex-end;
 }
 
-.app-dialog-actions .btn.is-danger,
-.app-dialog-actions .btn.primary.is-danger {
-  background: var(--error, #dc2626);
-  border-color: color-mix(in srgb, var(--error, #dc2626) 70%, var(--border-ink));
-  color: #fff;
-}
-
-.app-dialog-actions .btn.is-danger:hover {
-  filter: brightness(1.05);
-}
+/* 危险按钮语义覆盖见 _overrides.css（@layer overrides） */
 
 @media (prefers-reduced-motion: reduce) {
   .app-dialog-backdrop,
