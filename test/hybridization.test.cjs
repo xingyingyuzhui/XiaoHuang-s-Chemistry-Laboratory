@@ -236,7 +236,7 @@ test('ethylene tip mentions actual sigma dirs and pi', () => {
   assert.match(r.tip, /π|双键/);
 });
 
-test('molecule3d load clears selection handlers (source contract)', () => {
+test('src/molecule/viewer3d.js load clears selection handlers (source contract)', () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const src = fs.readFileSync(path.join(__dirname, '../src/molecule/viewer3d.js'), 'utf8');

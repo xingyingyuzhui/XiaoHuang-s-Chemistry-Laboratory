@@ -67,22 +67,26 @@ test('offline quiz bank contains HTML table stems for tabular questions', () => 
   }
 });
 
-// T1c: ESM source and CJS seed have identical question data
-test('offline quiz ESM source and CJS seed are in sync', async () => {
-  const { OFFLINE_QUESTIONS: esmQuestions } = await import('../src/data/offline-quiz-bank.js');
-  const { OFFLINE_QUESTIONS: cjsQuestions } = require('../server/seed/offline-quiz-bank');
+// T1c: offline quiz bank uses single JSON source of truth under server/seed/
+test('offline quiz bank uses single JSON source of truth without duplicate ESM/sync script', () => {
+  const jsonPath = path.join(__dirname, '../server/seed/offline-quiz-bank.json');
+  const rawQuestions = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  const bank = require('../server/seed/offline-quiz-bank');
 
-  assert.equal(esmQuestions.length, cjsQuestions.length, 'ESM and CJS must have same question count');
-
-  for (let i = 0; i < esmQuestions.length; i++) {
-    const e = esmQuestions[i];
-    const c = cjsQuestions[i];
-    assert.equal(e.sourceQuestionId, c.sourceQuestionId, `question ${i} sourceQuestionId mismatch`);
-    assert.equal(e.stem, c.stem, `question ${i} stem mismatch`);
-    assert.equal(e.answer, c.answer, `question ${i} answer mismatch`);
-    assert.equal(e.label, c.label, `question ${i} label mismatch`);
-    assert.deepEqual(e.options, c.options, `question ${i} options mismatch`);
-  }
+  assert.equal(bank.OFFLINE_QUIZ_VERSION, '3.0.0');
+  assert.equal(bank.OFFLINE_QUIZ_BANK_SIZE, rawQuestions.length);
+  assert.equal(bank.OFFLINE_QUESTIONS.length, rawQuestions.length);
+  assert.deepEqual(bank.OFFLINE_QUESTIONS, rawQuestions);
+  assert.equal(
+    fs.existsSync(path.join(__dirname, '../src/data/offline-quiz-bank.js')),
+    false,
+    'duplicate frontend ESM bank should be removed',
+  );
+  assert.equal(
+    fs.existsSync(path.join(__dirname, '../scripts/sync-offline-quiz-bank.mjs')),
+    false,
+    'obsolete dual-file sync script should be removed',
+  );
 });
 
 // T2: GET /api/offline-quiz/list returns questions without leaking answers

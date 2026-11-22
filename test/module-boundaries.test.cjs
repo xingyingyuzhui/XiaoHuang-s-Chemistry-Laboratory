@@ -48,19 +48,24 @@ test('main.js does not static-import heavy modules (Three.js, battle, classroom)
 
   // These must NOT appear as static imports
   assert.equal(
-    /import\s+.*from\s+['"]\.\/molecule-list\.js['"]/.test(entry),
+    /import\s+.*from\s+['"]\.\/molecule\/(?:index|list|ai|reactions|viewer3d)\.js['"]/.test(entry),
     false,
-    'molecule-list must be dynamically imported',
+    'src/molecule/* modules must be dynamically imported',
   );
   assert.equal(
-    /import\s+.*from\s+['"]\.\/molecule-ai\.js['"]/.test(entry),
+    /import\s+.*from\s+['"]\.\/molecule\/list\.js['"]/.test(entry),
     false,
-    'molecule-ai must be dynamically imported',
+    'molecule/list must be dynamically imported',
   );
   assert.equal(
-    /import\s+.*from\s+['"]\.\/molecule-reactions\.js['"]/.test(entry),
+    /import\s+.*from\s+['"]\.\/molecule\/ai\.js['"]/.test(entry),
     false,
-    'molecule-reactions must be dynamically imported',
+    'molecule/ai must be dynamically imported',
+  );
+  assert.equal(
+    /import\s+.*from\s+['"]\.\/molecule\/reactions\.js['"]/.test(entry),
+    false,
+    'molecule/reactions must be dynamically imported',
   );
   assert.equal(
     /import\s+.*from\s+['"]\.\/electron-renderer\.js['"]/.test(entry),
@@ -98,8 +103,20 @@ test('panel-loading module exists and is used for lazy tab overlay', () => {
   assert.match(loading, /\.hidden\s*=\s*true/);
 });
 
-test('molecule feature is packaged under src/molecule/', () => {
+test('molecule feature is packaged under src/molecule/ without legacy shims', () => {
   const entry = source('src/main.js');
   assert.match(entry, /import\(['"]\.\/molecule\//);
   assert.ok(fs.existsSync(path.join(root, 'src/molecule/index.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/molecule/ai.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/molecule/list.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/molecule/reactions.js')));
+  assert.ok(fs.existsSync(path.join(root, 'src/molecule/viewer3d.js')));
+  for (const shim of [
+    'src/molecule-ai.js',
+    'src/molecule-list.js',
+    'src/molecule-reactions.js',
+    'src/molecule3d.js',
+  ]) {
+    assert.equal(fs.existsSync(path.join(root, shim)), false, `legacy shim ${shim} should be removed`);
+  }
 });

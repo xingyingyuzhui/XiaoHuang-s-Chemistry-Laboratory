@@ -38,7 +38,7 @@ test('chem text formatter renders source LaTex as safe chemical subscripts', asy
 });
 
 test('all offline question previews and question bodies contain no raw LaTex syntax', async () => {
-  const { OFFLINE_QUESTIONS } = await import('../src/data/offline-quiz-bank.js');
+  const { OFFLINE_QUESTIONS } = require('../server/seed/offline-quiz-bank');
   const { formatChemOption, formatChemPreview, formatChemStem } = await import('../src/ai-classroom/chem-text.js');
   const rawSyntax = /\\|\$|(?:mathrm|text|frac|stackrel)\{|[_^]\{/;
 

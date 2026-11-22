@@ -4,10 +4,11 @@ dist
 *.local
 .vite
 
-# Server runtime files
+# Server runtime / generated files
 server/data/
 server/server.log
 server/public/
+server/build-manifest.json
 
 # Windows portable build output
 
@@ -21,6 +22,7 @@ dist-electron/
 
 # Third-party / agent scratch (do not publish)
 .mimocode/
+.cursor/
 
 # Agent tooling / local skills (not part of the published app)
 .grok/
