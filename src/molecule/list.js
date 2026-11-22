@@ -9,6 +9,7 @@ import { refreshMolarPresets } from '../molar-ui.js';
 import { getSubstanceCard } from '../data/substance-cards.js';
 import { inferHybridization } from '../chem/hybridization.js';
 import { appAlert, appConfirm } from '../app-dialog.js';
+import { notifyPageContextChange } from '../assistant/page-context.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -187,6 +188,7 @@ export async function renderMolList() {
               molTitle.textContent = '—';
               molDesc.textContent = '列表为空，可点击 ＋ 用 AI 生成分子';
               molViewer?.load?.(null);
+              notifyPageContextChange('molecule');
             }
           }
           await renderMolList();
@@ -366,6 +368,7 @@ export async function loadMolecule(id) {
     }
 
     await renderMolList();
+    notifyPageContextChange('molecule');
     try {
       onMoleculeChange?.(m);
     } catch (e) {

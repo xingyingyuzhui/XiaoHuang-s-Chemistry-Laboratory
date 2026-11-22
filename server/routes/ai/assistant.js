@@ -1,6 +1,7 @@
 /**
  * 随堂小黄 AI 助教路由
- * - POST /api/ai/thinking-question：根据当前页面上下文生成一道启发性课堂思考题
+ * - POST /api/ai/thinking-question：根据当前页面上下文生成 1 道或 3 道（count: 1..3）启发性课堂思考题，
+ *   也支持针对教师点击/输入的具体 question 返回「提示 + 结论 + 可选 3D 联动动作」。
  */
 
 const express = require('express');
@@ -35,11 +36,76 @@ function normalizeThinkingQuestion(raw) {
   return result;
 }
 
-function buildThinkingSystem(allow3dAction) {
+function normalizeThinkingQuestions(raw, count = 3) {
+  const limit = Math.min(3, Math.max(1, Number.isFinite(Number(count)) ? Math.round(Number(count)) : 3));
+  let list = [];
+  if (Array.isArray(raw)) {
+    list = raw;
+  } else if (raw && typeof raw === 'object' && Array.isArray(raw.questions)) {
+    list = raw.questions;
+  } else if (raw && typeof raw === 'object' && raw.question && raw.answer) {
+    list = [raw];
+  } else {
+    throw new Error('AI 思考题列表返回数据无效');
+  }
+
+  const seen = new Set();
+  const questions = [];
+  for (const item of list) {
+    if (questions.length >= limit) break;
+    try {
+      const normalized = normalizeThinkingQuestion(item);
+      const dedupKey = normalized.question.replace(/\s+/g, '').toLowerCase();
+      if (seen.has(dedupKey)) continue;
+      seen.add(dedupKey);
+      questions.push(normalized);
+    } catch {
+      /* 跳过单条格式残缺项，保留有效题目 */
+    }
+  }
+
+  if (!questions.length) {
+    throw new Error('AI 未返回有效思考题列表');
+  }
+  return { questions };
+}
+
+function buildThinkingSystem(allow3dAction, count = 1, hasFocusQuestion = false) {
   const actionRule = allow3dAction
     ? `"action": 若该思考题非常适合配合 3D 晶胞演示，可选用以下枚举之一，否则填 null：
 "ball-stick" | "space-filling" | "slice" | "explode" | "tile-2" | "tile-3" | "coordination" | "distance" | "reset"`
     : '"action": 固定填 null';
+
+  if (count > 1) {
+    return `你是「小黄的化学实验室」资深高中化学课堂助教，擅长根据当前展示内容现场命制 ${count} 道彼此不同角度、贴合课标与高考核心素养的随堂思考题。
+要求：
+1. 紧扣当前展示对象，必须避开已出现过的题目；${count} 道题分别切入不同维度（如：微观结构与性质关联、规律对比或反常辨析、定量计算或高考易错点）。
+2. 每道题题干简明紧凑（约 14～34 字），便于课堂点选；提示 1 句，结论解析 2～4 句。
+3. 只输出一个合法 JSON 对象，禁止 Markdown 代码块和多余文字：
+{
+  "questions": [
+    {
+      "question": "简明启发性思考题",
+      "hint": "简短思路提示（1句）",
+      "answer": "清晰结论与解析（2-4句）",
+      ${actionRule}
+    }
+  ]
+}`;
+  }
+
+  if (hasFocusQuestion) {
+    return `你是「小黄的化学实验室」资深高中化学课堂助教，请针对教师提出的当前课堂问题，给出适合课堂投屏「先给思路提示，再揭晓结论」的简明解答。
+要求：
+1. 紧扣当前展示对象与高中化学课标，拒绝空泛堆砌。
+2. 只输出一个合法 JSON 对象，禁止 Markdown 代码块和多余文字：
+{
+  "question": "原问题（可微调通顺）",
+  "hint": "简短引导思路提示（1句，不直接剧透最终结论）",
+  "answer": "清晰结论与解析（2-4句）",
+  ${actionRule}
+}`;
+  }
 
   return `你是「小黄的化学实验室」资深高中化学课堂助教，擅长根据当前展示内容现场出一道有启发性、贴合课标与高考核心素养的随堂思考题。
 要求：
@@ -63,11 +129,18 @@ router.post('/thinking-question', async (req, res) => {
     const formula = String(body.formula || '').trim().slice(0, 60);
     const mod = String(body.module || '').trim().slice(0, 40);
     const summary = String(body.summary || '').trim().slice(0, 500);
+    const focusQuestion = String(body.question || '').trim().slice(0, 220);
+    const rawCount = Number(body.count);
+    const count = focusQuestion
+      ? 1
+      : Number.isFinite(rawCount)
+        ? Math.min(3, Math.max(1, Math.round(rawCount)))
+        : 1;
     const existing = Array.isArray(body.existingQuestions)
       ? body.existingQuestions
           .map((q) => String(q || '').trim().slice(0, 160))
           .filter(Boolean)
-          .slice(0, 8)
+          .slice(0, 12)
       : [];
 
     const allow3dAction = mod === 'library';
@@ -75,10 +148,14 @@ router.post('/thinking-question', async (req, res) => {
       `当前主题：${title}${formula ? `（${formula}）` : ''}`,
       mod && `所在模块：${mod}`,
       summary && `当前内容摘要：${summary}`,
-      existing.length
-        ? `以下思考题已展示过，请勿重复，必须从新角度命制：\n${existing.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
-        : '',
-      '请生成 1 道全新的高质量高中化学随堂思考题。',
+      focusQuestion
+        ? `教师当前课堂提问：${focusQuestion}\n请结合当前主题给出引导提示与核心结论。`
+        : existing.length
+          ? `以下思考题已展示过，请勿重复，必须从新角度命制：\n${existing.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+          : '',
+      !focusQuestion && (count > 1
+        ? `请生成 ${count} 道全新的高质量高中化学随堂思考题。`
+        : '请生成 1 道全新的高质量高中化学随堂思考题。'),
     ]
       .filter(Boolean)
       .join('\n');
@@ -86,10 +163,10 @@ router.post('/thinking-question', async (req, res) => {
     let content;
     try {
       const chat = await callDeepSeekChat({
-        system: buildThinkingSystem(allow3dAction),
+        system: buildThinkingSystem(allow3dAction, count, Boolean(focusQuestion)),
         user: userLines,
-        temperature: 0.7,
-        max_tokens: 512,
+        temperature: focusQuestion ? 0.45 : 0.7,
+        max_tokens: count > 1 ? 1200 : 512,
         kind: 'thinking-question',
       });
       content = chat.content;
@@ -104,9 +181,25 @@ router.post('/thinking-question', async (req, res) => {
       return error(res, '模型返回格式异常，请重试', 502);
     }
 
+    if (count > 1) {
+      let batch;
+      try {
+        batch = normalizeThinkingQuestions(parsed, count);
+        if (!allow3dAction) {
+          batch.questions.forEach((item) => { item.action = null; });
+        }
+      } catch (ve) {
+        return error(res, ve.message || '生成的思考题列表内容无效', 502);
+      }
+      return success(res, batch);
+    }
+
     let result;
     try {
-      result = normalizeThinkingQuestion(parsed);
+      const candidate = focusQuestion && parsed && typeof parsed === 'object' && !parsed.question
+        ? { ...parsed, question: focusQuestion }
+        : parsed;
+      result = normalizeThinkingQuestion(candidate);
       if (!allow3dAction) result.action = null;
     } catch (ve) {
       return error(res, ve.message || '生成的思考题内容无效', 502);
@@ -120,6 +213,7 @@ router.post('/thinking-question', async (req, res) => {
 });
 
 router.normalizeThinkingQuestion = normalizeThinkingQuestion;
+router.normalizeThinkingQuestions = normalizeThinkingQuestions;
 router.VALID_ACTIONS = VALID_GUIDE_ACTIONS;
 
 module.exports = router;

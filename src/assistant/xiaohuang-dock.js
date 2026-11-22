@@ -4,37 +4,80 @@
 
 import { createXiaohuangPanel } from './xiaohuang-panel.js';
 
-const HOLD_MS = 220;
-const PULL_DOWN_Y = 14;
+const HOLD_MS = 200;
+const PULL_DOWN_Y = 10;
 const CLICK_DRAG_MAX = 8;
+const SUPPRESS_MS = 900;
 const RETURN_RADIUS = 70;
 const BADGE_SIZE = 56;
 const SAFE_MARGIN = 12;
+const COMPANION_TITLE = '点击打开小黄助教 · 拖回左上角收起';
+const defaultNow = () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now());
 
 let initialized = false;
-let suppressNextClick = false;
-let suppressTimer = 0;
+let suppressUntil = 0;
 
-export function consumeBrandTipSuppression() {
-  if (!suppressNextClick) return false;
-  suppressNextClick = false;
-  if (suppressTimer) { window.clearTimeout(suppressTimer); suppressTimer = 0; }
-  return true;
+export function markBrandTipSuppressed(ms = SUPPRESS_MS, now = defaultNow) {
+  suppressUntil = Math.max(suppressUntil, now() + ms);
 }
 
-function markClickSuppressed() {
-  suppressNextClick = true;
-  if (suppressTimer) window.clearTimeout(suppressTimer);
-  suppressTimer = window.setTimeout(() => { suppressNextClick = false; suppressTimer = 0; }, 450);
+export function isBrandTipSuppressed(now = defaultNow) {
+  return now() < suppressUntil;
+}
+
+export function consumeBrandTipSuppression(now = defaultNow) {
+  return isBrandTipSuppressed(now);
+}
+
+/** 供 #appBrandIcon 使用的点击拦截控制器（可独立单测） */
+export function createBrandClickGuard({
+  holdMs = HOLD_MS,
+  dragThreshold = CLICK_DRAG_MAX,
+  suppressMs = SUPPRESS_MS,
+  now = defaultNow,
+  onSuppress,
+} = {}) {
+  let downAt = 0;
+  let startX = 0;
+  let startY = 0;
+  let moved = false;
+  let active = false;
+  let localUntil = 0;
+
+  const suppress = () => {
+    localUntil = Math.max(localUntil, now() + suppressMs);
+    markBrandTipSuppressed(suppressMs, now);
+    onSuppress?.();
+  };
+
+  return {
+    start(x, y) { downAt = now(); startX = x; startY = y; moved = false; active = true; },
+    move(x, y) {
+      if (!active) return false;
+      if (!moved && Math.hypot(x - startX, y - startY) > dragThreshold) { moved = true; suppress(); }
+      return moved;
+    },
+    triggerHold() { if (active) suppress(); },
+    end() {
+      if (!active) return false;
+      active = false;
+      if (moved || now() - downAt >= holdMs) { suppress(); return true; }
+      return false;
+    },
+    isSuppressed() { return now() < localUntil || isBrandTipSuppressed(now); },
+    handleClickCapture(e) {
+      if (!this.isSuppressed()) return false;
+      e?.preventDefault?.();
+      e?.stopImmediatePropagation?.();
+      return true;
+    },
+  };
 }
 
 function clampPos(left, top) {
   const maxL = Math.max(SAFE_MARGIN, window.innerWidth - BADGE_SIZE - SAFE_MARGIN);
   const maxT = Math.max(SAFE_MARGIN, window.innerHeight - BADGE_SIZE - SAFE_MARGIN);
-  return {
-    left: Math.round(Math.min(Math.max(SAFE_MARGIN, left), maxL)),
-    top: Math.round(Math.min(Math.max(SAFE_MARGIN, top), maxT)),
-  };
+  return { left: Math.round(Math.min(Math.max(SAFE_MARGIN, left), maxL)), top: Math.round(Math.min(Math.max(SAFE_MARGIN, top), maxT)) };
 }
 
 const centerOf = (r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
@@ -59,10 +102,7 @@ function createTetherOverlay() {
       line.setAttribute('x2', String(Math.round(x2)));
       line.setAttribute('y2', String(Math.round(y2)));
     },
-    hide() {
-      svg.setAttribute('hidden', '');
-      svg.style.display = 'none';
-    },
+    hide() { svg.setAttribute('hidden', ''); svg.style.display = 'none'; },
   };
 }
 
@@ -77,7 +117,7 @@ export function initXiaohuangDock({ onSummon } = {}) {
   companion.className = 'xh-companion';
   companion.setAttribute('role', 'button');
   companion.setAttribute('tabindex', '0');
-  companion.setAttribute('title', '点击打开小黄助教 · 拖回左上角收起');
+  companion.setAttribute('title', COMPANION_TITLE);
   companion.setAttribute('aria-label', '小黄随堂助教，点击打开面板，拖回左上角或双击收起');
   companion.hidden = true;
   companion.innerHTML = `
@@ -90,12 +130,27 @@ export function initXiaohuangDock({ onSummon } = {}) {
   const imgEl = companion.querySelector('.xh-companion-img');
   const closeBtn = companion.querySelector('.xh-dock-close');
   const tether = createTetherOverlay();
-  const panel = createXiaohuangPanel({ onClose: () => companion.classList.remove('is-panel-open') });
+  const setPanelOpenState = (open) => {
+    companion.classList.toggle('is-panel-open', open);
+    if (open) companion.removeAttribute('title');
+    else companion.setAttribute('title', COMPANION_TITLE);
+  };
+  const panel = createXiaohuangPanel({ onClose: () => setPanelOpenState(false) });
 
   let dockedOut = false;
   let posLeft = 24;
   let posTop = 88;
   let clickGuardUntil = 0;
+  let draggingBrand = false;
+
+  const brandGuard = createBrandClickGuard({ onSuppress: () => onSummon?.() });
+  const suppressBrandClick = (e) => {
+    if (draggingBrand || e.target === brandIcon || brandIcon.contains?.(e.target)) {
+      brandGuard.handleClickCapture(e);
+    }
+  };
+  brandIcon.addEventListener('click', suppressBrandClick, true);
+  window.addEventListener('click', suppressBrandClick, true);
 
   const syncAvatar = () => {
     const src = brandIcon.getAttribute('src') || '/brand-avatar.png';
@@ -126,17 +181,18 @@ export function initXiaohuangDock({ onSummon } = {}) {
     tether.hide();
     dockedOut = false;
     brandIcon.classList.remove('xh-brand-pulling', 'xh-brand-pressing', 'xh-return-target');
-    companion.classList.remove('is-visible', 'is-dragging', 'is-returning', 'is-panel-open');
+    companion.classList.remove('is-visible', 'is-dragging', 'is-returning');
+    setPanelOpenState(false);
     companion.hidden = true;
   }
 
   function togglePanel() {
     if (!dockedOut) return;
     panel.toggle(companion.getBoundingClientRect());
-    companion.classList.toggle('is-panel-open', panel.isOpen());
+    setPanelOpenState(panel.isOpen());
   }
 
-  // 1. 左上角 #appBrandIcon：短点小知识，长按(≥220ms)或下拉(>14px)召唤小黄
+  // 1. 左上角 #appBrandIcon：短点小知识，长按(≥200ms)或拖拽(>8px)立即抑制 click 并召唤小黄
   brandIcon.addEventListener('pointerdown', (downEv) => {
     if (downEv.pointerType === 'mouse' && downEv.button !== 0) return;
     const pointerId = downEv.pointerId;
@@ -148,12 +204,14 @@ export function initXiaohuangDock({ onSummon } = {}) {
     let everLeftHome = false;
     const wasDockedOut = dockedOut;
 
+    brandGuard.start(startX, startY);
     brandIcon.classList.add('xh-brand-pressing');
+
     const enterPull = (cx, cy) => {
       if (pullActive) return;
       pullActive = true;
-      markClickSuppressed();
-      onSummon?.();
+      draggingBrand = true;
+      brandGuard.triggerHold();
       brandIcon.classList.remove('xh-brand-pressing');
       brandIcon.classList.add('xh-brand-pulling');
       panel.close();
@@ -169,11 +227,11 @@ export function initXiaohuangDock({ onSummon } = {}) {
       if (ev.pointerId !== pointerId) return;
       lastX = ev.clientX;
       lastY = ev.clientY;
-      const dx = lastX - startX;
       const dy = lastY - startY;
+      const moved = brandGuard.move(lastX, lastY);
       if (!pullActive) {
-        if (dy > PULL_DOWN_Y) { window.clearTimeout(holdTimer); enterPull(lastX, lastY); }
-        else if (Math.hypot(dx, dy) > PULL_DOWN_Y) { window.clearTimeout(holdTimer); brandIcon.classList.remove('xh-brand-pressing'); }
+        if (dy > PULL_DOWN_Y || (moved && dy >= -2)) { window.clearTimeout(holdTimer); enterPull(lastX, lastY); }
+        else if (moved) { window.clearTimeout(holdTimer); brandIcon.classList.remove('xh-brand-pressing'); }
         return;
       }
       ev.preventDefault();
@@ -196,6 +254,8 @@ export function initXiaohuangDock({ onSummon } = {}) {
       window.removeEventListener('pointerup', finish);
       window.removeEventListener('pointercancel', finish);
       try { brandIcon.releasePointerCapture(pointerId); } catch { /* ignore */ }
+      draggingBrand = false;
+      brandGuard.end();
       brandIcon.classList.remove('xh-brand-pressing', 'xh-brand-pulling', 'xh-return-target');
       tether.hide();
       if (!pullActive) return;
@@ -209,7 +269,7 @@ export function initXiaohuangDock({ onSummon } = {}) {
         applyPos(rect.left + 8, rect.bottom + 18);
       }
       panel.open(companion.getBoundingClientRect());
-      companion.classList.add('is-panel-open');
+      setPanelOpenState(true);
     };
 
     window.addEventListener('pointermove', onMove, { passive: false });
@@ -261,10 +321,7 @@ export function initXiaohuangDock({ onSummon } = {}) {
       try { companion.releasePointerCapture(pointerId); } catch { /* ignore */ }
       brandIcon.classList.remove('xh-return-target');
       companion.classList.remove('is-dragging', 'is-returning');
-      if (!moved) {
-        if (ev.type === 'pointerup' && performance.now() > clickGuardUntil) togglePanel();
-        return;
-      }
+      if (!moved) { if (ev.type === 'pointerup' && performance.now() > clickGuardUntil) togglePanel(); return; }
       if (distToBrand(posLeft + BADGE_SIZE / 2, posTop + BADGE_SIZE / 2) <= RETURN_RADIUS) dockHome();
       else if (panel.isOpen()) panel.reposition(companion.getBoundingClientRect());
     };

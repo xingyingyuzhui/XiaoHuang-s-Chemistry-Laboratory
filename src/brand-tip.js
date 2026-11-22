@@ -79,14 +79,14 @@ function unbindOutside() {
 }
 
 export function hideBrandTip() {
+  seq += 1;
+  loading = false;
   clearHideTimer();
   unbindOutside();
   regenerateHandler = null;
   const el = ensureBubble();
   el.classList.remove('is-visible', 'is-loading', 'is-scrollable', 'has-actions');
-  window.setTimeout(() => {
-    if (!el.classList.contains('is-visible')) el.hidden = true;
-  }, 200);
+  el.hidden = true;
 }
 
 function positionBubble(anchor) {
@@ -218,7 +218,9 @@ function showBubble(anchor, opts) {
 
   el.hidden = false;
   el.classList.remove('is-visible');
+  const showSeq = seq;
   requestAnimationFrame(() => {
+    if (showSeq !== seq) return;
     el.classList.add('is-visible');
     positionBubble(anchor);
   });
