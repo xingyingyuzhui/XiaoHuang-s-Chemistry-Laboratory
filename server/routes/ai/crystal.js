@@ -42,18 +42,28 @@ JSON 字段：
   ],
   "bondCutoff": 210,
   "bondRule": "any|hetero|homo",
-  "coordination": { "label": "体心 Ti⁴⁺ 与 6 个面心 O²⁻ 成正八面体配位（CN = 6）", "number": 6, "neighborSpecies": "O" },
+  "coordination": { "centerSpecies": "Ti", "neighborSpecies": "O", "number": 6, "label": "体心 Ti⁴⁺ 与 6 个面心 O²⁻ 成正八面体配位（CN = 6）" },
   "shortestDistance": { "formula": "d(Ti–O) = a / 2", "desc": "体心与面心距离为棱长一半", "pair": [[0.5,0.5,0.5],[0.5,0.5,0]], "valuePm": 191 },
-  "density": { "Z": 1, "molarMass": 135.98, "formulaText": "ρ = (1 × M) / (Nₐ · a³)" },
+  "density": { "Z": 1, "molarMass": 135.94, "formulaText": "ρ = (1 × M) / (Nₐ · a³)" },
   "qa": { "question": "一道贴合高考考点的思考题", "answer": "简明准确的解答" }
 }
 
-硬性规则：
-1. lattice 的 a, b, c 单位为 pm（150～2500）；六方晶系必须设 gamma=120、alpha=90、beta=90。
-2. species 1～5 种，color 用辨识度高的十六进制色（如 #3b82f6、#e03e3e、#22b573、#e6b800）。
-3. basisAtoms 1～24 个，分数坐标 u, v, w 落在 [0, 1) 内，**只需写约化基元**，后端会自动按周期边界把 0 展开到 1（如顶点只写 [0,0,0]，3 个独立面心写 [0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5]，3 个独立棱心写 [0.5,0,0],[0,0.5,0],[0,0,0.5]，体心写 [0.5,0.5,0.5]，六方 HCP 写 [0,0,0] 与 [0.6667,0.3333,0.5]）。
-4. 若为高考抽象字母题（A/B/C），如题未给具体摩尔质量，density.molarMass 可填合理参考值或在 formulaText 用 M 表示。
-5. 只输出 JSON。`;
+硬性规则（违反将被后端数学校验拒绝）：
+1. 单位换算：1 Å = 100 pm！lattice 的 a/b/c 必须用 pm（150～2500，如 NaCl 填 564、金刚石填 357，绝不能填 5.64 或 3.57）；六方晶系必须 gamma=120、alpha=90、beta=90。
+2. 配色遵循教科书 CPK 规范：C=#3f4654, O=#e03e3e, N=#3b6ef5, H=#eef2f6, Cl=#22b573, F=#73c255, S=#e6b800, Si=#7b88a8, Cu=#d97742, Au=#e6b800, Fe=#7d8a99, Na=#8b5cf6(离子)/#c8d0da(金属), Ca=#5bb85d, Ti=#738294, Mg=#8fa3b8, Zn=#7d8a99, B=#e879a0, I=#8b46a8；仅当题目是 A/B/C 或 X/Y/Z 抽象字母题时自选高对比色。
+3. 必须采用教科书 [0,0,0] 原点约化基元（禁止使用 Materials Project 偏移原点，如 HCP 禁写 [1/3,2/3,1/4]，金刚石禁写 [1/8,1/8,1/8]）。后端会自动把 0 周期展开到 1。常用标准基元：
+   - SC: [0,0,0]；BCC: [0,0,0],[0.5,0.5,0.5]
+   - FCC/Cu₃Au: A:[0,0,0], B:[0.5,0.5,0],[0.5,0,0.5],[0,0.5,0.5]
+   - NaCl: Cl:[0,0,0]+3面心, Na:[0.5,0,0],[0,0.5,0],[0,0,0.5],[0.5,0.5,0.5]
+   - CsCl: Cl:[0,0,0], Cs:[0.5,0.5,0.5]
+   - 金刚石/ZnS: A:[0,0,0]+3面心, B:[0.25,0.25,0.25],[0.75,0.75,0.25],[0.75,0.25,0.75],[0.25,0.75,0.75]
+   - CaF₂/Li₂O: A:[0,0,0]+3面心, B:全部8个四面体位(±0.25)
+   - CaTiO₃: Ca:[0,0,0], Ti:[0.5,0.5,0.5], O:3面心
+   - HCP(gamma=120): [0,0,0],[0.6667,0.3333,0.5]
+   - 纤锌矿(gamma=120): A:[0,0,0],[0.6667,0.3333,0.5], B:[0,0,0.375],[0.6667,0.3333,0.875]
+4. 化学计量自检：按均摊法计算出的各粒子数目之比必须严格等于 formula 的下标比；多原子离子（如 S₂²⁻、CO₃²⁻）不要把同一离子拆裂到不匹配的坐标，且任意两粒子周期最小间距不得小于 100 pm（含 H 不小于 70 pm）。
+5. bondCutoff 为最近邻主成键距离的 ~1.12 倍（单位 pm，切勿填成晶胞棱长 a）；coordination 建议提供 centerSpecies 与 neighborSpecies。
+6. 若为高考抽象字母题（A/B/C），题未给摩尔质量时可在 formulaText 用 M 表示。只输出 JSON。`;
 
 function buildGuideSystem(mod) {
   const actionHint = mod === 'library'
@@ -81,38 +91,68 @@ ${actionHint}
 }`;
 }
 
+async function generateCrystalWithRetry(prompt, chatFn = callDeepSeekChat) {
+  const first = await chatFn({
+    system: CRYSTAL_GENERATE_SYSTEM,
+    user: `请为以下晶胞需求生成 3D 晶胞 JSON：\n${prompt}`,
+    temperature: 0.2,
+    max_tokens: 2048,
+    kind: 'crystal-generate',
+  });
+  let firstErr;
+  try {
+    return validateCrystalPayload(parseModelJson(first.content));
+  } catch (e) {
+    firstErr = e;
+  }
+
+  const prevSnippet = String(first.content || '').trim().slice(0, 1800);
+  const repair = await chatFn({
+    system: CRYSTAL_GENERATE_SYSTEM,
+    user: [
+      `原始需求：${prompt}`,
+      `上一次输出的 JSON 未通过后端数学校验，报错：${firstErr.message}`,
+      `上一次输出：\n${prevSnippet}`,
+      '请严格修正上述错误（检查单位 pm、去重基元坐标、碰撞间距、化学计量比与理论密度），重新输出一个完整的合法 JSON。',
+    ].join('\n\n'),
+    temperature: 0.1,
+    max_tokens: 2048,
+    kind: 'crystal-generate',
+  });
+
+  let parsed;
+  try {
+    parsed = parseModelJson(repair.content);
+  } catch {
+    const err = new Error('模型返回不是合法 JSON，请重试');
+    err.httpStatus = 502;
+    throw err;
+  }
+  try {
+    return validateCrystalPayload(parsed);
+  } catch (ve) {
+    ve.httpStatus = 400;
+    throw ve;
+  }
+}
+
 router.post('/crystal-generate', async (req, res) => {
   try {
     const prompt = String(req.body?.prompt || '').trim();
     if (!prompt) return badRequest(res, '请输入要生成的晶胞化学式或题目描述');
     if (prompt.length > 500) return badRequest(res, '描述过长，请精简到 500 字以内');
 
-    let content;
-    try {
-      const chat = await callDeepSeekChat({
-        system: CRYSTAL_GENERATE_SYSTEM,
-        user: `请为以下晶胞需求生成 3D 晶胞 JSON：\n${prompt}`,
-        temperature: 0.2,
-        max_tokens: 2048,
-        kind: 'crystal-generate',
-      });
-      content = chat.content;
-    } catch (err) {
-      return mapAiError(res, err, 'DeepSeek 晶胞生成请求失败');
-    }
-
-    let parsed;
-    try {
-      parsed = parseModelJson(content);
-    } catch {
-      return error(res, '模型返回不是合法 JSON，请重试', 502);
-    }
-
     let crystalSpec;
     try {
-      crystalSpec = validateCrystalPayload(parsed);
-    } catch (ve) {
-      return badRequest(res, ve.message || '生成的晶胞结构不合法，请换常见晶体或补充晶胞参数重试');
+      crystalSpec = await generateCrystalWithRetry(prompt);
+    } catch (err) {
+      if (err?.httpStatus === 400) {
+        return badRequest(res, err.message || '生成的晶胞结构不合法，请换常见晶体或补充晶胞参数重试');
+      }
+      if (err?.httpStatus === 502) {
+        return error(res, err.message || '模型返回不是合法 JSON，请重试', 502);
+      }
+      return mapAiError(res, err, 'DeepSeek 晶胞生成请求失败');
     }
 
     return success(res, crystalSpec, '生成成功');
@@ -176,5 +216,8 @@ router.post('/crystal-guide', async (req, res) => {
     return error(res, err.message || 'AI 晶体助教请求失败');
   }
 });
+
+router.CRYSTAL_GENERATE_SYSTEM = CRYSTAL_GENERATE_SYSTEM;
+router.generateCrystalWithRetry = generateCrystalWithRetry;
 
 module.exports = router;

@@ -5,6 +5,7 @@ const { success, error, badRequest } = require('../../utils/response');
 const { normalizeApiBase, normalizeModel } = require('../../utils/ai-config');
 const { validateMoleculePayload, rejectComplexPrompt } = require('../../utils/molecule-validate');
 const { callDeepSeekChat } = require('../../services/ai/chat-service');
+const { parseModelJson } = require('../../services/ai/response-parser');
 
 router.post('/generate', async (req, res) => {
   try {
@@ -97,24 +98,12 @@ JSON 字段：
       return error(res, e.message || 'DeepSeek 请求失败', status >= 400 ? status : 502);
     }
 
-    // 提取 JSON
+    // 提取 JSON（统一使用 response-parser，修复未导入 fixJson 导致的 ReferenceError）
     let parsed;
     try {
-      parsed = JSON.parse(content.trim());
-    } catch (e1) {
-      let s = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-      try {
-        parsed = JSON.parse(s);
-      } catch (e2) {
-        const a = s.indexOf('{');
-        const b = s.lastIndexOf('}');
-        if (a >= 0 && b > a) {
-          let jsonStr = fixJson(s.slice(a, b + 1));
-          parsed = JSON.parse(jsonStr);
-        } else {
-          return error(res, '模型返回不是合法 JSON', 502);
-        }
-      }
+      parsed = parseModelJson(content);
+    } catch {
+      return error(res, '模型返回不是合法 JSON', 502);
     }
 
     // 验证 + 几何松弛 + 质量检查（fromAi 更严格）
