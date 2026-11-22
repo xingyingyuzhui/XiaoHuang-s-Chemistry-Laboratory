@@ -34,7 +34,7 @@ function esc(str) {
 
 function isMissingKeyError(err) {
   const msg = String(err?.message || '');
-  return err?.status === 400 || /key|密钥|未配置|api\s*key/i.test(msg);
+  return /key|密钥|未配置|api\s*key/i.test(msg);
 }
 
 /**
