@@ -92,7 +92,7 @@ export function createCrystalViewer(container) {
   const frameCameraForTiles = (count, opts) => frameCamera(count, null, opts);
   const resetCamera = (opts) => frameCamera(tileCount, HOME_CAM_DIR, opts);
   const resetSliceFlags = () => { sliced = false; exploded = false; explodeProgress = 0; targetExplode = 0; };
-  const applyFrameVisibility = () => { worldRoot.traverse((c) => { if (c.isLineSegments) c.visible = showFrame; }); };
+  const applyFrameVisibility = () => { worldRoot.traverse((c) => { if (c.isLineSegments && !c.userData?.isMolecularWire) c.visible = showFrame; }); };
 
   function exitSupercellIfNeeded() {
     const wasTiled = tileCount > 1;

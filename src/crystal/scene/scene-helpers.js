@@ -7,6 +7,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { getViewerStyle, getShadowTexture, currentThemeId } from '../../molecule/viewer-style.js';
 import { fracToCartesian, getCellCorners, computeBonds, computeCellBoundRadius } from '../math/lattice.js';
+import { detectMolecularPrototype, createMolecularNodeMesh } from './molecular-nodes.js';
 
 export const CELL_SCALE = 2.4;
 export const FRAME_MARGIN = 1.54;
@@ -142,9 +143,7 @@ export function getAtomRadius(sp, displayMode, isSliced) {
 }
 
 export function computeCrystalFraming(
-  crystal,
-  camera,
-  { tileCount = 1, displayMode = 'ball-stick', margin = FRAME_MARGIN } = {},
+  crystal, camera, { tileCount = 1, displayMode = 'ball-stick', margin = FRAME_MARGIN } = {},
 ) {
   const radius = computeCellBoundRadius(crystal, { tileCount, displayMode, scale: CELL_SCALE });
   const halfV = THREE.MathUtils.degToRad((camera?.fov || 38) * 0.5);
@@ -251,7 +250,9 @@ export function createWireframe(lattice, color, opacity = 0.7) {
   }
   const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-  return new THREE.LineSegments(geom, new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
+  const line = new THREE.LineSegments(geom, new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
+  line.userData.isCellFrame = true;
+  return line;
 }
 
 export function disposeObjectTree(obj) {
@@ -275,9 +276,8 @@ export function disposeGroupWithExtras(group) {
 export function buildNormalCellGroup(
   crystal,
   {
-    displayMode = 'ball-stick', sharedUnitSphere, sharedUnitBox,
-    style = getViewerStyle(currentThemeId()), dimAll = false, opacity = 1,
-    atomOpacityMap = null, skipPositions = null, cellShift = null,
+    displayMode = 'ball-stick', sharedUnitSphere, sharedUnitBox, style = getViewerStyle(currentThemeId()),
+    dimAll = false, opacity = 1, atomOpacityMap = null, skipPositions = null, cellShift = null,
   } = {},
 ) {
   const group = new THREE.Group();
@@ -308,6 +308,14 @@ export function buildNormalCellGroup(
     const r = getAtomRadius(sp, displayMode, false);
     const customOp = atomOpacityMap ? atomOpacityMap.get(i) : undefined;
     const op = customOp ?? (dimAll ? 0.22 : opacity);
+    const proto = detectMolecularPrototype(sp, crystal);
+    if (proto) {
+      const node = createMolecularNodeMesh(proto, {
+        radius: r, color: resolveAtomColorHex(sp, style), style, index: i,
+        position: pos, frac: a, displayMode, opacity: op, sharedUnitSphere,
+      });
+      if (node) { group.add(node); continue; }
+    }
     const mesh = new THREE.Mesh(atomGeom, getMat(sp, customOp));
     mesh.userData.sharedGeometry = true;
     mesh.userData.sharedMaterial = !atomOpacityMap;

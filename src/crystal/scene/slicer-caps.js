@@ -28,6 +28,11 @@ import {
   createCylinderBetween,
   createWireframe,
 } from './scene-helpers.js';
+import {
+  detectMolecularPrototype,
+  createMolecularNodeMesh,
+  getMolecularSliceCapRadius,
+} from './molecular-nodes.js';
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
@@ -177,29 +182,46 @@ export function buildSlicedCellGroup(
     const atomGroup = new THREE.Group();
     atomGroup.position.copy(basePos);
 
-    // 1) 外球面：边界原子挂 6 个局部裁剪面；体内原子不挂裁剪面
-    const sphereMat = makeAtomMaterial(
-      style,
-      sp,
-      crystal,
-      interior ? { side: THREE.FrontSide } : { clippingPlanes: atomPlanes, side: THREE.FrontSide },
-    );
-    const sphereMesh = new THREE.Mesh(sharedUnitSphere, sphereMat);
-    sphereMesh.userData.sharedGeometry = true;
-    sphereMesh.scale.setScalar(radius);
-    atomGroup.add(sphereMesh);
+    // 1) 外球面 / 分子节点：边界原子挂 6 个局部裁剪面；体内原子不挂裁剪面
+    const proto = detectMolecularPrototype(sp, crystal);
+    if (proto) {
+      const node = createMolecularNodeMesh(proto, {
+        radius,
+        color: resolveAtomColorHex(sp, style),
+        style,
+        index: i,
+        frac: a,
+        clippingPlanes: atomPlanes,
+        displayMode,
+        isSliced: true,
+        sharedUnitSphere,
+      });
+      if (node) atomGroup.add(node);
+    } else {
+      const sphereMat = makeAtomMaterial(
+        style,
+        sp,
+        crystal,
+        interior ? { side: THREE.FrontSide } : { clippingPlanes: atomPlanes, side: THREE.FrontSide },
+      );
+      const sphereMesh = new THREE.Mesh(sharedUnitSphere, sphereMat);
+      sphereMesh.userData.sharedGeometry = true;
+      sphereMesh.scale.setScalar(radius);
+      atomGroup.add(sphereMesh);
+    }
 
     // 2) 实心截面封盖（Solid Cross-Section Caps，仅边界原子生成）
     const hitNormals = [];
+    const capBaseR = proto ? getMolecularSliceCapRadius(proto, radius, displayMode) : radius;
     if (!interior) {
       for (let k = 0; k < baseClipPlanes.length; k++) {
         const bp = baseClipPlanes[k];
         const dist = bp.distanceToPoint(basePos);
-        if (Math.abs(dist) < radius - 1e-4) {
-          const capR = Math.sqrt(Math.max(0, radius * radius - dist * dist));
+        if (Math.abs(dist) < radius - 1e-4) hitNormals.push(bp.normal);
+        if (capBaseR > 0 && Math.abs(dist) < capBaseR - 1e-4) {
+          const capR = Math.sqrt(Math.max(0, capBaseR * capBaseR - dist * dist));
           if (capR < 0.015) continue;
 
-          hitNormals.push(bp.normal);
           const otherPlanes = atomPlanes.filter((_, idx) => idx !== k);
           const capMat = makeCapMaterial(style, atomColor, otherPlanes, tokens.isDark);
           const capGeom = new THREE.CircleGeometry(capR * 1.004, 42);

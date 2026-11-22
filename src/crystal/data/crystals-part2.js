@@ -41,18 +41,6 @@ function buildTetraBridges(species, fractions) {
   return out;
 }
 
-const CO2_T = 0.1191;
-const CO2_O_FRACS = [
-  [CO2_T, CO2_T, CO2_T],
-  [1 - CO2_T, 1 - CO2_T, 1 - CO2_T],
-  [0.5 + CO2_T, 0.5 - CO2_T, 1 - CO2_T],
-  [0.5 - CO2_T, 0.5 + CO2_T, CO2_T],
-  [0.5 - CO2_T, CO2_T, 0.5 - CO2_T],
-  [0.5 + CO2_T, 1 - CO2_T, 0.5 + CO2_T],
-  [1 - CO2_T, 0.5 - CO2_T, 0.5 + CO2_T],
-  [CO2_T, 0.5 + CO2_T, 0.5 - CO2_T],
-];
-
 const I2_FRACS = [
   [0.349, 0, 0.368], [0.151, 0, 0.132],
   [0.651, 0, 0.868], [0.849, 0, 0.632],
@@ -160,19 +148,16 @@ export const CRYSTALS_PART2 = [
     category: 'molecular',
     subtitle: '面心立方分子晶体 · 范德华力',
     system: 'cubic',
-    lattice: { a: 562.4, b: 562.4, c: 562.4, alpha: 90, beta: 90, gamma: 90 },
-    species: [
-      { id: 'C', symbol: 'C', color: 0x3f4654, ballRadius: 0.16, spaceRadius: 0.34, countPerCell: 4 },
-      { id: 'O', symbol: 'O', color: 0xe03e3e, ballRadius: 0.14, spaceRadius: 0.32, countPerCell: 8 },
-    ],
-    atoms: expandPeriodic([...toBasis('C', FCC_FRACS), ...toBasis('O', CO2_O_FRACS)]),
-    bondCutoff: 135,
+    lattice: { a: 572, b: 572, c: 572, alpha: 90, beta: 90, gamma: 90 },
+    species: [{ id: 'CO2', symbol: 'CO₂', color: 0x3f4654, ballRadius: 0.36, spaceRadius: 0.68, countPerCell: 4 }],
+    atoms: expandPeriodic(toBasis('CO2', FCC_FRACS)),
+    bondCutoff: 0,
     bonds: null,
-    bondRule: 'hetero',
-    coordination: { centerIndex: 8, label: '每个 CO₂ 分子周围有 12 个紧邻 CO₂ 分子（面心立方密堆积，CN = 12）', number: 12, neighborSpecies: 'C' },
-    shortestDistance: { formula: 'd(CO₂–CO₂) = √2/2 · a', desc: '相邻 CO₂ 分子质心最短距离约 398 pm，4 个 CO₂ 分子分别沿 4 条体对角线取向', pair: [[0, 0, 0], [0.5, 0.5, 0]], valuePm: 398 },
-    density: { Z: 4, molarMass: 44.01, formulaText: 'ρ = (4 × M) / (Nₐ · a³)', valueGcm3: 1.64 },
-    averagingFormula: 'C：8×1/8 + 6×1/2 = 4；O：8×1 = 8（即 4 个 CO₂ 分子）',
+    bondRule: 'any',
+    coordination: { centerIndex: 8, label: '每个 CO₂ 分子周围有 12 个紧邻 CO₂ 分子（面心立方密堆积，CN = 12）', number: 12, neighborSpecies: 'CO2' },
+    shortestDistance: { formula: 'd(CO₂–CO₂) = √2/2 · a', desc: '相邻 CO₂ 分子质心最短距离约 404 pm，4 个 CO₂ 分子分别沿 4 条体对角线取向', pair: [[0, 0, 0], [0.5, 0.5, 0]], valuePm: 404 },
+    density: { Z: 4, molarMass: 44.01, formulaText: 'ρ = (4 × M) / (Nₐ · a³)', valueGcm3: 1.56 },
+    averagingFormula: 'CO₂：8×1/8 + 6×1/2 = 4（每晶胞含 4 个完整线性 O=C=O 分子，沿 4 条体对角线取向）',
     hexPrismHighlight: false,
     qa: { question: 'CO₂ 和 SiO₂ 同为第 IVA 族元素的二氧化物，为什么干冰常温升华而 SiO₂ 熔点超过 1700°C？', answer: 'CO₂ 形成以弱范德华力结合的分子晶体，升华只需克服分子间作用力；SiO₂ 形成三维 Si–O 共价网状晶体，熔化必须断裂强共价键。' },
   },

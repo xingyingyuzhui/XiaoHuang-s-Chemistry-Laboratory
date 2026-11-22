@@ -43,6 +43,7 @@ export function createSupercellTiler({
   let supercellGroup = null;
   let hexPrismGroup = null;
   const tileMap = new Map();
+  let lastSyncSig = '';
   const centerTarget = new THREE.Vector3();
   const centerCurrent = new THREE.Vector3();
 
@@ -143,6 +144,9 @@ export function createSupercellTiler({
   }
 
   function syncTiles(crystal, tileCount, displayMode, style = getViewerStyle(currentThemeId())) {
+    const sig = `${crystal?.id || crystal?.formula || ''}|${displayMode}|${style?.id || ''}`;
+    if (lastSyncSig && lastSyncSig !== sig) clear();
+    lastSyncSig = sig;
     if (!supercellGroup) {
       supercellGroup = new THREE.Group();
       worldRoot.add(supercellGroup);
@@ -244,6 +248,7 @@ export function createSupercellTiler({
       supercellGroup = null;
     }
     tileMap.clear();
+    lastSyncSig = '';
     clearHexPrism();
     centerTarget.set(0, 0, 0);
   }
