@@ -89,13 +89,6 @@
 .cl-glass-pill.is-active { background: rgba(56, 189, 248, 0.22); border-color: var(--cl-cyan); color: #e0f2fe; }
 .cl-drawer-btn { border-color: rgba(56, 189, 248, 0.34); background: rgba(56, 189, 248, 0.12); color: #bae6fd; }
 
-/* Slim Translucent Cue Ribbon */
-.cl-cue-ribbon { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 7px 14px; background: rgba(12, 22, 42, 0.86); border-bottom: 1px solid rgba(56, 189, 248, 0.18); z-index: 12; }
-.cl-cue-tag { flex-shrink: 0; padding: 2px 7px; border-radius: 999px; background: rgba(56, 189, 248, 0.2); color: #7dd3fc; font-size: 0.7rem; font-weight: 800; }
-.cl-cue-text { flex: 1 1 auto; margin: 0; font-size: 0.79rem; line-height: 1.4; color: #dbeafe; }
-.cl-cue-close { width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--cl-muted); font-size: 1rem; cursor: pointer; }
-.cl-cue-close:hover { background: rgba(255, 255, 255, 0.08); color: #f8fafc; }
-
 /* Zone 2: Full-Height 3D Stage + Safe-Zone Caption Rail */
 .cl-stage-zone { position: relative; flex: 1 1 0; min-height: 0; width: 100%; overflow: hidden; }
 .cl-stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }

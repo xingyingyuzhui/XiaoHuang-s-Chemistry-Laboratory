@@ -83,9 +83,6 @@ export function createCrystalLessonDrawer({
         <label class="cl-d-field"><span>环节标题</span>
           <input type="text" class="cl-d-input" data-drawer-field="slide-title" maxlength="48" value="${esc(cur.title)}" />
         </label>
-        <label class="cl-d-field"><span>教师讲授提词（顶栏「提词」可见）</span>
-          <textarea class="cl-d-textarea" data-drawer-field="slide-cue" rows="3" maxlength="280" placeholder="写下停顿提问时机或观察引导…">${esc(cur.cue)}</textarea>
-        </label>
         ${cur.qa?.question ? `<div class="cl-d-qa"><strong>思考题</strong><span>${esc(cur.qa.question)}</span></div>` : ''}
       </div>` : ''}`;
   }
@@ -216,8 +213,6 @@ export function createCrystalLessonDrawer({
         if (el) el.textContent = updated.title;
         onMetaChanged?.();
       }
-    } else if (field === 'slide-cue' && store.updateSlide(lesson.id, slide.id, { cue: e.target.value })) {
-      onMetaChanged?.();
     }
   };
 

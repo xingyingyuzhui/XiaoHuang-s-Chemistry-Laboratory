@@ -36,14 +36,9 @@ export function createCrystalLessonShell({ hostEl } = {}) {
         <strong class="cl-slide-title"></strong>
       </div>
       <div class="cl-topbar-right">
-        <button type="button" class="cl-glass-pill cl-cue-btn" data-act="toggle-cue" aria-expanded="false">提词</button>
         <button type="button" class="cl-glass-pill cl-drawer-btn" data-act="toggle-drawer" aria-expanded="false">备课 / AI</button>
       </div>
     </header>
-    <div class="cl-cue-ribbon" hidden>
-      <span class="cl-cue-tag">提词</span><p class="cl-cue-text"></p>
-      <button type="button" class="cl-cue-close" data-act="close-cue" aria-label="收起提词">×</button>
-    </div>
     <main class="cl-stage-zone">
       <div class="cl-stage-canvas"></div>
       <div class="cl-safe-rail" aria-live="polite" hidden>
@@ -61,12 +56,12 @@ export function createCrystalLessonShell({ hostEl } = {}) {
   </div>`;
 
   const [
-    triggerBtn, triggerTextEl, menuEl, dotsEl, slideTitleEl, cueBtn, drawerBtn,
-    cueRibbonEl, cueTextEl, stageCanvasEl, safeRailEl, dualLabelsEl, leftBadgeEl,
+    triggerBtn, triggerTextEl, menuEl, dotsEl, slideTitleEl, drawerBtn,
+    stageCanvasEl, safeRailEl, dualLabelsEl, leftBadgeEl,
     rightBadgeEl, statusPillEl, stageControlsEl, prevBtn, nextBtn, backdropEl, drawerHostEl,
   ] = [
     '.cl-lesson-trigger', '.cl-lesson-trigger-text', '.cl-lesson-menu', '.cl-dots', '.cl-slide-title',
-    '.cl-cue-btn', '.cl-drawer-btn', '.cl-cue-ribbon', '.cl-cue-text', '.cl-stage-canvas',
+    '.cl-drawer-btn', '.cl-stage-canvas',
     '.cl-safe-rail', '.cl-dual-labels', '.cl-dual-badge.is-left', '.cl-dual-badge.is-right',
     '.cl-status-pill', '.cl-stage-controls', '[data-act="prev"]', '[data-act="next"]',
     '.cl-drawer-backdrop', '.cl-drawer-host',
@@ -74,7 +69,7 @@ export function createCrystalLessonShell({ hostEl } = {}) {
 
   const panelAiEl = document.getElementById('panel-ai');
   const store = createCrystalLessonStore();
-  let slideIdx = 0, menuOpen = false, cueOpen = false, drawerOpen = false;
+  let slideIdx = 0, menuOpen = false, drawerOpen = false;
   let activeStage = null, mountedSlideId = '', sectionActive = false, destroyed = false, resizeRaf = 0;
   let panelVisible = panelAiEl ? !panelAiEl.hidden : true;
 
@@ -113,10 +108,6 @@ export function createCrystalLessonShell({ hostEl } = {}) {
     dotsEl.innerHTML = slides.map((s, i) => `<button type="button" class="cl-dot${i === slideIdx ? ' is-active' : ''}" data-jump-slide="${i}" role="tab" aria-selected="${i === slideIdx}" title="${esc(s.title)}" aria-label="第 ${i + 1} 步：${esc(s.title)}"></button>`).join('');
     prevBtn.disabled = slideIdx <= 0;
     nextBtn.disabled = slideIdx >= slides.length - 1;
-    cueTextEl.textContent = slide?.cue || '暂无讲授提词，可点击「备课 / AI」为本环节补充课堂引导。';
-    cueRibbonEl.hidden = !cueOpen;
-    cueBtn.classList.toggle('is-active', cueOpen);
-    cueBtn.setAttribute('aria-expanded', cueOpen ? 'true' : 'false');
     if (menuOpen) renderLessonMenu();
   }
 
@@ -202,8 +193,6 @@ export function createCrystalLessonShell({ hostEl } = {}) {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (!act) return;
     if (act === 'toggle-menu') setMenuOpen(!menuOpen);
-    else if (act === 'toggle-cue') { cueOpen = !cueOpen; syncChrome(); scheduleResize(); }
-    else if (act === 'close-cue') { cueOpen = false; syncChrome(); scheduleResize(); }
     else if (act === 'toggle-drawer') setDrawerOpen(!drawerOpen);
     else if (act === 'close-drawer') setDrawerOpen(false);
     else if (act === 'prev' && slideIdx > 0) mountSlide(slideIdx - 1);
@@ -216,7 +205,6 @@ export function createCrystalLessonShell({ hostEl } = {}) {
     if (e.key === 'Escape') {
       if (menuOpen) setMenuOpen(false);
       else if (drawerOpen) setDrawerOpen(false);
-      else if (cueOpen) { cueOpen = false; syncChrome(); scheduleResize(); }
       return;
     }
     if (drawerOpen) return;
