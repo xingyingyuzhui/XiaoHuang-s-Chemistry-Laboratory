@@ -15,4 +15,5 @@
 @import './_ai-classroom/mastery.css' layer(components);
 @import './_ai-classroom/lesson-packs.css' layer(components);
 @import './_ai-classroom/quiz-fx.css' layer(components);
+@import './_ai-classroom/crystal-lesson.css' layer(components);
 @import './_ai-classroom/overrides.css' layer(overrides);

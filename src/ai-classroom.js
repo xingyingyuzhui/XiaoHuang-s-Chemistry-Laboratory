@@ -25,46 +25,15 @@ import { CHEM_TOPICS } from './data/chem-topics.js';
 const $ = (sel) => document.querySelector(sel);
 
 const AI_SECTIONS = [
-  {
-    id: 'quiz',
-    title: '智能出题',
-    desc: '单选练习 · 提示与解析 · 交卷报告',
-  },
-  {
-    id: 'offline',
-    title: '离线题库',
-    desc: '历年高考题源 · 不需 AI Key',
-  },
-  {
-    id: 'wrong',
-    title: '错题本',
-    desc: '重练做对后自动移出',
-  },
-  {
-    id: 'lab',
-    title: '实验探究',
-    desc: '实验脚本 · 交互式预习',
-  },
-  {
-    id: 'balance',
-    title: '分步配平',
-    desc: '脚本演示 · 逐步学配平',
-  },
-  {
-    id: 'mastery',
-    title: '知识地图',
-    desc: '知识点掌握度 · 薄弱分析',
-  },
-  {
-    id: 'rollcall',
-    title: '随机点名',
-    desc: '名单与点名',
-  },
-  {
-    id: 'lessonpack',
-    title: '备课包',
-    desc: '教学材料打包 · 导入导出',
-  },
+  { id: 'quiz', title: '智能出题', desc: '单选练习 · 提示与解析 · 交卷报告' },
+  { id: 'offline', title: '离线题库', desc: '历年高考题源 · 不需 AI Key' },
+  { id: 'wrong', title: '错题本', desc: '重练做对后自动移出' },
+  { id: 'lab', title: '实验探究', desc: '实验脚本 · 交互式预习' },
+  { id: 'balance', title: '分步配平', desc: '脚本演示 · 逐步学配平' },
+  { id: 'crystal', title: '晶体探究', desc: '认识晶体 · 性质对比 · AI 深化' },
+  { id: 'mastery', title: '知识地图', desc: '知识点掌握度 · 薄弱分析' },
+  { id: 'rollcall', title: '随机点名', desc: '名单与点名' },
+  { id: 'lessonpack', title: '备课包', desc: '教学材料打包 · 导入导出' },
 ];
 
 let config = {
@@ -169,6 +138,26 @@ const balanceShell = createBalanceShellController({
   aiApi,
 });
 
+let crystalShell = null;
+let crystalLoadPromise = null;
+
+async function ensureCrystalShell() {
+  if (crystalShell) return crystalShell;
+  if (!crystalLoadPromise) {
+    crystalLoadPromise = import('./ai-classroom/crystal-lesson-shell.js')
+      .then(({ createCrystalLessonShell }) => {
+        crystalShell = createCrystalLessonShell({ hostEl: $('#aiSectionCrystal') });
+        return crystalShell;
+      })
+      .catch((err) => {
+        crystalLoadPromise = null;
+        console.error('[classroom-crystal] load failed:', err);
+        return null;
+      });
+  }
+  return crystalLoadPromise;
+}
+
 /** 错题本角标：数字变化时跳一下，增加时弹出 +N */
 let wrongBookBadgeKnown = false;
 function setWrongBookBadge(count) {
@@ -223,6 +212,7 @@ async function confirmLeaveSectionIfNeeded(fromId) {
   }
   if (fromId === 'balance') balanceShell.onDeactivate?.();
   if (fromId === 'lab') labShell.onDeactivate?.();
+  if (fromId === 'crystal') crystalShell?.onLeave?.();
   return true;
 }
 
@@ -235,6 +225,13 @@ async function selectSection(id) {
         await balanceShell.init();
       } else {
         balanceShell.render();
+      }
+    }
+    if (id === 'crystal') {
+      const shell = await ensureCrystalShell();
+      if (shell && currentSection === 'crystal') {
+        shell.onEnter();
+        shell.resize();
       }
     }
     return;
@@ -253,6 +250,7 @@ async function selectSection(id) {
   const lab = $('#aiSectionLab');
   const lessonpack = $('#aiSectionLessonPack');
   const balance = $('#aiSectionBalance');
+  const crystal = $('#aiSectionCrystal');
   if (quiz) quiz.hidden = id !== 'quiz';
   if (offline) offline.hidden = id !== 'offline';
   if (wrong) wrong.hidden = id !== 'wrong';
@@ -261,6 +259,7 @@ async function selectSection(id) {
   if (lab) lab.hidden = id !== 'lab';
   if (lessonpack) lessonpack.hidden = id !== 'lessonpack';
   if (balance) balance.hidden = id !== 'balance';
+  if (crystal) crystal.hidden = id !== 'crystal';
   if (id === 'offline') {
     if (!offlineInited) {
       offlineInited = true;
@@ -300,6 +299,15 @@ async function selectSection(id) {
       await balanceShell.init();
     } else {
       balanceShell.render();
+    }
+  }
+  if (id === 'crystal') {
+    const shell = await ensureCrystalShell();
+    if (shell && currentSection === 'crystal') {
+      shell.onEnter();
+      requestAnimationFrame(() => {
+        if (currentSection === 'crystal') shell.resize();
+      });
     }
   }
 }

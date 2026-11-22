@@ -1,0 +1,148 @@
+/* 课堂 · 晶体探究分区（认识晶体 + 晶体的性质）无遮挡布局与横向课程条样式 */
+
+#aiSectionCrystal,
+.ai-section-crystal {
+  --bg: var(--bg-body);
+  --surface: var(--card-elevated);
+  --surface-2: var(--paper);
+  --muted: var(--text-muted);
+  --radius: var(--radius-md);
+  --shadow: var(--shadow-print-sm);
+  --shadow-card: var(--shadow-print);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#aiSectionCrystal[hidden] {
+  display: none !important;
+}
+
+.stage-ai:has(#aiSectionCrystal:not([hidden])) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  min-height: min(78vh, 820px);
+}
+
+.crystal-lesson-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--stage-3d-bg, var(--paper));
+}
+
+/* Row 1: 46px 顶栏（左侧子模块分段切换 + 中右当前课程标题与状态） */
+.crystal-lesson-header {
+  flex: 0 0 46px;
+  height: 46px;
+  gap: 0.75rem;
+}
+
+.crystal-lesson-subseg { flex: 0 0 auto; }
+.crystal-lesson-info { justify-content: flex-end; }
+
+.crystal-lesson-subbtn.is-active {
+  background: var(--accent);
+  border-color: var(--border-ink);
+  color: #ffffff;
+}
+
+/* Row 2: 紧凑单行横向课程胶囊条（避免课堂出现双侧边栏） */
+.crystal-lesson-strip {
+  flex: 0 0 auto;
+  min-width: 0;
+  background: var(--surface, var(--card-elevated));
+  border-bottom: 1px solid var(--border);
+}
+
+.crystal-lesson-strip .crystal-drawer-list {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.42rem 0.85rem;
+  scrollbar-width: thin;
+  scrollbar-gutter: auto;
+}
+
+.crystal-lesson-strip .crystal-drawer-item {
+  flex: 0 0 auto;
+  width: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.72rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border);
+  background: var(--surface-2, var(--paper));
+  box-shadow: none;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.crystal-lesson-strip .crystal-drawer-item:hover {
+  transform: none;
+  border-color: var(--border-ink);
+  background: var(--diagram-soft, var(--surface));
+  box-shadow: none;
+}
+
+.crystal-lesson-strip .crystal-drawer-item.is-active {
+  border-color: var(--border-ink);
+  background: var(--accent);
+  box-shadow: var(--shadow-print-sm);
+}
+
+.crystal-lesson-strip .crystal-drawer-item-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+.crystal-lesson-strip .crystal-drawer-item.is-active .crystal-drawer-item-title { color: #ffffff; }
+.crystal-lesson-strip .crystal-drawer-item-sub { display: none; }
+
+/* Row 3 & 4: 无遮挡开放交互舞台 + 底部专有操作栏 */
+.crystal-lesson-viewport {
+  flex: 1 1 0;
+  min-height: 440px;
+  background: var(--stage-3d-bg, var(--paper));
+}
+
+.crystal-lesson-actionbar { flex: 0 0 auto; }
+
+/* 黑板主题高对比主强调文字 */
+html[data-theme='blackboard'] .crystal-lesson-subbtn.is-active,
+html[data-theme='blackboard'] .crystal-lesson-strip .crystal-drawer-item.is-active .crystal-drawer-item-title {
+  color: #132e26;
+}
+
+@media (max-width: 900px) {
+  .crystal-lesson-header {
+    height: auto;
+    min-height: 46px;
+    flex-basis: auto;
+    flex-wrap: wrap;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .crystal-lesson-info { justify-content: flex-start; }
+  .crystal-lesson-viewport { min-height: 360px; }
+}
