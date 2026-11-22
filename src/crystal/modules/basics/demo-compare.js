@@ -3,7 +3,7 @@
  * 同时重导出 Demo 2（mountSelfFormDemo）保持对外入口兼容。
  */
 
-import { STAGE_BG, setupHiDpiCanvas } from './stage-canvas.js';
+import { setupHiDpiCanvas } from './stage-canvas.js';
 
 export { mountSelfFormDemo } from './demo-selfform.js';
 
@@ -42,7 +42,7 @@ function buildHexPrism() {
   return { verts, faces };
 }
 
-function drawQuartzPrism(ctx, cx, cy, scale, rotY, rotX, prism) {
+function drawQuartzPrism(ctx, cx, cy, scale, rotY, rotX, prism, p) {
   const proj = prism.verts.map((v) => project3D(v, rotY, rotX, cx, cy, scale));
   const sorted = prism.faces
     .map((f) => ({ f, zAvg: f.reduce((s, i) => s + proj[i].z, 0) / f.length }))
@@ -52,16 +52,18 @@ function drawQuartzPrism(ctx, cx, cy, scale, rotY, rotX, prism) {
     ctx.beginPath();
     f.forEach((vi, i) => (i === 0 ? ctx.moveTo(proj[vi].x, proj[vi].y) : ctx.lineTo(proj[vi].x, proj[vi].y)));
     ctx.closePath();
-    const shade = Math.max(0.18, Math.min(0.68, 0.34 + zAvg * 0.24));
-    ctx.fillStyle = `rgba(56, 189, 248, ${shade.toFixed(2)})`;
+    const shade = Math.max(0.22, Math.min(0.68, 0.36 + zAvg * 0.22));
+    ctx.fillStyle = p.isDark
+      ? `rgba(56, 189, 248, ${shade.toFixed(2)})`
+      : `rgba(14, 165, 233, ${(shade * 0.78).toFixed(2)})`;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(224, 242, 254, 0.85)';
+    ctx.strokeStyle = p.isDark ? 'rgba(224, 242, 254, 0.85)' : 'rgba(3, 105, 161, 0.78)';
     ctx.lineWidth = 1.4;
     ctx.stroke();
   }
 }
 
-function drawGlassLump(ctx, cx, cy, scale, rotY) {
+function drawGlassLump(ctx, cx, cy, scale, rotY, p) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.beginPath();
@@ -75,18 +77,24 @@ function drawGlassLump(ctx, cx, cy, scale, rotY) {
   }
   ctx.closePath();
   const grad = ctx.createRadialGradient(-scale * 0.28, -scale * 0.3, scale * 0.08, 0, 0, scale * 1.1);
-  grad.addColorStop(0, 'rgba(253, 230, 138, 0.62)');
-  grad.addColorStop(0.55, 'rgba(245, 158, 11, 0.32)');
-  grad.addColorStop(1, 'rgba(180, 83, 9, 0.16)');
+  if (p.isDark) {
+    grad.addColorStop(0, 'rgba(253, 230, 138, 0.65)');
+    grad.addColorStop(0.55, 'rgba(245, 158, 11, 0.36)');
+    grad.addColorStop(1, 'rgba(180, 83, 9, 0.18)');
+  } else {
+    grad.addColorStop(0, 'rgba(254, 243, 199, 0.88)');
+    grad.addColorStop(0.55, 'rgba(245, 158, 11, 0.42)');
+    grad.addColorStop(1, 'rgba(180, 83, 9, 0.26)');
+  }
   ctx.fillStyle = grad;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(253, 224, 71, 0.68)';
+  ctx.strokeStyle = p.isDark ? 'rgba(253, 224, 71, 0.72)' : 'rgba(180, 83, 9, 0.72)';
   ctx.lineWidth = 1.6;
   ctx.stroke();
 
   ctx.beginPath();
   ctx.ellipse(-scale * 0.28, -scale * 0.24, scale * 0.26, scale * 0.11, -0.5, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+  ctx.fillStyle = p.isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.58)';
   ctx.fill();
   ctx.restore();
 }
@@ -131,16 +139,18 @@ function buildMicroNetworks() {
   return { ordered, disordered };
 }
 
-function drawMicroNetwork(ctx, cx, cy, radius, net, isDisordered, alpha) {
+function drawMicroNetwork(ctx, cx, cy, radius, net, isDisordered, alpha, p) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fillStyle = '#09101f';
+  ctx.fillStyle = p.inset;
   ctx.fill();
   ctx.clip();
 
-  ctx.strokeStyle = isDisordered ? 'rgba(251, 191, 36, 0.52)' : 'rgba(125, 211, 252, 0.65)';
+  ctx.strokeStyle = isDisordered
+    ? (p.isDark ? 'rgba(251, 191, 36, 0.58)' : 'rgba(180, 83, 9, 0.52)')
+    : (p.isDark ? 'rgba(125, 211, 252, 0.68)' : 'rgba(2, 132, 199, 0.56)');
   ctx.lineWidth = 2.2;
   for (const b of net.bonds) {
     const p1 = net.si[b[0]];
@@ -154,16 +164,16 @@ function drawMicroNetwork(ctx, cx, cy, radius, net, isDisordered, alpha) {
   for (const o of net.o) {
     ctx.beginPath();
     ctx.arc(cx + o[0], cy + o[1], 4.2, 0, Math.PI * 2);
-    ctx.fillStyle = '#fb7185';
+    ctx.fillStyle = p.covalent;
     ctx.fill();
   }
   for (const si of net.si) {
     ctx.beginPath();
     ctx.arc(cx + si[0], cy + si[1], 6.4, 0, Math.PI * 2);
-    ctx.fillStyle = isDisordered ? '#fbbf24' : '#38bdf8';
+    ctx.fillStyle = isDisordered ? p.amorphous : p.crystal;
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = p.isDark ? '#ffffff' : p.bg;
+    ctx.lineWidth = 1.2;
     ctx.stroke();
   }
   ctx.restore();
@@ -172,17 +182,15 @@ function drawMicroNetwork(ctx, cx, cy, radius, net, isDisordered, alpha) {
   ctx.globalAlpha = alpha;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.strokeStyle = isDisordered ? '#fbbf24' : '#38bdf8';
+  ctx.strokeStyle = isDisordered ? p.amorphous : p.crystal;
   ctx.lineWidth = 2.4;
   ctx.stroke();
   ctx.restore();
 }
 
 export function mountCompareDemo({ stageEl, controlsEl, setCaption, setLegend }) {
-  const { canvas, ctx, getSize, resize, dispose } = setupHiDpiCanvas(stageEl);
   const prism = buildHexPrism();
   const nets = buildMicroNetworks();
-
   let rotY = 0.55;
   let rotX = 0.28;
   let autoRotate = true;
@@ -194,10 +202,12 @@ export function mountCompareDemo({ stageEl, controlsEl, setCaption, setLegend })
   let lastX = 0;
   let lastY = 0;
 
+  const { canvas, ctx, getSize, getPalette, resize, dispose } = setupHiDpiCanvas(stageEl, () => render());
+
   setLegend([
-    { label: 'Si 原子', color: '#38bdf8' },
-    { label: 'O 原子', color: '#fb7185' },
-    { label: '玻璃无序态', color: '#fbbf24' },
+    { label: 'Si 原子', color: '#0284c7' },
+    { label: 'O 原子', color: '#e11d48' },
+    { label: '无序玻璃', color: '#d97706' },
   ]);
 
   controlsEl.innerHTML = `
@@ -205,14 +215,9 @@ export function mountCompareDemo({ stageEl, controlsEl, setCaption, setLegend })
       <button type="button" class="crystal-seg-btn is-active" data-mode="macro">宏观外形</button>
       <button type="button" class="crystal-seg-btn" data-mode="micro">微观排布</button>
     </div>
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-full" data-act="toggle-zoom">
-      一键放大微观 Si–O 结构
-    </button>
-    <div class="crystal-slice-actions">
-      <button type="button" class="crystal-btn crystal-btn-ghost" data-act="rotate">暂停旋转</button>
-      <button type="button" class="crystal-btn crystal-btn-ghost" data-act="reset">重置角度</button>
-    </div>
-    <p class="crystal-exam-desc">提示：在黑色舞台上拖动鼠标或手指，可 360° 观察水晶棱柱的规则晶面与玻璃的无定形轮廓。</p>
+    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="toggle-zoom">放大微观 Si–O</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="rotate">暂停旋转</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置</button>
   `;
 
   const modeBtns = controlsEl.querySelectorAll('[data-mode]');
@@ -223,36 +228,21 @@ export function mountCompareDemo({ stageEl, controlsEl, setCaption, setLegend })
   function syncUi() {
     const isMicro = targetZoom > 0.5;
     modeBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.mode === (isMicro ? 'micro' : 'macro')));
-    zoomBtn.textContent = isMicro ? '缩小回到宏观外形' : '一键放大微观 Si–O 结构';
+    zoomBtn.textContent = isMicro ? '回到宏观外形' : '放大微观 Si–O';
     rotBtn.textContent = autoRotate ? '暂停旋转' : '继续旋转';
     setCaption(
       isMicro
-        ? '微观本质：晶体（水晶）长程有序排列；非晶体（石英玻璃）短程有序、长程无序'
-        : '宏观对比：天然水晶呈规则六棱柱外形，石英玻璃无固定几何外形（可拖拽旋转）',
+        ? '微观本质：水晶（晶体）长程有序；石英玻璃（非晶体）短程有序、长程无序'
+        : '宏观对比：天然水晶呈规则六棱柱，石英玻璃无固定外形（拖拽可 360° 旋转）',
     );
   }
 
   modeBtns.forEach((btn) =>
-    btn.addEventListener('click', () => {
-      targetZoom = btn.dataset.mode === 'micro' ? 1 : 0;
-      syncUi();
-    }),
+    btn.addEventListener('click', () => { targetZoom = btn.dataset.mode === 'micro' ? 1 : 0; syncUi(); }),
   );
-  zoomBtn.addEventListener('click', () => {
-    targetZoom = targetZoom > 0.5 ? 0 : 1;
-    syncUi();
-  });
-  rotBtn.addEventListener('click', () => {
-    autoRotate = !autoRotate;
-    syncUi();
-  });
-  resetBtn.addEventListener('click', () => {
-    rotY = 0.55;
-    rotX = 0.28;
-    targetZoom = 0;
-    autoRotate = true;
-    syncUi();
-  });
+  zoomBtn.addEventListener('click', () => { targetZoom = targetZoom > 0.5 ? 0 : 1; syncUi(); });
+  rotBtn.addEventListener('click', () => { autoRotate = !autoRotate; syncUi(); });
+  resetBtn.addEventListener('click', () => { rotY = 0.55; rotX = 0.28; targetZoom = 0; autoRotate = true; syncUi(); });
 
   const onDown = (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.setPointerCapture?.(e.pointerId); };
   const onMove = (e) => {
@@ -269,72 +259,72 @@ export function mountCompareDemo({ stageEl, controlsEl, setCaption, setLegend })
   canvas.addEventListener('pointercancel', onUp);
   syncUi();
 
-  function frame() {
-    if (paused) return;
+  function render() {
     const { width, height } = getSize();
-    if (autoRotate && !dragging) rotY += 0.008;
-    zoom += (targetZoom - zoom) * 0.09;
+    const p = getPalette();
 
-    ctx.fillStyle = STAGE_BG;
+    ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, width, height);
 
+    const topSafe = 86;
+    const botSafe = 78;
     const midX = width * 0.5;
-    const cy = height * 0.5;
-    const scale = Math.min(width * 0.16, height * 0.25);
+    const cy = topSafe + (height - topSafe - botSafe) * 0.52;
+    const scale = Math.min(width * 0.15, (height - topSafe - botSafe) * 0.30);
 
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+    ctx.strokeStyle = p.grid;
+    ctx.lineWidth = 1.2;
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
-    ctx.moveTo(midX, 48);
-    ctx.lineTo(midX, height - 52);
+    ctx.moveTo(midX, topSafe + 4);
+    ctx.lineTo(midX, height - botSafe - 4);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    const leftX = width * 0.255;
-    const rightX = width * 0.745;
+    const leftX = width * 0.26;
+    const rightX = width * 0.74;
 
     if (zoom < 0.98) {
       ctx.save();
       ctx.globalAlpha = Math.max(0, 1 - zoom * 1.15);
-      const s = scale * (1 + zoom * 0.55);
-      drawQuartzPrism(ctx, leftX, cy, s, rotY, rotX, prism);
-      drawGlassLump(ctx, rightX, cy, s, rotY);
+      const s = scale * (1 + zoom * 0.5);
+      drawQuartzPrism(ctx, leftX, cy, s, rotY, rotX, prism, p);
+      drawGlassLump(ctx, rightX, cy, s, rotY, p);
       ctx.restore();
     }
 
     if (zoom > 0.02) {
-      const microR = Math.min(width * 0.19, height * 0.31) * (0.45 + zoom * 0.55);
-      drawMicroNetwork(ctx, leftX, cy, microR, nets.ordered, false, zoom);
-      drawMicroNetwork(ctx, rightX, cy, microR, nets.disordered, true, zoom);
+      const microR = Math.min(width * 0.18, (height - topSafe - botSafe) * 0.36) * (0.45 + zoom * 0.55);
+      drawMicroNetwork(ctx, leftX, cy, microR, nets.ordered, false, zoom, p);
+      drawMicroNetwork(ctx, rightX, cy, microR, nets.disordered, true, zoom, p);
     }
 
     ctx.textAlign = 'center';
-    ctx.font = '700 16px system-ui, sans-serif';
-    ctx.fillStyle = '#7dd3fc';
-    ctx.fillText('水晶 · 晶体 (SiO₂)', leftX, 66);
-    ctx.fillStyle = '#fcd34d';
-    ctx.fillText('石英玻璃 · 非晶体 (SiO₂)', rightX, 66);
+    ctx.font = '700 15px system-ui, sans-serif';
+    ctx.fillStyle = p.crystalText;
+    ctx.fillText('水晶 · 晶体 (SiO₂)', leftX, topSafe + 22);
+    ctx.fillStyle = p.amorphousText;
+    ctx.fillText('石英玻璃 · 非晶体 (SiO₂)', rightX, topSafe + 22);
 
     ctx.font = '600 13px system-ui, sans-serif';
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText(zoom > 0.5 ? '微观：周期性长程有序六元环' : '宏观：规则六棱柱多面体', leftX, height - 56);
-    ctx.fillText(zoom > 0.5 ? '微观：键角畸变、长程无序' : '宏观：无规则几何外形', rightX, height - 56);
+    ctx.fillStyle = p.muted;
+    ctx.fillText(zoom > 0.5 ? '微观：周期性长程有序六元环' : '宏观：规则六棱柱多面体', leftX, height - botSafe - 10);
+    ctx.fillText(zoom > 0.5 ? '微观：键角畸变、长程无序' : '宏观：无规则几何外形', rightX, height - botSafe - 10);
+  }
 
+  function frame() {
+    if (paused) return;
+    if (autoRotate && !dragging) rotY += 0.008;
+    zoom += (targetZoom - zoom) * 0.09;
+    render();
     rafId = requestAnimationFrame(frame);
   }
   rafId = requestAnimationFrame(frame);
 
   return {
-    pause() {
-      paused = true;
-      cancelAnimationFrame(rafId);
-    },
-    resume() {
-      if (!paused) return;
-      paused = false;
-      rafId = requestAnimationFrame(frame);
-    },
-    resize,
+    pause() { paused = true; cancelAnimationFrame(rafId); },
+    resume() { if (!paused) return; paused = false; rafId = requestAnimationFrame(frame); },
+    resize() { resize(); render(); },
     destroy() {
       paused = true;
       cancelAnimationFrame(rafId);

@@ -1,6 +1,6 @@
 /**
  * 实验 2：NaCl 固态 / 熔融态 / 水溶液三态导电实验
- * 直流电路 + 灯泡发光 + 烧杯内部微观离子定向迁移。
+ * 直流电路 + 灯泡发光 + 烧杯内部微观离子定向迁移（5 主题自适应）。
  */
 
 import { drawSphere, mountCanvasLoop } from './canvas-kit.js';
@@ -34,77 +34,61 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
   }
 
   controlsEl.innerHTML = `
-    <div class="crystal-card">
-      <div class="crystal-card-head">
-        <h4 class="crystal-card-title">NaCl 三态导电实验</h4>
-        <span class="crystal-tag">离子迁移</span>
-      </div>
-      <div class="crystal-exam-tabs">
-        <button type="button" class="crystal-exam-tab is-active" data-mode="solid">固态晶体</button>
-        <button type="button" class="crystal-exam-tab" data-mode="molten">熔融态</button>
-        <button type="button" class="crystal-exam-tab" data-mode="aqueous">水溶液</button>
-      </div>
-      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-full" data-act="power">
-        直流电源开关：已闭合（通电）
-      </button>
-      <div class="crystal-exam-body">
-        <div class="crystal-exam-metric">
-          <span class="crystal-exam-k">灯泡状态</span>
-          <span class="crystal-exam-v" data-stat="bulb">熄灭</span>
-        </div>
-        <div class="crystal-exam-metric" style="margin-bottom:0;">
-          <span class="crystal-exam-k">电流读数</span>
-          <span class="crystal-exam-v" data-stat="amp">0.00 A</span>
-        </div>
-      </div>
-      <p class="crystal-exam-tip" data-stat="desc"></p>
+    <div class="crystal-seg" role="group" aria-label="NaCl 状态" style="grid-template-columns:repeat(3,auto);">
+      <button type="button" class="crystal-seg-btn is-active" data-mode="solid">固态晶体</button>
+      <button type="button" class="crystal-seg-btn" data-mode="molten">熔融态</button>
+      <button type="button" class="crystal-seg-btn" data-mode="aqueous">水溶液</button>
     </div>
+    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="power">电源：闭合通电</button>
+    <span class="crystal-param-pill">灯泡 <strong data-stat="bulb">熄灭</strong></span>
+    <span class="crystal-param-pill">电流 <strong data-stat="amp">0.00 A</strong></span>
   `;
 
   const modeBtns = controlsEl.querySelectorAll('[data-mode]');
   const btnPower = controlsEl.querySelector('[data-act="power"]');
   const statBulb = controlsEl.querySelector('[data-stat="bulb"]');
   const statAmp = controlsEl.querySelector('[data-stat="amp"]');
-  const statDesc = controlsEl.querySelector('[data-stat="desc"]');
 
   function syncUI() {
     const info = CONDUCT_STATES[mode];
     const active = powerOn && info.current > 0;
     modeBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.mode === mode));
-    btnPower.textContent = powerOn ? '直流电源开关：已闭合（通电）' : '直流电源开关：已断开';
+    btnPower.textContent = powerOn ? '电源：闭合通电' : '电源：已断开';
     btnPower.classList.toggle('crystal-btn-primary', powerOn);
     btnPower.classList.toggle('crystal-btn-ghost', !powerOn);
     statBulb.textContent = active ? (mode === 'aqueous' ? '明亮发光' : '发光') : '熄灭';
-    statBulb.style.color = active ? '#16a34a' : '#94a3b8';
+    statBulb.style.color = active ? 'var(--ok, #16a34a)' : 'var(--muted, #64748b)';
     statAmp.textContent = active ? `${(info.current * 0.85).toFixed(2)} A` : '0.00 A';
-    statDesc.textContent = powerOn ? info.desc : '电源开关断开：即使存在自由离子，也只做无规则热运动，无定向电流。';
-    onCaption?.(`${info.label} — ${statDesc.textContent}`);
+    const desc = powerOn ? info.desc : '电源开关断开：即使存在自由离子，也只做无规则热运动，无定向电流。';
+    onCaption?.(`${info.label} — ${desc}`);
   }
 
   modeBtns.forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode; syncUI(); }));
   btnPower.addEventListener('click', () => { powerOn = !powerOn; syncUI(); });
   syncUI();
 
-  const loopCtrl = mountCanvasLoop(stageEl, (ctx, w, h, dt) => {
+  const loopCtrl = mountCanvasLoop(stageEl, (ctx, w, h, dt, p) => {
     tAccum += dt;
     const info = CONDUCT_STATES[mode];
     const conducting = powerOn && info.current > 0;
     if (conducting) wirePhase = (wirePhase + dt * (mode === 'aqueous' ? 1.5 : 1.1)) % 1;
 
-    ctx.fillStyle = '#0d1322';
+    ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, w, h);
 
     const cx = w * 0.5;
-    const circuitY = Math.max(58, h * 0.17);
-    const elecL = cx - Math.min(180, w * 0.28);
-    const elecR = cx + Math.min(180, w * 0.28);
-    const boxTop = Math.max(138, h * 0.36);
-    const boxH = Math.max(140, h - boxTop - 52);
+    const topSafe = 86;
+    const botSafe = 78;
+    const circuitY = topSafe + Math.max(24, (h - topSafe - botSafe) * 0.14);
+    const elecL = cx - Math.min(190, w * 0.27);
+    const elecR = cx + Math.min(190, w * 0.27);
+    const boxTop = circuitY + Math.max(76, (h - topSafe - botSafe) * 0.25);
+    const boxH = Math.max(140, h - botSafe - boxTop);
     const boxW = (elecR - elecL) + 110;
     const boxX = cx - boxW / 2;
 
     // 电路连线与电子流
-    ctx.strokeStyle = conducting ? '#38bdf8' : '#475569';
+    ctx.strokeStyle = conducting ? p.wireOn : p.wireOff;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(elecL, boxTop + 36);
@@ -116,41 +100,41 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
     ctx.stroke();
 
     if (conducting) {
-      ctx.fillStyle = '#fde047';
+      ctx.fillStyle = p.flash;
       for (let i = 0; i < 6; i++) {
         const px = elecL + (elecR - elecL) * ((i / 6 + wirePhase) % 1);
         ctx.beginPath();
-        ctx.arc(px, circuitY, 3.2, 0, Math.PI * 2);
+        ctx.arc(px, circuitY, 3.4, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
     // 直流电源 + 开关
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeStyle = '#64748b';
+    ctx.fillStyle = p.surface;
+    ctx.strokeStyle = p.borderStrong;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.roundRect(elecL - 28, circuitY + 26, 56, 30, 6);
+    ctx.roundRect(elecL - 30, circuitY + 24, 60, 30, 6);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#f87171';
-    ctx.font = '700 12px system-ui';
+    ctx.fillStyle = p.covalentText;
+    ctx.font = '700 12px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('DC +/−', elecL, circuitY + 45);
+    ctx.fillText('DC +/−', elecL, circuitY + 43);
 
-    ctx.strokeStyle = powerOn ? '#4ade80' : '#f87171';
+    ctx.strokeStyle = powerOn ? p.ok : p.bad;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(elecR, circuitY + 24);
-    ctx.lineTo(powerOn ? elecR : elecR + 18, circuitY + 54);
+    ctx.moveTo(elecR, circuitY + 22);
+    ctx.lineTo(powerOn ? elecR : elecR + 18, circuitY + 52);
     ctx.stroke();
 
     // 灯泡
     const bulbR = 23;
     if (conducting) {
       const glow = ctx.createRadialGradient(cx, circuitY, 4, cx, circuitY, bulbR * 2.8);
-      glow.addColorStop(0, `rgba(253, 224, 71, ${(0.85 * info.glow).toFixed(2)})`);
-      glow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      glow.addColorStop(0, `rgba(250, 204, 21, ${(0.82 * info.glow).toFixed(2)})`);
+      glow.addColorStop(1, 'rgba(250, 204, 21, 0)');
       ctx.fillStyle = glow;
       ctx.beginPath();
       ctx.arc(cx, circuitY, bulbR * 2.8, 0, Math.PI * 2);
@@ -158,18 +142,18 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
     }
     ctx.beginPath();
     ctx.arc(cx, circuitY, bulbR, 0, Math.PI * 2);
-    ctx.fillStyle = conducting ? '#fef08a' : '#1e293b';
+    ctx.fillStyle = conducting ? '#fef08a' : p.surfaceSoft;
     ctx.fill();
-    ctx.strokeStyle = conducting ? '#facc15' : '#64748b';
+    ctx.strokeStyle = conducting ? '#eab308' : p.borderStrong;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = conducting ? '#713f12' : '#94a3b8';
-    ctx.font = '700 12px system-ui';
+    ctx.fillStyle = conducting ? '#713f12' : p.muted;
+    ctx.font = '700 12px system-ui, sans-serif';
     ctx.fillText(conducting ? '亮' : '暗', cx, circuitY + 4);
 
     // 电解槽容器与电极
-    ctx.fillStyle = mode === 'aqueous' ? 'rgba(14,116,144,0.28)' : mode === 'molten' ? 'rgba(180,83,9,0.28)' : 'rgba(30,41,59,0.45)';
-    ctx.strokeStyle = 'rgba(148,163,184,0.42)';
+    ctx.fillStyle = mode === 'aqueous' ? p.water : mode === 'molten' ? p.molten : p.surfaceSoft;
+    ctx.strokeStyle = p.borderStrong;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(boxX, boxTop, boxW, boxH, 12);
@@ -177,29 +161,28 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
     ctx.stroke();
 
     const drawElec = (ex, sign, col) => {
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = p.isDark ? '#334155' : '#475569';
       ctx.strokeStyle = col;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.roundRect(ex - 9, boxTop - 6, 18, boxH * 0.72, 4);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = col;
-      ctx.font = '800 14px system-ui';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 14px system-ui, sans-serif';
       ctx.fillText(sign, ex, boxTop + 16);
     };
-    drawElec(elecL, '+', '#f87171');
-    drawElec(elecR, '−', '#38bdf8');
+    drawElec(elecL, '+', p.covalent);
+    drawElec(elecR, '−', p.crystal);
 
-    // 离子运动与绘制
-    const padX = elecL + 22;
-    const spanX = Math.max(80, (elecR - elecL) - 44);
-    const padY = boxTop + 26;
-    const spanY = Math.max(60, boxH - 48);
+    const padX = elecL + 24;
+    const spanX = Math.max(80, (elecR - elecL) - 48);
+    const padY = boxTop + 28;
+    const spanY = Math.max(60, boxH - 52);
 
     if (mode === 'solid') {
-      ctx.strokeStyle = 'rgba(148,163,184,0.22)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = p.grid;
+      ctx.lineWidth = 1.2;
       for (let r = 0; r < 4; r++) {
         const y = padY + ((r + 0.5) / 4) * spanY;
         ctx.beginPath();
@@ -228,23 +211,25 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
       if (mode === 'aqueous') {
         ctx.beginPath();
         ctx.arc(px, py, ion.isNa ? 15 : 18, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(56,189,248,0.32)';
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = p.crystal;
+        ctx.globalAlpha = 0.36;
+        ctx.lineWidth = 1.3;
         ctx.stroke();
+        ctx.globalAlpha = 1;
       }
       if (ion.isNa) {
-        drawSphere(ctx, px, py, 10, '#e9d5ff', '#9333ea', '#581c87', '+');
+        drawSphere(ctx, px, py, 10, '#e9d5ff', '#9333ea', '#581c87', '+', p.sphereRim);
       } else {
-        drawSphere(ctx, px, py, 13, '#bbf7d0', '#16a34a', '#14532d', '−');
+        drawSphere(ctx, px, py, 13, '#bbf7d0', '#16a34a', '#14532d', '−', p.sphereRim);
       }
     }
 
     if (conducting) {
-      ctx.font = '700 12px system-ui';
-      ctx.fillStyle = '#e9d5ff';
-      ctx.fillText('Na⁺ 向阴极 (−) 迁移 →', cx, boxTop + boxH - 14);
-      ctx.fillStyle = '#bbf7d0';
-      ctx.fillText('← Cl⁻ 向阳极 (+) 迁移', cx, boxTop + 14);
+      ctx.font = '700 12px system-ui, sans-serif';
+      ctx.fillStyle = p.ionicText;
+      ctx.fillText('Na⁺ 向阴极 (−) 迁移 →', cx, boxTop + boxH - 12);
+      ctx.fillStyle = p.okText;
+      ctx.fillText('← Cl⁻ 向阳极 (+) 迁移', cx, boxTop + 16);
     }
   });
 

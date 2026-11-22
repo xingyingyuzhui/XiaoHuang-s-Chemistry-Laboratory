@@ -1,16 +1,17 @@
 /**
- * 模块 01 共享高分屏 2D 舞台画布工具
+ * 模块 01 共享高分屏 2D 舞台画布工具（实时响应 5 主题切换）
  */
 
-export const STAGE_BG = '#0d1322';
+import { getStagePalette, observeThemeChange } from '../stage-theme.js';
 
-export function setupHiDpiCanvas(stageEl) {
+export function setupHiDpiCanvas(stageEl, onThemeChange) {
   const canvas = document.createElement('canvas');
   canvas.style.cssText = 'display:block;width:100%;height:100%;touch-action:none;';
   stageEl.appendChild(canvas);
   const ctx = canvas.getContext('2d');
   let width = 640;
   let height = 420;
+  let palette = getStagePalette();
 
   function resize() {
     const rect = stageEl.getBoundingClientRect();
@@ -26,12 +27,19 @@ export function setupHiDpiCanvas(stageEl) {
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
   ro?.observe(stageEl);
 
+  const stopTheme = observeThemeChange((next) => {
+    palette = next;
+    onThemeChange?.(next);
+  });
+
   return {
     canvas,
     ctx,
     getSize: () => ({ width, height }),
+    getPalette: () => palette,
     resize,
     dispose() {
+      stopTheme();
       ro?.disconnect();
       canvas.remove();
     },

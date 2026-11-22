@@ -1,6 +1,6 @@
 /**
  * 实验 1：敲一下对比（金属 Cu 滑移延展 vs 食盐 NaCl 错位碎裂）
- * 暗棚单 Canvas 动画，支持正常 / 慢动作回放与连续敲击。
+ * 5 主题自适应 Canvas 动画，支持正常 / 慢动作回放与连续敲击。
  */
 
 import {
@@ -12,7 +12,7 @@ const COLS = 6;
 const ROWS = 4;
 const SPLIT_ROW = 2;
 
-function drawHammer(ctx, x, y, angle, scale) {
+function drawHammer(ctx, x, y, angle, scale, p) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
@@ -27,14 +27,14 @@ function drawHammer(ctx, x, y, angle, scale) {
   ctx.fill();
 
   const headG = ctx.createLinearGradient(-10, -22, 14, 22);
-  headG.addColorStop(0, '#e2e8f0');
-  headG.addColorStop(0.5, '#94a3b8');
-  headG.addColorStop(1, '#475569');
+  headG.addColorStop(0, p.isDark ? '#e2e8f0' : '#cbd5e1');
+  headG.addColorStop(0.5, '#64748b');
+  headG.addColorStop(1, '#334155');
   ctx.fillStyle = headG;
   ctx.beginPath();
   ctx.roundRect(-12, -22, 24, 44, 5);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(248,250,252,0.55)';
+  ctx.strokeStyle = p.isDark ? 'rgba(248,250,252,0.55)' : 'rgba(15,23,42,0.38)';
   ctx.lineWidth = 1.4;
   ctx.stroke();
   ctx.restore();
@@ -79,30 +79,11 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
   resetShards();
 
   controlsEl.innerHTML = `
-    <div class="crystal-card">
-      <div class="crystal-card-head">
-        <h4 class="crystal-card-title">敲击对比控制台</h4>
-        <span class="crystal-tag">机械外力</span>
-      </div>
-      <div class="crystal-slice-actions">
-        <button type="button" class="crystal-btn crystal-btn-primary" data-act="strike">同时敲一下</button>
-        <button type="button" class="crystal-btn crystal-btn-ghost" data-act="reset">复原</button>
-      </div>
-      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-full crystal-btn-sm" data-act="slow">
-        慢动作观察（0.35×）：关闭
-      </button>
-      <div class="crystal-exam-body">
-        <div class="crystal-exam-metric">
-          <span class="crystal-exam-k">金属铜 Cu</span>
-          <span class="crystal-exam-v" data-stat="cu">整齐点阵</span>
-        </div>
-        <div class="crystal-exam-metric" style="margin-bottom:0;">
-          <span class="crystal-exam-k">食盐 NaCl</span>
-          <span class="crystal-exam-v" data-stat="nacl" style="color:var(--flame,#d97706);">整齐点阵</span>
-        </div>
-      </div>
-      <p class="crystal-exam-tip">提示：可连续敲击观察金属铜层层滑移；打开慢动作可看清 NaCl 错位时同号电荷相斥瞬间。</p>
-    </div>
+    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="strike">同时敲一下</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复原</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="slow">慢动作 0.35×：关</button>
+    <span class="crystal-param-pill">Cu: <strong data-stat="cu">整齐点阵</strong></span>
+    <span class="crystal-param-pill">NaCl: <strong data-stat="nacl">整齐点阵</strong></span>
   `;
 
   const btnStrike = controlsEl.querySelector('[data-act="strike"]');
@@ -123,11 +104,11 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
       statNacl.textContent = naclRepel > 0.15 ? '同号相斥！' : '发生错位…';
       btnStrike.disabled = true;
     } else {
-      statCu.textContent = `已滑移 ${strikeCount} 格（不断裂）`;
-      statNacl.textContent = '错位碎裂（脆性）';
+      statCu.textContent = `滑移 ${strikeCount} 格`;
+      statNacl.textContent = '错位碎裂';
       btnStrike.disabled = strikeCount >= 2;
-      btnStrike.textContent = strikeCount >= 2 ? '已达最大滑移' : '再敲一下（看铜延展）';
-      onCaption?.('结果：Cu 自由电子维系金属键→滑移不断裂；NaCl 错位后同号离子正对相斥→直接碎裂');
+      btnStrike.textContent = strikeCount >= 2 ? '已达最大滑移' : '再敲一下';
+      onCaption?.('结果：Cu 自由电子维系金属键 → 滑移不断裂；NaCl 错位后同号离子正对相斥 → 直接碎裂');
     }
   }
 
@@ -152,7 +133,7 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
 
   btnSlow.addEventListener('click', () => {
     slowMo = !slowMo;
-    btnSlow.textContent = `慢动作观察（0.35×）：${slowMo ? '开启' : '关闭'}`;
+    btnSlow.textContent = `慢动作 0.35×：${slowMo ? '开' : '关'}`;
     btnSlow.classList.toggle('crystal-btn-primary', slowMo);
     btnSlow.classList.toggle('crystal-btn-ghost', !slowMo);
   });
@@ -187,7 +168,7 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
         } else if (animTime < 0.95) {
           naclSlip = 1;
           naclRepel = 1;
-          statNacl.textContent = '同号离子正对相斥！';
+          statNacl.textContent = '同号相斥！';
         } else {
           const exT = clamp((animTime - 0.95) / 0.85, 0, 1);
           naclRepel = Math.max(0, 1 - exT * 1.6);
@@ -201,39 +182,37 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
     }
   }
 
-  const loopCtrl = mountCanvasLoop(stageEl, (ctx, w, h, dt) => {
+  const loopCtrl = mountCanvasLoop(stageEl, (ctx, w, h, dt, p) => {
     step(dt);
-    const bg = ctx.createRadialGradient(w * 0.5, h * 0.4, 40, w * 0.5, h * 0.5, Math.max(w, h) * 0.75);
-    bg.addColorStop(0, '#131d36');
-    bg.addColorStop(1, '#0b101d');
-    ctx.fillStyle = bg;
+    ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, w, h);
 
-    const pad = 16;
+    const padX = 18;
+    const topSafe = 78;
+    const botSafe = 76;
     const gap = 14;
-    const pw = (w - pad * 2 - gap) / 2;
-    const ph = h - pad * 2 - 40;
-    const leftX = pad;
-    const rightX = pad + pw + gap;
+    const pw = (w - padX * 2 - gap) / 2;
+    const ph = Math.max(200, h - topSafe - botSafe);
+    const leftX = padX;
+    const rightX = padX + pw + gap;
 
-    drawPanelCard(ctx, leftX, pad, pw, ph, '金属晶体 · Cu', '阳离子浸泡在自由电子海中', '#fbbf24');
-    drawPanelCard(ctx, rightX, pad, pw, ph, '离子晶体 · NaCl', '阴阳离子交替强静电排列', '#38bdf8');
+    drawPanelCard(ctx, leftX, topSafe, pw, ph, '金属晶体 · Cu', '阳离子浸泡在自由电子海中', p.amorphousText, p);
+    drawPanelCard(ctx, rightX, topSafe, pw, ph, '离子晶体 · NaCl', '阴阳离子交替强静电排列', p.crystalText, p);
 
-    const cell = clamp(Math.min(pw / (COLS + 3.4), (ph - 105) / (ROWS + 1.5)), 24, 44);
-    const baseY = pad + ph - 52 - (ROWS - 1) * cell;
-    const cuX0 = leftX + (pw - (COLS - 1) * cell) * 0.44;
-    const naX0 = rightX + (pw - (COLS - 1) * cell) * 0.44;
+    const cell = clamp(Math.min(pw / (COLS + 3.4), (ph - 110) / (ROWS + 1.4)), 22, 44);
+    const baseY = topSafe + ph - 58 - (ROWS - 1) * cell;
+    const cuX0 = leftX + (pw - (COLS - 1) * cell) * 0.46;
+    const naX0 = rightX + (pw - (COLS - 1) * cell) * 0.46;
     const shearY = baseY + (SPLIT_ROW - 0.5) * cell;
 
-    // Cu 电子海 + 剪切虚线 + Cu2+ 点阵
     const seaX = cuX0 - cell * 0.6 + cuSlip * cell * 0.25;
     const seaY = baseY - cell * 0.65;
     const seaW = (COLS - 1 + cuSlip * 0.85) * cell + cell * 1.25;
     const seaH = (ROWS - 1) * cell + cell * 1.3;
     const seaG = ctx.createLinearGradient(seaX, seaY, seaX + seaW, seaY + seaH);
-    seaG.addColorStop(0, 'rgba(56,189,248,0.14)');
-    seaG.addColorStop(0.5, 'rgba(251,191,36,0.15)');
-    seaG.addColorStop(1, 'rgba(56,189,248,0.14)');
+    seaG.addColorStop(0, p.crystalSoft);
+    seaG.addColorStop(0.5, p.amorphousSoft);
+    seaG.addColorStop(1, p.crystalSoft);
     ctx.fillStyle = seaG;
     ctx.beginPath();
     ctx.roundRect(seaX, seaY, seaW, seaH, 16);
@@ -241,13 +220,15 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
 
     ctx.save();
     ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = 'rgba(251,191,36,0.35)';
+    ctx.strokeStyle = p.amorphous;
+    ctx.globalAlpha = 0.45;
     ctx.beginPath();
     ctx.moveTo(leftX + 18, shearY);
     ctx.lineTo(leftX + pw - 18, shearY);
     ctx.stroke();
-    ctx.strokeStyle = naclRepel > 0.1 ? 'rgba(248,113,113,0.85)' : 'rgba(148,163,184,0.32)';
-    ctx.lineWidth = naclRepel > 0.1 ? 2 : 1.2;
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = naclRepel > 0.1 ? p.bad : p.grid;
+    ctx.lineWidth = naclRepel > 0.1 ? 2.2 : 1.3;
     ctx.beginPath();
     ctx.moveTo(rightX + 18, shearY);
     ctx.lineTo(rightX + pw - 18, shearY);
@@ -258,25 +239,26 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
     for (let r = 0; r < ROWS; r++) {
       const shiftX = r < SPLIT_ROW ? cuSlip * cell : 0;
       for (let c = 0; c < COLS; c++) {
-        drawSphere(ctx, cuX0 + c * cell + shiftX, baseY + r * cell, cuR, '#fde68a', '#d97706', '#78350f', 'Cu²⁺');
+        drawSphere(ctx, cuX0 + c * cell + shiftX, baseY + r * cell, cuR, '#fde68a', '#d97706', '#78350f', 'Cu²⁺', p.sphereRim);
       }
     }
     for (const e of electrons) {
       ctx.beginPath();
       ctx.arc(seaX + e.u * seaW, seaY + e.v * seaH, 3.1, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(125,211,252,${(0.55 + 0.35 * Math.sin(e.phase)).toFixed(2)})`;
+      ctx.fillStyle = p.crystal;
+      ctx.globalAlpha = 0.5 + 0.35 * Math.sin(e.phase);
       ctx.fill();
+      ctx.globalAlpha = 1;
     }
     if (strikeCount > 0 && state !== 'swinging') {
-      drawStatusPill(ctx, leftX + 16, pad + ph - 34, pw - 32, '自由电子缓冲：层间滑移不断裂 → 延展性', 'rgba(22,163,74,0.22)', '#4ade80', '#bbf7d0');
+      drawStatusPill(ctx, leftX + 16, topSafe + ph - 36, pw - 32, '自由电子缓冲：层间滑移不断裂 → 延展性', p.okSoft, p.ok, p.okText);
     }
 
-    // NaCl 下半固定层 + 同号排斥闪电 + 上半飞散碎片
     const rNa = cell * 0.29;
     const rCl = cell * 0.39;
     const drawIon = (ix, iy, isNa) => (isNa
-      ? drawSphere(ctx, ix, iy, rNa, '#e9d5ff', '#9333ea', '#4c1d95', '+')
-      : drawSphere(ctx, ix, iy, rCl, '#bbf7d0', '#16a34a', '#14532d', '−'));
+      ? drawSphere(ctx, ix, iy, rNa, '#e9d5ff', '#9333ea', '#4c1d95', '+', p.sphereRim)
+      : drawSphere(ctx, ix, iy, rCl, '#bbf7d0', '#16a34a', '#14532d', '−', p.sphereRim));
 
     for (let r = SPLIT_ROW; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) drawIon(naX0 + c * cell, baseY + r * cell, (r + c) % 2 === 0);
@@ -284,7 +266,8 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
 
     if (naclRepel > 0.05) {
       ctx.save();
-      ctx.strokeStyle = `rgba(248,113,113,${naclRepel.toFixed(2)})`;
+      ctx.globalAlpha = naclRepel;
+      ctx.strokeStyle = p.bad;
       ctx.lineWidth = 2.5;
       for (let c = 0; c < COLS - 1; c++) {
         const px = naX0 + (c + 1) * cell;
@@ -297,7 +280,7 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
         ctx.lineTo(px, y2);
         ctx.stroke();
       }
-      ctx.fillStyle = `rgba(254,202,202,${naclRepel.toFixed(2)})`;
+      ctx.fillStyle = p.badText;
       ctx.font = '800 13px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('⚡ 同号电荷正对 · 强烈排斥！', rightX + pw * 0.52, shearY - cell * 1.65);
@@ -313,26 +296,27 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
       ctx.restore();
     }
     if (naclExplode > 0.35) {
-      drawStatusPill(ctx, rightX + 16, pad + ph - 34, pw - 32, '同号离子相斥：离子键断裂 → 晶体碎裂', 'rgba(239,68,68,0.22)', '#f87171', '#fecaca');
+      drawStatusPill(ctx, rightX + 16, topSafe + ph - 36, pw - 32, '同号离子相斥：离子键断裂 → 晶体碎裂', p.badSoft, p.bad, p.badText);
     }
 
-    // 两侧同步锤子与冲击波
     const hScale = clamp(cell / 36, 0.72, 1.15);
     const angle = -0.58 + hammerSwing * 0.62;
     const hitX = hammerSwing * 14;
     const hammerY = baseY + cell * 0.5;
-    drawHammer(ctx, cuX0 - cell * 1.15 + hitX, hammerY, angle, hScale);
-    drawHammer(ctx, naX0 - cell * 1.15 + hitX, hammerY, angle, hScale);
+    drawHammer(ctx, cuX0 - cell * 1.15 + hitX, hammerY, angle, hScale, p);
+    drawHammer(ctx, naX0 - cell * 1.15 + hitX, hammerY, angle, hScale, p);
 
     if (impactFlash > 0.02) {
       const flashR = (1 - impactFlash) * cell * 1.4 + 8;
-      ctx.strokeStyle = `rgba(253,224,71,${(impactFlash * 0.85).toFixed(2)})`;
+      ctx.strokeStyle = p.flash;
+      ctx.globalAlpha = impactFlash * 0.85;
       ctx.lineWidth = 2.5;
       for (const ox of [cuX0 - cell * 0.45, naX0 - cell * 0.45]) {
         ctx.beginPath();
         ctx.arc(ox, hammerY, flashR, 0, Math.PI * 2);
         ctx.stroke();
       }
+      ctx.globalAlpha = 1;
     }
   });
 

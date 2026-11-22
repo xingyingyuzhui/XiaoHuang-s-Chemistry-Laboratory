@@ -3,39 +3,30 @@
  * 同时重导出 Demo 3（mountMeltingDemo）与 Demo 5（mountXrdDemo）保持对外入口兼容。
  */
 
-import { STAGE_BG, setupHiDpiCanvas } from './stage-canvas.js';
+import { setupHiDpiCanvas } from './stage-canvas.js';
 
 export { mountMeltingDemo } from './demo-melting.js';
 export { mountXrdDemo } from './demo-xrd.js';
 
 export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend }) {
-  const { canvas, ctx, getSize, resize, dispose } = setupHiDpiCanvas(stageEl);
   let radius = 0;
   let heating = false;
   let showLattice = true;
   let paused = false;
   let rafId = 0;
 
+  const { canvas, ctx, getSize, getPalette, resize, dispose } = setupHiDpiCanvas(stageEl, () => render());
+
   setLegend([
-    { label: '云母（椭圆熔斑 · 各向异性）', color: '#38bdf8' },
-    { label: '玻璃（正圆熔斑 · 各向同性）', color: '#fbbf24' },
+    { label: '云母 · 椭圆熔斑（各向异性）', color: '#0284c7' },
+    { label: '玻璃 · 正圆熔斑（各向同性）', color: '#d97706' },
   ]);
 
   controlsEl.innerHTML = `
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-full" data-act="heat">
-      点击烫针同时加热
-    </button>
-    <div class="crystal-slice-actions">
-      <button type="button" class="crystal-btn crystal-btn-ghost" data-act="lattice">隐藏微观排布</button>
-      <button type="button" class="crystal-btn crystal-btn-ghost" data-act="reset">重新涂蜡</button>
-    </div>
-    <div class="crystal-exam-body">
-      <div class="crystal-exam-metric">
-        <span class="crystal-exam-k">云母熔蜡长短轴比 a : b</span>
-        <span class="crystal-exam-v">1.72 : 1</span>
-      </div>
-      <p class="crystal-exam-desc">提示：也可直接点击黑色舞台上的薄片触发或暂停烫针导热。</p>
-    </div>
+    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="heat">烫针同时加热</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="lattice">隐藏微观排布</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重新涂蜡</button>
+    <span class="crystal-param-pill">云母长短轴比 a : b = <strong>1.72 : 1</strong></span>
   `;
 
   const btnHeat = controlsEl.querySelector('[data-act="heat"]');
@@ -44,15 +35,15 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
 
   function syncUi() {
     btnHeat.textContent = heating
-      ? '移开烫针（暂停扩散）'
+      ? '移开烫针'
       : radius > 0.95
-        ? '已熔穿（点击重新加热）'
-        : '点击烫针同时加热';
+        ? '重新加热'
+        : '烫针同时加热';
     btnLattice.textContent = showLattice ? '隐藏微观排布' : '显示微观排布';
     setCaption(
       radius < 0.05
-        ? '在云母片与玻璃片表面涂上一层薄石蜡，点击「烫针同时加热」对比导热形状'
-        : '云母片上石蜡熔成椭圆（不同方向微粒间距不同 → 导热快慢不同）；玻璃片熔成正圆（各向同性）',
+        ? '云母片与玻璃片均涂有薄石蜡，点击「烫针同时加热」或直接点击舞台观察导热形状'
+        : '云母单晶沿不同方向微粒间距不同 → 熔成椭圆（各向异性）；玻璃长程无序 → 熔成正圆（各向同性）',
     );
   }
 
@@ -63,23 +54,16 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
   }
 
   btnHeat.addEventListener('click', triggerHeat);
-  btnLattice.addEventListener('click', () => {
-    showLattice = !showLattice;
-    syncUi();
-  });
-  btnReset.addEventListener('click', () => {
-    radius = 0;
-    heating = false;
-    syncUi();
-  });
+  btnLattice.addEventListener('click', () => { showLattice = !showLattice; syncUi(); render(); });
+  btnReset.addEventListener('click', () => { radius = 0; heating = false; syncUi(); render(); });
   canvas.addEventListener('click', triggerHeat);
   syncUi();
 
-  function drawPlate(cx, cy, w, h, isMica) {
+  function drawPlate(cx, cy, w, h, isMica, p) {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.fillStyle = isMica ? 'rgba(56, 189, 248, 0.14)' : 'rgba(251, 191, 36, 0.14)';
-    ctx.strokeStyle = isMica ? 'rgba(125, 211, 252, 0.65)' : 'rgba(252, 211, 77, 0.65)';
+    ctx.fillStyle = isMica ? p.crystalSoft : p.amorphousSoft;
+    ctx.strokeStyle = isMica ? p.crystal : p.amorphous;
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.roundRect(-w / 2, -h / 2, w, h, 14);
@@ -87,7 +71,9 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
     ctx.stroke();
 
     if (showLattice) {
-      ctx.fillStyle = isMica ? 'rgba(125, 211, 252, 0.25)' : 'rgba(252, 211, 77, 0.22)';
+      ctx.fillStyle = isMica
+        ? (p.isDark ? 'rgba(125, 211, 252, 0.30)' : 'rgba(2, 132, 199, 0.28)')
+        : (p.isDark ? 'rgba(252, 211, 77, 0.26)' : 'rgba(180, 83, 9, 0.26)');
       if (isMica) {
         for (let r = -3; r <= 3; r++) {
           for (let c = -5; c <= 5; c++) {
@@ -110,18 +96,24 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
     const ry = isMica ? radius * maxR * 0.77 : radius * maxR;
     if (radius > 0.01) {
       const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, Math.max(rx, ry, 6));
-      grad.addColorStop(0, 'rgba(244, 63, 94, 0.72)');
-      grad.addColorStop(0.55, isMica ? 'rgba(56, 189, 248, 0.45)' : 'rgba(251, 191, 36, 0.45)');
-      grad.addColorStop(1, 'rgba(15, 23, 42, 0.08)');
+      grad.addColorStop(0, p.isDark ? 'rgba(244, 63, 94, 0.72)' : 'rgba(225, 29, 72, 0.56)');
+      grad.addColorStop(
+        0.55,
+        isMica
+          ? (p.isDark ? 'rgba(56, 189, 248, 0.45)' : 'rgba(2, 132, 199, 0.34)')
+          : (p.isDark ? 'rgba(251, 191, 36, 0.45)' : 'rgba(217, 119, 6, 0.34)'),
+      );
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.beginPath();
       ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
-      ctx.strokeStyle = isMica ? '#7dd3fc' : '#fde047';
+      ctx.strokeStyle = isMica ? p.crystal : p.amorphous;
       ctx.lineWidth = 2.2;
       ctx.stroke();
 
-      ctx.strokeStyle = '#f8fafc';
+      ctx.strokeStyle = p.ink;
+      ctx.globalAlpha = 0.75;
       ctx.setLineDash([4, 3]);
       ctx.lineWidth = 1.2;
       ctx.beginPath();
@@ -131,21 +123,38 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
       ctx.lineTo(0, ry);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
     }
 
     ctx.beginPath();
     ctx.arc(0, 0, heating ? 6 : 4, 0, Math.PI * 2);
-    ctx.fillStyle = heating ? '#fb7185' : '#94a3b8';
+    ctx.fillStyle = heating ? p.covalent : p.muted;
     ctx.fill();
 
-    ctx.fillStyle = '#f8fafc';
+    ctx.fillStyle = p.ink;
     ctx.font = '700 15px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(isMica ? '云母单晶片（晶体）' : '玻璃片（非晶体）', 0, -h / 2 - 14);
-    ctx.fillStyle = isMica ? '#7dd3fc' : '#fde047';
+    ctx.fillStyle = isMica ? p.crystalText : p.amorphousText;
     ctx.font = '600 13px system-ui, sans-serif';
     ctx.fillText(isMica ? '熔斑呈椭圆 → 导热各向异性' : '熔斑呈正圆 → 导热各向同性', 0, h / 2 + 22);
     ctx.restore();
+  }
+
+  function render() {
+    const { width, height } = getSize();
+    const p = getPalette();
+
+    ctx.fillStyle = p.bg;
+    ctx.fillRect(0, 0, width, height);
+
+    const topSafe = 86;
+    const botSafe = 80;
+    const cy = topSafe + (height - topSafe - botSafe) * 0.5;
+    const pw = Math.min(260, width * 0.38);
+    const ph = Math.min(220, (height - topSafe - botSafe) * 0.64);
+    drawPlate(width * 0.27, cy, pw, ph, true, p);
+    drawPlate(width * 0.73, cy, pw, ph, false, p);
   }
 
   function frame() {
@@ -157,29 +166,15 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
         syncUi();
       }
     }
-    const { width, height } = getSize();
-    ctx.fillStyle = STAGE_BG;
-    ctx.fillRect(0, 0, width, height);
-
-    const pw = Math.min(250, width * 0.39);
-    const ph = Math.min(220, height * 0.52);
-    drawPlate(width * 0.27, height * 0.5, pw, ph, true);
-    drawPlate(width * 0.73, height * 0.5, pw, ph, false);
+    render();
     rafId = requestAnimationFrame(frame);
   }
   rafId = requestAnimationFrame(frame);
 
   return {
-    pause() {
-      paused = true;
-      cancelAnimationFrame(rafId);
-    },
-    resume() {
-      if (!paused) return;
-      paused = false;
-      rafId = requestAnimationFrame(frame);
-    },
-    resize,
+    pause() { paused = true; cancelAnimationFrame(rafId); },
+    resume() { if (!paused) return; paused = false; rafId = requestAnimationFrame(frame); },
+    resize() { resize(); render(); },
     destroy() {
       paused = true;
       cancelAnimationFrame(rafId);

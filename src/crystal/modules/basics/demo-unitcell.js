@@ -1,12 +1,12 @@
 /**
  * 模块 01 · 认识晶体：Demo 6（从金属铜晶体到单个 FCC 晶胞，再无隙并置拼回）
- * 使用 Three.js + OrbitControls 实现真实 3D 交互演示。
+ * 使用 Three.js + OrbitControls 实现 5 主题自适应 3D 交互演示。
  */
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { getStagePalette, observeThemeChange } from '../stage-theme.js';
 
-const STAGE_BG = 0x0d1322;
 const CELL_SIZE = 1.8;
 
 // 面心立方（FCC）单个晶胞的 14 个格点（8 顶点 + 6 面心，归一化坐标 [-0.5, 0.5]）
@@ -18,32 +18,21 @@ const FCC_SITES = [
 
 export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }) {
   setLegend([
-    { label: 'Cu 原子（提取晶胞）', color: '#f59e0b' },
-    { label: 'Cu 原子（周围晶胞）', color: '#d97757' },
-    { label: '晶胞边界', color: '#38bdf8' },
+    { label: 'Cu（提取晶胞）', color: '#ea580c' },
+    { label: 'Cu（周围晶胞）', color: '#c2714f' },
+    { label: '晶胞边界', color: '#0284c7' },
   ]);
 
   controlsEl.innerHTML = `
-    <div class="crystal-exam-tabs" role="group" aria-label="演示步骤">
-      <button type="button" class="crystal-exam-tab is-active" data-step="bulk">1.整块晶体</button>
-      <button type="button" class="crystal-exam-tab" data-step="extract">2.提取晶胞</button>
-      <button type="button" class="crystal-exam-tab" data-step="tile">3.无隙拼回</button>
+    <div class="crystal-seg" role="group" aria-label="演示步骤" style="grid-template-columns:repeat(3,auto);">
+      <button type="button" class="crystal-seg-btn is-active" data-step="bulk">1.整块晶体</button>
+      <button type="button" class="crystal-seg-btn" data-step="extract">2.提取晶胞</button>
+      <button type="button" class="crystal-seg-btn" data-step="tile">3.无隙拼回</button>
     </div>
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-full" data-act="auto">
-      自动演示全流程
-    </button>
-    <div class="crystal-slice-actions">
-      <button type="button" class="crystal-btn crystal-btn-ghost" data-act="wire">隐藏晶胞框</button>
-      <button type="button" class="crystal-btn crystal-btn-ghost" data-act="reset">重置视角</button>
-    </div>
-    <div class="crystal-exam-body">
-      <div class="crystal-exam-metric">
-        <span class="crystal-exam-k">单 FCC 晶胞铜原子数</span>
-        <span class="crystal-exam-v">4 个</span>
-      </div>
-      <p class="crystal-exam-formula">8 × 1/8 (顶点) + 6 × 1/2 (面心) = 4</p>
-      <p class="crystal-exam-desc">晶胞是晶体中最小的基本重复单元，沿三维方向<strong>无隙并置</strong>（平移不旋转）即可拼成整块晶体。</p>
-    </div>
+    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="auto">自动演示</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="wire">隐藏晶胞框</button>
+    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复位</button>
+    <span class="crystal-param-pill">8×1/8 + 6×1/2 = <strong>4</strong></span>
   `;
 
   const stepBtns = controlsEl.querySelectorAll('[data-step]');
@@ -51,10 +40,7 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
   const btnWire = controlsEl.querySelector('[data-act="wire"]');
   const btnReset = controlsEl.querySelector('[data-act="reset"]');
 
-  // Three.js 场景、相机与渲染器
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(STAGE_BG);
-
   const rect = stageEl.getBoundingClientRect();
   const initW = Math.max(320, Math.floor(rect.width || 640));
   const initH = Math.max(280, Math.floor(rect.height || 420));
@@ -74,34 +60,61 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
   controls.minDistance = 3.2;
   controls.maxDistance = 16;
 
-  // 三点布光呈现金属铜质感
-  scene.add(new THREE.AmbientLight(0xdbeafe, 0.65));
-  const keyLight = new THREE.DirectionalLight(0xfff7ed, 1.85);
+  // 三点 + 半球布光：浅色主题下金属铜依然温润明亮、无发黑发死
+  const hemiLight = new THREE.HemisphereLight(0xfffaf0, 0x94a3b8, 1.35);
+  scene.add(hemiLight);
+  const keyLight = new THREE.DirectionalLight(0xfff7ed, 2.1);
   keyLight.position.set(6, 9, 7);
   scene.add(keyLight);
-  const rimLight = new THREE.DirectionalLight(0x7dd3fc, 0.85);
+  const rimLight = new THREE.DirectionalLight(0xbae6fd, 0.9);
   rimLight.position.set(-7, -4, -6);
   scene.add(rimLight);
 
-  const sphereGeo = new THREE.SphereGeometry(0.27, 22, 18);
+  const sphereGeo = new THREE.SphereGeometry(0.27, 24, 18);
   const boxEdgesGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE, CELL_SIZE));
 
   const heroMat = new THREE.MeshStandardMaterial({
-    color: 0xf59e0b,
-    metalness: 0.72,
-    roughness: 0.24,
-    emissive: 0x78350f,
-    emissiveIntensity: 0.28,
+    color: 0xea7a38,
+    metalness: 0.34,
+    roughness: 0.28,
+    emissive: 0x7c2d12,
+    emissiveIntensity: 0.16,
   });
   const peerMat = new THREE.MeshStandardMaterial({
-    color: 0xd97757,
-    metalness: 0.68,
-    roughness: 0.3,
+    color: 0xc97b55,
+    metalness: 0.28,
+    roughness: 0.36,
     transparent: true,
     opacity: 1,
   });
-  const heroWireMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.95 });
-  const peerWireMat = new THREE.LineBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.32 });
+  const heroWireMat = new THREE.LineBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.95 });
+  const peerWireMat = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.35 });
+
+  function applyTheme(p) {
+    scene.background = new THREE.Color(p.bg);
+    if (p.isDark) {
+      hemiLight.color.setHex(0xe2f4ec);
+      hemiLight.groundColor.setHex(0x1f3d33);
+      hemiLight.intensity = 1.2;
+      keyLight.intensity = 2.0;
+      heroMat.color.setHex(0xf59e0b);
+      heroMat.emissiveIntensity = 0.26;
+      peerMat.color.setHex(0xd97757);
+      heroWireMat.color.setHex(0x38bdf8);
+      peerWireMat.color.setHex(0xcbd5e1);
+    } else {
+      hemiLight.color.setHex(0xffffff);
+      hemiLight.groundColor.setHex(0xcbd5e1);
+      hemiLight.intensity = 1.45;
+      keyLight.intensity = 2.2;
+      heroMat.color.setHex(0xea6d28);
+      heroMat.emissiveIntensity = 0.14;
+      peerMat.color.setHex(0xc97b55);
+      heroWireMat.color.setHex(0x0284c7);
+      peerWireMat.color.setHex(0x64748b);
+    }
+    renderer.render(scene, camera);
+  }
 
   const rootGroup = new THREE.Group();
   scene.add(rootGroup);
@@ -131,19 +144,15 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
 
         group.position.copy(home);
         rootGroup.add(group);
-        cells.push({
-          isHero,
-          group,
-          wire,
-          home,
-          explode,
-          order: isHero ? 0 : ++peerOrder,
-        });
+        cells.push({ isHero, group, wire, home, explode, order: isHero ? 0 : ++peerOrder });
       }
     }
   }
 
-  let step = 'bulk'; // 'bulk' | 'extract' | 'tile'
+  applyTheme(getStagePalette());
+  const stopTheme = observeThemeChange(applyTheme);
+
+  let step = 'bulk';
   let showWire = true;
   let autoPlay = false;
   let autoTimer = 0;
@@ -155,7 +164,6 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
     step = nextStep;
     if (!fromAuto) autoPlay = false;
     if (nextStep === 'tile') {
-      // 从提取态开始平滑无隙拼回
       tileProgress = 0;
       for (const c of cells) {
         c.group.position.copy(c.isHero ? new THREE.Vector3(0, 0, 0) : c.explode);
@@ -167,12 +175,12 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
 
   function syncUi() {
     stepBtns.forEach((b) => b.classList.toggle('is-active', b.dataset.step === step));
-    btnAuto.textContent = autoPlay ? '停止自动演示' : '自动演示全流程';
+    btnAuto.textContent = autoPlay ? '停止演示' : '自动演示';
     btnWire.textContent = showWire ? '隐藏晶胞框' : '显示晶胞框';
     if (step === 'bulk') {
       setCaption('① 金属铜（Cu）晶体：2×2×2 面心立方阵列，拖拽可 360° 观察长程周期性');
     } else if (step === 'extract') {
-      setCaption('② 提取单个 FCC 晶胞：8 个顶点 + 6 个面心铜原子，构成最小重复单元');
+      setCaption('② 提取单个 FCC 晶胞：8 顶点 + 6 面心铜原子，构成最小重复单元');
     } else {
       setCaption('③ 无隙并置拼回：晶胞沿三维坐标轴平移、不旋转、不留空隙，拼出整块晶体');
     }
@@ -187,9 +195,7 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
   });
   btnWire.addEventListener('click', () => {
     showWire = !showWire;
-    cells.forEach((c) => {
-      c.wire.visible = showWire;
-    });
+    cells.forEach((c) => { c.wire.visible = showWire; });
     syncUi();
   });
   btnReset.addEventListener('click', () => {
@@ -205,6 +211,7 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
+    renderer.render(scene, camera);
   }
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
   ro?.observe(stageEl);
@@ -218,17 +225,14 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
       autoTimer += 1;
       if (autoTimer === 130) setStep('extract', true);
       else if (autoTimer === 280) setStep('tile', true);
-      else if (autoTimer >= 460) {
-        autoTimer = 0;
-        setStep('bulk', true);
-      }
+      else if (autoTimer >= 460) { autoTimer = 0; setStep('bulk', true); }
     }
 
     rootGroup.rotation.y += 0.0032;
 
     if (step === 'bulk') {
       peerMat.opacity += (1 - peerMat.opacity) * 0.08;
-      peerWireMat.opacity += (0.32 - peerWireMat.opacity) * 0.08;
+      peerWireMat.opacity += (0.34 - peerWireMat.opacity) * 0.08;
       for (const c of cells) {
         c.group.visible = true;
         c.group.position.lerp(c.home, 0.09);
@@ -248,7 +252,7 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
     } else if (step === 'tile') {
       tileProgress = Math.min(1, tileProgress + 0.009);
       peerMat.opacity += (1 - peerMat.opacity) * 0.06;
-      peerWireMat.opacity += (0.34 - peerWireMat.opacity) * 0.06;
+      peerWireMat.opacity += (0.36 - peerWireMat.opacity) * 0.06;
       for (const c of cells) {
         c.group.visible = true;
         if (c.isHero) {
@@ -271,19 +275,13 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
   rafId = requestAnimationFrame(frame);
 
   return {
-    pause() {
-      paused = true;
-      cancelAnimationFrame(rafId);
-    },
-    resume() {
-      if (!paused) return;
-      paused = false;
-      rafId = requestAnimationFrame(frame);
-    },
+    pause() { paused = true; cancelAnimationFrame(rafId); },
+    resume() { if (!paused) return; paused = false; rafId = requestAnimationFrame(frame); },
     resize,
     destroy() {
       paused = true;
       cancelAnimationFrame(rafId);
+      stopTheme();
       ro?.disconnect();
       controls.dispose();
       sphereGeo.dispose();
