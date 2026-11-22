@@ -67,18 +67,22 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
   let tAccum = 0;
 
   controlsEl.innerHTML = `
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="play">开始升温</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置</button>
-    <div class="crystal-seg" role="group" aria-label="升温倍率" style="grid-template-columns:repeat(3,auto);">
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="play">开始升温</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置</button>
+    </div>
+    <div class="crystal-dock-group crystal-seg" role="group" aria-label="升温倍率">
       <button type="button" class="crystal-seg-btn" data-spd="0.5">0.5×</button>
       <button type="button" class="crystal-seg-btn is-active" data-spd="1">1×</button>
       <button type="button" class="crystal-seg-btn" data-spd="2.5">2.5×</button>
     </div>
-    <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
-      <input type="range" min="0" max="1000" step="1" value="0" data-act="slider" style="width:120px;accent-color:var(--accent,#3b82f6);" />
-      <strong data-stat="temp" style="font-family:var(--font-mono,monospace);min-width:58px;">-250 °C</strong>
-    </label>
-    <span class="crystal-param-pill" data-stat="count">0 / 16 熔化</span>
+    <div class="crystal-dock-group">
+      <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
+        <input type="range" min="0" max="1000" step="1" value="0" data-act="slider" style="width:120px;accent-color:var(--accent,#3b82f6);" />
+        <strong data-stat="temp" style="font-family:var(--font-mono,monospace);min-width:58px;">-250 °C</strong>
+      </label>
+      <span class="crystal-param-pill" data-stat="count">0 / 16 熔化</span>
+    </div>
   `;
 
   const btnPlay = controlsEl.querySelector('[data-act="play"]');
@@ -101,7 +105,7 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
     if (!isScrub && fresh.length) {
       fresh.sort((a, b) => a.mp - b.mp);
       const last = fresh[fresh.length - 1];
-      onCaption?.(`${temp}°C：${last.f}（${last.name} · ${last.type}晶体）${last.subl ? '升华' : '熔化'}！`);
+      onCaption?.(`${temp}°C · ${last.f}（${last.type}）${last.subl ? '升华' : '熔化'}`);
     }
     statCount.textContent = `${count} / 16 熔化`;
     statTemp.textContent = `${temp} °C`;
@@ -128,7 +132,7 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
     for (const it of items) { it.melted = false; it.flash = 0; }
     syncMelted(true);
     syncPlayBtn();
-    onCaption?.('已重置到 -250°C：4 类晶体全部处于固态，点击「开始升温」观看熔化大比拼');
+    onCaption?.('已重置 · -250°C 全固态');
   });
 
   spdBtns.forEach((b) => {
@@ -146,7 +150,7 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
   });
 
   syncMelted(true);
-  onCaption?.('4×4 晶体熔化大比拼：从 -250°C 同步升温至 3600°C，直观感受四类晶体的熔点鸿沟');
+  onCaption?.('-250°C → 3600°C 四类晶体熔点对比');
 
   const loopCtrl = mountCanvasLoop(stageEl, (ctx, w, h, dt, p) => {
     tAccum += dt;
@@ -156,7 +160,7 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
       if (u >= 1) {
         playing = false;
         syncPlayBtn();
-        onCaption?.('3600°C 终点！分子晶体最先全军覆没，金属跨度极大（Hg↔W），共价晶体笑到最后');
+        onCaption?.('3600°C 终点 · 共价晶体最耐高温');
       }
     }
 
@@ -185,8 +189,8 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
     ctx.fillRect(0, 0, w, h);
 
     const padX = 16;
-    const topSafe = 74;
-    const botSafe = 76;
+    const topSafe = 16;
+    const botSafe = 16;
     const tempInt = Math.round(temp);
     const barBoxH = 44;
 

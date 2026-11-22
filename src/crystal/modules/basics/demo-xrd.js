@@ -4,7 +4,7 @@
 
 import { setupHiDpiCanvas } from './stage-canvas.js';
 
-export function mountXrdDemo({ stageEl, controlsEl, setCaption, setLegend }) {
+export function mountXrdDemo({ stageEl, controlsEl, setCaption }) {
   let sample = 'both';
   let thetaDeg = 22;
   let tick = 0;
@@ -13,23 +13,20 @@ export function mountXrdDemo({ stageEl, controlsEl, setCaption, setLegend }) {
 
   const { ctx, getSize, getPalette, resize, dispose } = setupHiDpiCanvas(stageEl, () => render());
 
-  setLegend([
-    { label: '晶体 · 锐利衍射斑点', color: '#0284c7' },
-    { label: '非晶体 · 宽化晕环', color: '#d97706' },
-  ]);
-
   controlsEl.innerHTML = `
-    <div class="crystal-seg" role="group" aria-label="X射线样品" style="grid-template-columns:repeat(3,auto);">
+    <div class="crystal-dock-group crystal-seg" role="group" aria-label="X射线样品">
       <button type="button" class="crystal-seg-btn" data-sample="crystal">单晶</button>
       <button type="button" class="crystal-seg-btn" data-sample="amorphous">玻璃</button>
       <button type="button" class="crystal-seg-btn is-active" data-sample="both">并排对比</button>
     </div>
-    <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
+    <label class="crystal-dock-group" style="font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
       <span>入射角 θ</span>
       <input type="range" min="10" max="40" value="22" data-el="slider" style="width:105px;accent-color:var(--accent,#3b82f6);" />
       <strong data-el="theta" style="font-family:var(--font-mono,monospace);min-width:28px;">22°</strong>
     </label>
-    <span class="crystal-param-pill">2d sinθ = nλ</span>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">2d sinθ = nλ</span>
+    </div>
   `;
 
   const sampleBtns = controlsEl.querySelectorAll('[data-sample]');
@@ -41,10 +38,10 @@ export function mountXrdDemo({ stageEl, controlsEl, setCaption, setLegend }) {
     thetaEl.textContent = `${thetaDeg}°`;
     setCaption(
       sample === 'crystal'
-        ? '单晶 X 射线衍射：周期性晶面满足布拉格条件，产生清晰对称的锐利衍射斑点与尖峰'
+        ? '单晶 · 锐利斑点与尖峰'
         : sample === 'amorphous'
-          ? '非晶体 X 射线散射：内部缺少长程周期性，仅出现弥散宽化的同心晕环与宽包'
-          : '最可靠鉴别法：晶体产生分立锐利的衍射斑点与尖峰，非晶体只产生弥散晕环与宽包',
+          ? '玻璃 · 弥散晕环与宽包'
+          : '单晶 vs 非晶体衍射对比',
     );
   }
 
@@ -175,21 +172,21 @@ export function mountXrdDemo({ stageEl, controlsEl, setCaption, setLegend }) {
     ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, width, height);
 
-    const topSafe = 90;
-    const botSafe = 78;
-    const usableH = Math.max(200, height - topSafe - botSafe);
-    const detR = Math.min(width * (sample === 'both' ? 0.16 : 0.22), usableH * 0.30);
+    const topSafe = 28;
+    const botSafe = 18;
+    const usableH = Math.max(220, height - topSafe - botSafe);
+    const detR = Math.min(width * (sample === 'both' ? 0.17 : 0.22), usableH * 0.29);
     const detY = topSafe + detR + 28;
-    const specY = detY + detR + 22;
-    const specH = Math.max(54, Math.min(84, height - botSafe - specY - 6));
+    const specY = detY + detR + 20;
+    const specH = Math.max(64, Math.min(112, height - botSafe - specY - 4));
 
     const waveX = (tick * 4) % width;
     ctx.strokeStyle = p.crystal;
     ctx.globalAlpha = 0.34;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(Math.max(24, waveX - 60), topSafe - 2);
-    ctx.lineTo(Math.min(width - 24, waveX), topSafe - 2);
+    ctx.moveTo(Math.max(24, waveX - 60), topSafe - 12);
+    ctx.lineTo(Math.min(width - 24, waveX), topSafe - 12);
     ctx.stroke();
     ctx.globalAlpha = 1;
 

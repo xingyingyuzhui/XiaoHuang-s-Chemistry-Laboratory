@@ -6,9 +6,9 @@
 import { drawSphere, mountCanvasLoop } from './canvas-kit.js';
 
 const CONDUCT_STATES = {
-  solid: { label: '固态 NaCl 晶体', current: 0, glow: 0, desc: '离子被强离子键固定在晶格，无法自由移动 → 不导电' },
-  molten: { label: '熔融态 NaCl (801°C)', current: 0.78, glow: 0.85, desc: '高温破坏离子键，自由 Na⁺/Cl⁻ 定向迁移 → 导电' },
-  aqueous: { label: 'NaCl 水溶液', current: 1.0, glow: 1.0, desc: '水分子电离出自由水合离子，定向迁移更快 → 强导电' },
+  solid: { label: '固态 NaCl', current: 0, glow: 0, desc: '离子固定 · 不导电' },
+  molten: { label: '熔融态 (801°C)', current: 0.78, glow: 0.85, desc: '自由离子 · 导电' },
+  aqueous: { label: 'NaCl 水溶液', current: 1.0, glow: 1.0, desc: '水合离子 · 强导电' },
 };
 
 export function createConductExp(stageEl, controlsEl, onCaption) {
@@ -34,14 +34,18 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
   }
 
   controlsEl.innerHTML = `
-    <div class="crystal-seg" role="group" aria-label="NaCl 状态" style="grid-template-columns:repeat(3,auto);">
+    <div class="crystal-dock-group crystal-seg" role="group" aria-label="NaCl 状态">
       <button type="button" class="crystal-seg-btn is-active" data-mode="solid">固态晶体</button>
       <button type="button" class="crystal-seg-btn" data-mode="molten">熔融态</button>
       <button type="button" class="crystal-seg-btn" data-mode="aqueous">水溶液</button>
     </div>
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="power">电源：闭合通电</button>
-    <span class="crystal-param-pill">灯泡 <strong data-stat="bulb">熄灭</strong></span>
-    <span class="crystal-param-pill">电流 <strong data-stat="amp">0.00 A</strong></span>
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="power">电源：闭合通电</button>
+    </div>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">灯泡 <strong data-stat="bulb">熄灭</strong></span>
+      <span class="crystal-param-pill">电流 <strong data-stat="amp">0.00 A</strong></span>
+    </div>
   `;
 
   const modeBtns = controlsEl.querySelectorAll('[data-mode]');
@@ -59,8 +63,7 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
     statBulb.textContent = active ? (mode === 'aqueous' ? '明亮发光' : '发光') : '熄灭';
     statBulb.style.color = active ? 'var(--ok, #16a34a)' : 'var(--muted, #64748b)';
     statAmp.textContent = active ? `${(info.current * 0.85).toFixed(2)} A` : '0.00 A';
-    const desc = powerOn ? info.desc : '电源开关断开：即使存在自由离子，也只做无规则热运动，无定向电流。';
-    onCaption?.(`${info.label} — ${desc}`);
+    onCaption?.(powerOn ? `${info.label} · ${info.desc}` : '电源已断开 · 无定向电流');
   }
 
   modeBtns.forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode; syncUI(); }));
@@ -77,13 +80,14 @@ export function createConductExp(stageEl, controlsEl, onCaption) {
     ctx.fillRect(0, 0, w, h);
 
     const cx = w * 0.5;
-    const topSafe = 86;
-    const botSafe = 78;
-    const circuitY = topSafe + Math.max(24, (h - topSafe - botSafe) * 0.14);
-    const elecL = cx - Math.min(190, w * 0.27);
-    const elecR = cx + Math.min(190, w * 0.27);
-    const boxTop = circuitY + Math.max(76, (h - topSafe - botSafe) * 0.25);
-    const boxH = Math.max(140, h - botSafe - boxTop);
+    const topSafe = 24;
+    const botSafe = 20;
+    const usableH = Math.max(220, h - topSafe - botSafe);
+    const circuitY = topSafe + Math.max(28, usableH * 0.13);
+    const elecL = cx - Math.min(200, w * 0.27);
+    const elecR = cx + Math.min(200, w * 0.27);
+    const boxTop = circuitY + Math.max(72, usableH * 0.24);
+    const boxH = Math.max(150, h - botSafe - boxTop);
     const boxW = (elecR - elecL) + 110;
     const boxX = cx - boxW / 2;
 

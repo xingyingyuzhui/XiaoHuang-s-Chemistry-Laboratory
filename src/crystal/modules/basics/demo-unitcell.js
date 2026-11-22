@@ -16,23 +16,21 @@ const FCC_SITES = [
   [0, 0, -0.5], [0, 0, 0.5], [0, -0.5, 0], [0, 0.5, 0], [-0.5, 0, 0], [0.5, 0, 0],
 ];
 
-export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }) {
-  setLegend([
-    { label: 'Cu（提取晶胞）', color: '#ea580c' },
-    { label: 'Cu（周围晶胞）', color: '#c2714f' },
-    { label: '晶胞边界', color: '#0284c7' },
-  ]);
-
+export function mountUnitCellDemo({ stageEl, controlsEl, setCaption }) {
   controlsEl.innerHTML = `
-    <div class="crystal-seg" role="group" aria-label="演示步骤" style="grid-template-columns:repeat(3,auto);">
+    <div class="crystal-dock-group crystal-seg" role="group" aria-label="演示步骤">
       <button type="button" class="crystal-seg-btn is-active" data-step="bulk">1.整块晶体</button>
       <button type="button" class="crystal-seg-btn" data-step="extract">2.提取晶胞</button>
       <button type="button" class="crystal-seg-btn" data-step="tile">3.无隙拼回</button>
     </div>
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="auto">自动演示</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="wire">隐藏晶胞框</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复位</button>
-    <span class="crystal-param-pill">8×1/8 + 6×1/2 = <strong>4</strong></span>
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="auto">自动演示</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="wire">隐藏晶胞框</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复位</button>
+    </div>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">8×1/8 + 6×1/2 = <strong>4</strong></span>
+    </div>
   `;
 
   const stepBtns = controlsEl.querySelectorAll('[data-step]');
@@ -178,11 +176,11 @@ export function mountUnitCellDemo({ stageEl, controlsEl, setCaption, setLegend }
     btnAuto.textContent = autoPlay ? '停止演示' : '自动演示';
     btnWire.textContent = showWire ? '隐藏晶胞框' : '显示晶胞框';
     if (step === 'bulk') {
-      setCaption('① 金属铜（Cu）晶体：2×2×2 面心立方阵列，拖拽可 360° 观察长程周期性');
+      setCaption('2×2×2 金属铜 FCC 晶体 · 拖拽旋转');
     } else if (step === 'extract') {
-      setCaption('② 提取单个 FCC 晶胞：8 顶点 + 6 面心铜原子，构成最小重复单元');
+      setCaption('提取单个 FCC 晶胞 · 8 顶点 + 6 面心');
     } else {
-      setCaption('③ 无隙并置拼回：晶胞沿三维坐标轴平移、不旋转、不留空隙，拼出整块晶体');
+      setCaption('无隙并置拼回 · 沿坐标轴平移');
     }
   }
 

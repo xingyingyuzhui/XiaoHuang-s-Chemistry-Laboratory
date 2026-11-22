@@ -8,7 +8,7 @@ import { setupHiDpiCanvas } from './stage-canvas.js';
 export { mountMeltingDemo } from './demo-melting.js';
 export { mountXrdDemo } from './demo-xrd.js';
 
-export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend }) {
+export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption }) {
   let radius = 0;
   let heating = false;
   let showLattice = true;
@@ -17,16 +17,17 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
 
   const { canvas, ctx, getSize, getPalette, resize, dispose } = setupHiDpiCanvas(stageEl, () => render());
 
-  setLegend([
-    { label: '云母 · 椭圆熔斑（各向异性）', color: '#0284c7' },
-    { label: '玻璃 · 正圆熔斑（各向同性）', color: '#d97706' },
-  ]);
-
   controlsEl.innerHTML = `
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="heat">烫针同时加热</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="lattice">隐藏微观排布</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重新涂蜡</button>
-    <span class="crystal-param-pill">云母长短轴比 a : b = <strong>1.72 : 1</strong></span>
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="heat">烫针同时加热</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重新涂蜡</button>
+    </div>
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="lattice">隐藏微观排布</button>
+    </div>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">云母长短轴比 a : b = <strong>1.72 : 1</strong></span>
+    </div>
   `;
 
   const btnHeat = controlsEl.querySelector('[data-act="heat"]');
@@ -40,11 +41,7 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
         ? '重新加热'
         : '烫针同时加热';
     btnLattice.textContent = showLattice ? '隐藏微观排布' : '显示微观排布';
-    setCaption(
-      radius < 0.05
-        ? '云母片与玻璃片均涂有薄石蜡，点击「烫针同时加热」或直接点击舞台观察导热形状'
-        : '云母单晶沿不同方向微粒间距不同 → 熔成椭圆（各向异性）；玻璃长程无序 → 熔成正圆（各向同性）',
-    );
+    setCaption(radius < 0.05 ? '涂蜡待加热 · 点击舞台开始' : '云母椭圆(异性) vs 玻璃正圆(同性)');
   }
 
   function triggerHeat() {
@@ -148,11 +145,11 @@ export function mountAnisotropyDemo({ stageEl, controlsEl, setCaption, setLegend
     ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, width, height);
 
-    const topSafe = 86;
-    const botSafe = 80;
+    const topSafe = 44;
+    const botSafe = 44;
     const cy = topSafe + (height - topSafe - botSafe) * 0.5;
-    const pw = Math.min(260, width * 0.38);
-    const ph = Math.min(220, (height - topSafe - botSafe) * 0.64);
+    const pw = Math.min(310, width * 0.39);
+    const ph = Math.min(260, (height - topSafe - botSafe) * 0.74);
     drawPlate(width * 0.27, cy, pw, ph, true, p);
     drawPlate(width * 0.73, cy, pw, ph, false, p);
   }

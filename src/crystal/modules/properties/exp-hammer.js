@@ -79,11 +79,15 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
   resetShards();
 
   controlsEl.innerHTML = `
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="strike">同时敲一下</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复原</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="slow">慢动作 0.35×：关</button>
-    <span class="crystal-param-pill">Cu: <strong data-stat="cu">整齐点阵</strong></span>
-    <span class="crystal-param-pill">NaCl: <strong data-stat="nacl">整齐点阵</strong></span>
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="strike">同时敲一下</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复原</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="slow">慢动作 0.35×：关</button>
+    </div>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">Cu: <strong data-stat="cu">整齐点阵</strong></span>
+      <span class="crystal-param-pill">NaCl: <strong data-stat="nacl">整齐点阵</strong></span>
+    </div>
   `;
 
   const btnStrike = controlsEl.querySelector('[data-act="strike"]');
@@ -98,7 +102,7 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
       statNacl.textContent = '整齐点阵';
       btnStrike.textContent = '同时敲一下';
       btnStrike.disabled = false;
-      onCaption?.('点击「同时敲一下」，对比金属晶体与离子晶体受外力后的微观变化');
+      onCaption?.('待敲击 · Cu 金属键 vs NaCl 离子键');
     } else if (state === 'swinging' || state === 'slipping') {
       statCu.textContent = '层间滑移中…';
       statNacl.textContent = naclRepel > 0.15 ? '同号相斥！' : '发生错位…';
@@ -108,7 +112,7 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
       statNacl.textContent = '错位碎裂';
       btnStrike.disabled = strikeCount >= 2;
       btnStrike.textContent = strikeCount >= 2 ? '已达最大滑移' : '再敲一下';
-      onCaption?.('结果：Cu 自由电子维系金属键 → 滑移不断裂；NaCl 错位后同号离子正对相斥 → 直接碎裂');
+      onCaption?.('Cu 延展滑移 · NaCl 同号相斥碎裂');
     }
   }
 
@@ -188,11 +192,11 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
     ctx.fillRect(0, 0, w, h);
 
     const padX = 18;
-    const topSafe = 78;
-    const botSafe = 76;
+    const topSafe = 16;
+    const botSafe = 16;
     const gap = 14;
     const pw = (w - padX * 2 - gap) / 2;
-    const ph = Math.max(200, h - topSafe - botSafe);
+    const ph = Math.max(220, h - topSafe - botSafe);
     const leftX = padX;
     const rightX = padX + pw + gap;
 
@@ -200,7 +204,8 @@ export function createHammerExp(stageEl, controlsEl, onCaption) {
     drawPanelCard(ctx, rightX, topSafe, pw, ph, '离子晶体 · NaCl', '阴阳离子交替强静电排列', p.crystalText, p);
 
     const cell = clamp(Math.min(pw / (COLS + 3.4), (ph - 110) / (ROWS + 1.4)), 22, 44);
-    const baseY = topSafe + ph - 58 - (ROWS - 1) * cell;
+    const gridH = (ROWS - 1) * cell;
+    const baseY = topSafe + 68 + Math.max(22, (ph - 122 - gridH) * 0.56);
     const cuX0 = leftX + (pw - (COLS - 1) * cell) * 0.46;
     const naX0 = rightX + (pw - (COLS - 1) * cell) * 0.46;
     const shearY = baseY + (SPLIT_ROW - 0.5) * cell;

@@ -42,18 +42,20 @@ export function createIceExp(stageEl, controlsEl, onCaption) {
   });
 
   controlsEl.innerHTML = `
-    <div class="crystal-seg" role="group" aria-label="温度预设" style="grid-template-columns:repeat(3,auto);">
+    <div class="crystal-dock-group crystal-seg" role="group" aria-label="温度预设">
       <button type="button" class="crystal-seg-btn is-active" data-t="0">0°C 冰</button>
       <button type="button" class="crystal-seg-btn" data-t="4">4°C 水</button>
       <button type="button" class="crystal-seg-btn" data-t="20">20°C 水</button>
     </div>
-    <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
+    <label class="crystal-dock-group" style="font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
       <span>温度</span>
       <input type="range" min="-10" max="20" step="0.5" value="0" data-act="slider" style="width:110px;accent-color:var(--accent,#3b82f6);" />
       <strong data-stat="temp" style="font-family:var(--font-mono,monospace);min-width:48px;">0.0 °C</strong>
     </label>
-    <span class="crystal-param-pill">ρ <strong data-stat="rho">0.917</strong> g/cm³</span>
-    <span class="crystal-param-pill">氢键 <strong data-stat="hb">100%</strong></span>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">ρ <strong data-stat="rho">0.917</strong> g/cm³</span>
+      <span class="crystal-param-pill">氢键 <strong data-stat="hb">100%</strong></span>
+    </div>
   `;
 
   const presetBtns = controlsEl.querySelectorAll('[data-t]');
@@ -73,10 +75,10 @@ export function createIceExp(stageEl, controlsEl, onCaption) {
     statHb.textContent = `${hbPct}%`;
     presetBtns.forEach((b) => b.classList.toggle('is-active', Number(b.dataset.t) === temp));
     const msg = isIce
-      ? '0°C 冰：每个水分子形成 4 个方向性氢键构成正四面体大空隙骨架 → ρ = 0.917 g/cm³ < 水'
+      ? '0°C 冰 · 氢键大空隙 ρ=0.917'
       : temp <= 4
-        ? '0°C→4°C 液态水：部分氢键断裂，分子坍缩填入空隙，排布最紧密 → 4°C 密度最大 1.000 g/cm³'
-        : '4°C→20°C：热运动加剧占主导，分子间距微增，密度略降至 0.998 g/cm³';
+        ? '4°C 液态水 · 排布最密 ρ=1.000'
+        : `${temp.toFixed(0)}°C 液态水 · 热膨胀 ρ=${rho.toFixed(3)}`;
     onCaption?.(msg);
   }
 
@@ -93,13 +95,18 @@ export function createIceExp(stageEl, controlsEl, onCaption) {
     ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, w, h);
 
-    const topSafe = 82;
-    const botSafe = 78;
-    const usableH = Math.max(200, h - topSafe - botSafe);
+    const topSafe = 20;
+    const botSafe = 20;
+    const usableH = Math.max(220, h - topSafe - botSafe);
     const microW = w * 0.68;
     const mcx = microW * 0.5;
-    const mcy = topSafe + usableH * 0.52;
-    const unit = clamp(Math.min(microW / 5.4, usableH / 4.8), 24, 54);
+    const mcy = topSafe + 24 + (usableH - 24) * 0.5;
+    const unit = clamp(Math.min(microW / 5.4, (usableH - 28) / 4.8), 26, 56);
+
+    ctx.fillStyle = p.crystalText;
+    ctx.font = '700 14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(temp <= 0 ? 'H₂O 氢键四面体骨架（0°C 冰）' : 'H₂O 液态水分子排布（部分氢键断裂）', mcx, topSafe + 16);
 
     if (morph < 0.55) {
       const a = 1 - morph * 1.8;

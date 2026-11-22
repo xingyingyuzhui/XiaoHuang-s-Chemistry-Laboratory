@@ -14,7 +14,7 @@ function waxTempAt(p) {
   return 20 + p * 58 + Math.sin(p * Math.PI) * 3.5;
 }
 
-export function mountMeltingDemo({ stageEl, controlsEl, setCaption, setLegend }) {
+export function mountMeltingDemo({ stageEl, controlsEl, setCaption }) {
   let progress = 0;
   let heating = true;
   let fast = false;
@@ -24,22 +24,21 @@ export function mountMeltingDemo({ stageEl, controlsEl, setCaption, setLegend })
 
   const { ctx, getSize, getPalette, resize, dispose } = setupHiDpiCanvas(stageEl, () => render());
 
-  setLegend([
-    { label: '晶体 · 海波 (48°C)', color: '#0284c7' },
-    { label: '非晶体 · 石蜡', color: '#d97706' },
-  ]);
-
   controlsEl.innerHTML = `
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="toggle">暂停加热</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="speed">1× 速度</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置</button>
-    <label style="display:inline-flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="toggle">暂停加热</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="speed">1× 速度</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置</button>
+    </div>
+    <label class="crystal-dock-group" style="font-size:0.78rem;color:var(--ink-soft,var(--muted,#475569));">
       <span>进度</span>
       <input type="range" min="0" max="100" value="0" data-el="slider" style="width:110px;accent-color:var(--accent,#3b82f6);" />
       <strong data-el="pct" style="font-family:var(--font-mono,monospace);min-width:34px;">0%</strong>
     </label>
-    <span class="crystal-param-pill">海波 <strong data-el="tc">20.0°C</strong></span>
-    <span class="crystal-param-pill">石蜡 <strong data-el="tw">20.0°C</strong></span>
+    <div class="crystal-dock-group">
+      <span class="crystal-param-pill">海波 <strong data-el="tc">20.0°C</strong></span>
+      <span class="crystal-param-pill">石蜡 <strong data-el="tw">20.0°C</strong></span>
+    </div>
   `;
 
   const btnToggle = controlsEl.querySelector('[data-act="toggle"]');
@@ -61,11 +60,11 @@ export function mountMeltingDemo({ stageEl, controlsEl, setCaption, setLegend })
     twEl.textContent = `${tw.toFixed(1)}°C`;
 
     if (progress < 0.34) {
-      setCaption('升温阶段：海波与石蜡均吸热升温，晶体微粒在平衡位置剧烈振动');
+      setCaption('升温期 · 两者吸热升温');
     } else if (progress < 0.72) {
-      setCaption('熔化平台期（48°C 恒温）：海波吸热全部用于破坏晶格，温度不变；石蜡持续升温软化');
+      setCaption('48°C 恒温平台 · 海波固液共存');
     } else {
-      setCaption('完全液化：海波彻底熔化后温度重新上升；晶体有固定熔点，非晶体无固定熔点');
+      setCaption('完全液化 · 晶体有固定熔点');
     }
   }
 
@@ -180,21 +179,21 @@ export function mountMeltingDemo({ stageEl, controlsEl, setCaption, setLegend })
     const cMelt = progress < 0.34 ? 0 : progress > 0.72 ? 1 : (progress - 0.34) / 0.38;
     const wMelt = Math.max(0, Math.min(1, (progress - 0.15) / 0.7));
 
-    const tubeY = 112;
-    const tubeH = Math.max(82, Math.min(126, (height - 260) * 0.44));
+    const tubeY = 44;
+    const tubeH = Math.max(88, Math.min(138, (height - 150) * 0.42));
     drawTube(width * 0.14, tubeY, 44, tubeH, tc, cMelt, p.crystal, p.crystalText, '海波（晶体）', p);
     drawTube(width * 0.34, tubeY, 44, tubeH, tw, wMelt, p.amorphous, p.amorphousText, '石蜡（非晶体）', p);
 
-    const microX = width * 0.52;
-    const microW = Math.max(130, width * 0.42);
-    const microH = Math.max(54, tubeH * 0.5);
+    const microX = width * 0.50;
+    const microW = Math.max(150, width * 0.44);
+    const microH = Math.max(54, tubeH * 0.52);
     drawMicroBox(microX, tubeY - 10, microW, microH, cMelt, true, p);
     drawMicroBox(microX, tubeY + microH + 8, microW, microH, wMelt, false, p);
 
     const gx = 58;
-    const gy = tubeY + tubeH + 54;
-    const gw = width - 92;
-    const gh = Math.max(96, height - gy - 92);
+    const gy = tubeY + tubeH + 48;
+    const gw = width - 88;
+    const gh = Math.max(104, height - gy - 32);
 
     ctx.fillStyle = p.surfaceSoft;
     ctx.beginPath();
@@ -249,10 +248,18 @@ export function mountMeltingDemo({ stageEl, controlsEl, setCaption, setLegend })
     drawCurve(crystalTempAt, p.crystal);
     drawCurve(waxTempAt, p.amorphous);
 
+    // 曲线左上角内联图例（避开曲线与平台区）
+    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = p.crystalText;
+    ctx.fillText('— 海波(晶体)', gx + 10, gy + 16);
+    ctx.fillStyle = p.amorphousText;
+    ctx.fillText('— 石蜡(非晶体)', gx + 10, gy + 32);
+
     ctx.fillStyle = p.muted;
     ctx.font = '600 11px system-ui, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('加热时间 t →', gx + gw, gy + gh + 16);
+    ctx.fillText('加热时间 t →', gx + gw, gy + gh + 18);
   }
 
   function frame() {

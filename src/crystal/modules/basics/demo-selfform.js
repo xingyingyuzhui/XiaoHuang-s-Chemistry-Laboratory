@@ -4,7 +4,7 @@
 
 import { setupHiDpiCanvas } from './stage-canvas.js';
 
-export function mountSelfFormDemo({ stageEl, controlsEl, setCaption, setLegend }) {
+export function mountSelfFormDemo({ stageEl, controlsEl, setCaption }) {
   const N = 7;
   const sites = [];
   for (let r = 0; r < N; r++) {
@@ -40,17 +40,15 @@ export function mountSelfFormDemo({ stageEl, controlsEl, setCaption, setLegend }
 
   const { canvas, ctx, getSize, getPalette, resize, dispose } = setupHiDpiCanvas(stageEl, () => render());
 
-  setLegend([
-    { label: 'Na⁺ 离子', color: '#6366f1' },
-    { label: 'Cl⁻ 离子', color: '#16a34a' },
-    { label: '饱和食盐水', color: '#0284c7' },
-  ]);
-
   controlsEl.innerHTML = `
-    <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="grow">1. 自发生长</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="chip">2. 敲掉一角</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="heal">3. 溶液自修复</button>
-    <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置晶核</button>
+    <div class="crystal-dock-group" role="group" aria-label="演示步骤">
+      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="grow">1. 自发生长</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="chip">2. 敲掉一角</button>
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="heal">3. 溶液自修复</button>
+    </div>
+    <div class="crystal-dock-group">
+      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置晶核</button>
+    </div>
   `;
 
   const btnGrow = controlsEl.querySelector('[data-act="grow"]');
@@ -58,16 +56,26 @@ export function mountSelfFormDemo({ stageEl, controlsEl, setCaption, setLegend }
   const btnHeal = controlsEl.querySelector('[data-act="heal"]');
   const btnReset = controlsEl.querySelector('[data-act="reset"]');
 
+  function syncStepButtons() {
+    const activeAct = mode === 'grow' ? 'grow' : mode === 'chipped' ? 'chip' : mode === 'heal' ? 'heal' : 'grow';
+    for (const [el, key] of [[btnGrow, 'grow'], [btnChip, 'chip'], [btnHeal, 'heal']]) {
+      const on = key === activeAct;
+      el.classList.toggle('crystal-btn-primary', on);
+      el.classList.toggle('crystal-btn-ghost', !on);
+    }
+  }
+
   function updateCaption() {
+    syncStepButtons();
     const filledCnt = sites.filter((s) => s.filled).length;
     if (mode === 'grow') {
-      setCaption(`自范性生长中（${filledCnt}/${sites.length}）：离子按周期性点阵有序堆积，自发长成规则立方外形`);
+      setCaption(`自发生长 ${filledCnt}/${sites.length}`);
     } else if (mode === 'chipped') {
-      setCaption('已敲掉右上角！点击「3. 溶液自修复」或直接点击晶体见证缺角优先补齐');
+      setCaption('已敲掉右上角 · 点击自修复');
     } else if (mode === 'heal') {
-      setCaption('自修复中：溶液中 Na⁺、Cl⁻ 优先落位到高能断口台阶，恢复规整多面体');
+      setCaption(`断口自修复中 ${filledCnt}/${sites.length}`);
     } else {
-      setCaption('完整 NaCl 立方晶体已长成！可点击「2. 敲掉一角」或直接点击晶体测试自修复');
+      setCaption('完整 NaCl 立方体 · 点击晶体敲角');
     }
   }
 
@@ -123,10 +131,10 @@ export function mountSelfFormDemo({ stageEl, controlsEl, setCaption, setLegend }
     ctx.fillStyle = p.bg;
     ctx.fillRect(0, 0, width, height);
 
-    const padX = Math.max(40, width * 0.08);
-    const padY = 82;
+    const padX = Math.max(24, width * 0.06);
+    const padY = 18;
     const boxW = width - padX * 2;
-    const boxH = Math.max(180, height - padY - 78);
+    const boxH = Math.max(200, height - padY - 20);
     const waterGrad = ctx.createLinearGradient(0, padY, 0, padY + boxH);
     waterGrad.addColorStop(0, p.water);
     waterGrad.addColorStop(1, p.waterDeep);
@@ -144,6 +152,23 @@ export function mountSelfFormDemo({ stageEl, controlsEl, setCaption, setLegend }
     ctx.font = '600 12px system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText('饱和 NaCl 水溶液（溶解—结晶动态平衡）', padX + 14, padY + 22);
+
+    // 右上角简洁离子图例
+    const legY = padY + 18;
+    const legX = padX + boxW - 14;
+    ctx.textAlign = 'right';
+    ctx.fillStyle = p.muted;
+    ctx.fillText('Cl⁻', legX, legY + 4);
+    ctx.beginPath();
+    ctx.arc(legX - 28, legY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#16a34a';
+    ctx.fill();
+    ctx.fillStyle = p.muted;
+    ctx.fillText('Na⁺', legX - 44, legY + 4);
+    ctx.beginPath();
+    ctx.arc(legX - 75, legY, 4.2, 0, Math.PI * 2);
+    ctx.fillStyle = '#6366f1';
+    ctx.fill();
 
     const cx = width * 0.5;
     const cy = padY + boxH * 0.54;
