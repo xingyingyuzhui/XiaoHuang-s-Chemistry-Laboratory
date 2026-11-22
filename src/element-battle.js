@@ -4,4 +4,11 @@
  *
  * @see ./battle/index.js
  */
-export { initElementBattle, setScreen } from './battle/index.js';
+export {
+  initElementBattle,
+  setScreen,
+  onBattleLeave,
+  onBattleEnter,
+  pauseBattleAudio,
+  resumeBattleAudio,
+} from './battle/index.js';

@@ -14,6 +14,22 @@ let master = null;
 let muted = loadMuted();
 /** 0–1 */
 let masterVol = loadVol();
+/** 离开元素乱斗 Tab 时的挂起标记（不改动用户静音偏好） */
+let tabSuspended = false;
+/** 页面最小化/后台不可见时的挂起标记（不改动用户静音偏好） */
+let visibilitySuspended = isDocumentHidden();
+let visibilityBound = false;
+
+function isDocumentHidden() {
+  return (
+    typeof document !== 'undefined' &&
+    (document.hidden === true || document.visibilityState === 'hidden')
+  );
+}
+
+function isAudioSuspended() {
+  return tabSuspended || visibilitySuspended;
+}
 
 function loadMuted() {
   try {
@@ -40,7 +56,7 @@ function ensureCtx() {
   if (!ctx) {
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = masterVol;
+    master.gain.value = muted || isAudioSuspended() ? 0 : masterVol;
     master.connect(ctx.destination);
   }
   return ctx;
@@ -48,7 +64,8 @@ function ensureCtx() {
 
 function applyMasterGain() {
   if (master && ctx) {
-    master.gain.setTargetAtTime(muted ? 0 : masterVol, ctx.currentTime, 0.02);
+    const target = muted || isAudioSuspended() ? 0 : masterVol;
+    master.gain.setTargetAtTime(target, ctx.currentTime, 0.02);
   }
 }
 
@@ -57,11 +74,16 @@ function applyMasterGain() {
  * @returns {Promise<boolean>}
  */
 export async function sfxUnlock() {
+  if (isAudioSuspended()) return false;
   const c = ensureCtx();
   if (!c) return false;
   try {
     if (c.state === 'suspended') await c.resume();
   } catch {
+    return false;
+  }
+  if (isAudioSuspended()) {
+    suspendAudioNow();
     return false;
   }
   applyMasterGain();
@@ -70,6 +92,10 @@ export async function sfxUnlock() {
 
 export function sfxIsMuted() {
   return muted;
+}
+
+export function sfxIsSuspended() {
+  return isAudioSuspended();
 }
 
 export function sfxGetVolume() {
@@ -87,7 +113,7 @@ export function sfxSetMuted(m) {
   applyMasterGain();
   // BGM 跟随静音
   if (muted) bgmPause(600);
-  else if (bgmWanted) bgmStart({ force: true }).catch(() => {});
+  else if (bgmWanted && !isAudioSuspended()) bgmStart({ force: true }).catch(() => {});
 }
 
 /** @param {number} v 0–1 */
@@ -99,7 +125,7 @@ export function sfxSetVolume(v) {
     /* ignore */
   }
   applyMasterGain();
-  if (bgmEl && !bgmEl.paused) {
+  if (!muted && !isAudioSuspended() && bgmEl && !bgmEl.paused) {
     bgmEl.volume = clamp01(bgmTargetVol() * bgmFadeLevel);
   }
 }
@@ -145,19 +171,22 @@ function bgmTargetVol() {
 
 function ensureBgm() {
   if (bgmEl) return bgmEl;
+  if (typeof Audio === 'undefined') return null;
   const a = new Audio(BGM_URL);
   a.loop = true;
   a.preload = 'auto';
   a.volume = 0;
   // 部分浏览器需要 playsInline 属性（DOM 上）
-  a.setAttribute('playsinline', 'true');
+  a.setAttribute?.('playsinline', 'true');
   bgmEl = a;
   return a;
 }
 
 function clearBgmFade() {
   if (bgmFadeTimer != null) {
-    cancelAnimationFrame(bgmFadeTimer);
+    if (typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(bgmFadeTimer);
+    }
     bgmFadeTimer = null;
   }
 }
@@ -174,12 +203,24 @@ function fadeBgm(from, to, ms, onDone) {
     onDone?.();
     return;
   }
+  if (typeof requestAnimationFrame !== 'function' || ms <= 0) {
+    bgmFadeLevel = to;
+    bgmEl.volume = clamp01(bgmTargetVol() * to);
+    onDone?.();
+    return;
+  }
   const start = performance.now();
   bgmFadeLevel = from;
   bgmEl.volume = clamp01(bgmTargetVol() * from);
 
   const tick = (now) => {
     if (!bgmEl) return;
+    if (to > 0 && (muted || isAudioSuspended())) {
+      bgmFadeTimer = null;
+      bgmFadeLevel = 0;
+      bgmEl.volume = 0;
+      return;
+    }
     const t = ms <= 0 ? 1 : Math.min(1, (now - start) / ms);
     // ease-out cubic，起音更柔
     const e = 1 - (1 - t) ** 3;
@@ -204,9 +245,11 @@ function fadeBgm(from, to, ms, onDone) {
  * @param {{ force?: boolean }} [opts]
  */
 export async function bgmStart(opts = {}) {
+  bindVisibilityLifecycle();
   bgmWanted = true;
-  if (muted) return false;
+  if (muted || isAudioSuspended()) return false;
   const a = ensureBgm();
+  if (!a) return false;
   try {
     if (a.paused || opts.force) {
       // 始终从极低音量起
@@ -216,6 +259,16 @@ export async function bgmStart(opts = {}) {
       const playP = a.play();
       sfxUnlock().catch(() => {});
       await playP;
+      if (muted || isAudioSuspended() || !bgmWanted) {
+        try {
+          a.pause();
+        } catch {
+          /* ignore */
+        }
+        a.volume = 0;
+        bgmFadeLevel = 0;
+        return false;
+      }
       fadeBgm(0, 1, BGM_FADE_IN_MS);
     } else if (bgmFadeLevel < 0.99) {
       sfxUnlock().catch(() => {});
@@ -234,6 +287,7 @@ export async function bgmStart(opts = {}) {
  * @param {number} [ms]
  */
 export function bgmPause(ms = BGM_FADE_OUT_MS) {
+  clearBgmFade();
   if (!bgmEl || bgmEl.paused) {
     bgmFadeLevel = 0;
     return;
@@ -258,17 +312,116 @@ export function bgmIsWanted() {
   return bgmWanted;
 }
 
+/* ========== Tab / 页面可见性生命周期挂起与恢复 ========== */
+
+function suspendAudioNow() {
+  clearBgmFade();
+  bgmFadeLevel = 0;
+  if (bgmEl) {
+    try {
+      bgmEl.volume = 0;
+      bgmEl.pause();
+    } catch {
+      /* ignore */
+    }
+  }
+  if (master && ctx) {
+    try {
+      master.gain.cancelScheduledValues?.(ctx.currentTime);
+      master.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (ctx && ctx.state === 'running' && typeof ctx.suspend === 'function') {
+    try {
+      const p = ctx.suspend();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function restoreAudioIfNeeded() {
+  if (muted || isAudioSuspended()) return;
+  if (ctx) {
+    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+      try {
+        const p = ctx.resume();
+        if (p && typeof p.then === 'function') {
+          p.then(() => {
+            if (!muted && !isAudioSuspended()) applyMasterGain();
+          }).catch(() => {});
+        } else if (!muted && !isAudioSuspended()) {
+          applyMasterGain();
+        }
+      } catch {
+        /* ignore */
+      }
+    } else if (ctx.state === 'running') {
+      applyMasterGain();
+    }
+  }
+  if (bgmWanted) {
+    bgmStart().catch(() => {});
+  }
+}
+
+function handleVisibilityChange() {
+  if (isDocumentHidden()) {
+    visibilitySuspended = true;
+    suspendAudioNow();
+  } else {
+    visibilitySuspended = false;
+    restoreAudioIfNeeded();
+  }
+}
+
+function bindVisibilityLifecycle() {
+  if (
+    visibilityBound ||
+    typeof document === 'undefined' ||
+    typeof document.addEventListener !== 'function'
+  ) {
+    return;
+  }
+  visibilityBound = true;
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+}
+
+bindVisibilityLifecycle();
+
+/**
+ * 离开元素乱斗 Tab：立即静音并挂起 BGM 与 WebAudio，不改动用户静音偏好
+ */
+export function pauseBattleAudio() {
+  bindVisibilityLifecycle();
+  tabSuspended = true;
+  suspendAudioNow();
+}
+
+/**
+ * 返回元素乱斗 Tab：仅在用户未静音且页面可见时恢复音频（未初始化 AudioContext 时不抛错）
+ */
+export function resumeBattleAudio() {
+  bindVisibilityLifecycle();
+  tabSuspended = false;
+  visibilitySuspended = isDocumentHidden();
+  restoreAudioIfNeeded();
+}
+
 /**
  * 在 context 就绪后执行；若仍 suspended 会尝试 resume
  * @param {(c: AudioContext, out: AudioNode) => void} fn
  */
 function withAudio(fn) {
-  if (muted) return;
+  if (muted || isAudioSuspended()) return;
   const c = ensureCtx();
   if (!c || !master) return;
 
   const run = () => {
-    if (muted || !ctx || !master || ctx.state !== 'running') return;
+    if (muted || isAudioSuspended() || !ctx || !master || ctx.state !== 'running') return;
     try {
       fn(ctx, master);
     } catch (e) {
@@ -283,6 +436,7 @@ function withAudio(fn) {
   // 可能刚点完手势：异步 resume 后再播
   c.resume()
     .then(() => {
+      if (muted || isAudioSuspended()) return;
       applyMasterGain();
       run();
     })

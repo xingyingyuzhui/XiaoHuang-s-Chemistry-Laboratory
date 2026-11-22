@@ -229,7 +229,7 @@ async function switchTab(name) {
     }
   });
 
-  // 离开重模块页：停动画（不卸载模块，便于再进复用）
+  // 离开重模块页：停动画 / 挂起乱斗音频（不卸载模块，便于再进复用）
   if (name !== 'molecule' && molModule) {
     molModule.getMolViewer()?.stop();
   }
@@ -238,6 +238,9 @@ async function switchTab(name) {
   }
   if (name !== 'electron' && electronViewer) {
     electronViewer.stop();
+  }
+  if (name !== 'battle' && battleModule) {
+    battleModule.onBattleLeave?.();
   }
 
   // ── 分子 ──
@@ -291,7 +294,13 @@ async function switchTab(name) {
 
   // ── 元素乱斗 ──
   if (name === 'battle') {
-    await runFeatureLoad('battle', mySeq, ensureBattleModule);
+    if (battleModule) {
+      battleModule.onBattleEnter?.();
+    } else {
+      const ok = await runFeatureLoad('battle', mySeq, ensureBattleModule);
+      if (!ok || mySeq !== switchSeq) return;
+      battleModule?.onBattleEnter?.();
+    }
   }
 }
 

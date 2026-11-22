@@ -23,6 +23,7 @@ import {
   playerDrawAndPass,
   openFlipPicker,
 } from './actions.js';
+import { pauseBattleAudio, resumeBattleAudio } from './sfx.js';
 
 setBattleActionHandlers({
   startModeB,
@@ -44,5 +45,20 @@ export function initElementBattle() {
   render({ force: true });
 }
 
+/**
+ * 离开元素乱斗 Tab：自动静音/挂起 BGM 与 SFX（保留用户静音偏好）
+ */
+export function onBattleLeave() {
+  pauseBattleAudio();
+}
+
+/**
+ * 返回元素乱斗 Tab：若用户未静音则恢复音频
+ */
+export function onBattleEnter() {
+  resumeBattleAudio();
+}
+
 export { setScreen } from './ui.js';
 export { getHintMode, isBeginnerHints } from './hint-settings.js';
+export { pauseBattleAudio, resumeBattleAudio } from './sfx.js';
