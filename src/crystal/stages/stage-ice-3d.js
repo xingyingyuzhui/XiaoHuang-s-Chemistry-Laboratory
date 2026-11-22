@@ -1,168 +1,121 @@
 /**
- * 旗舰 3D 舞台 #3：冰为何浮在水上（真 3D 冰 Ih 六方氢键空心笼坍塌 + 密度浮沉实时联动）
- * 适配全站 5 主题（RoomEnvironment + viewer-style + stage-theme）。
+ * 影院级 3D 冰 Ih 六方氢键空心笼坍塌舞台（18 个 H₂O 球棍分子 + 发光青色虚线氢键 + 六方空腔光环）
+ * 使用统一 render-kit.js 暗色科研影院管线，右上角安全区暗色玻璃浮窗实时联动密度与浮沉状态。
  */
 
 import * as THREE from 'three';
-import { getViewerStyle, currentThemeId } from '../../molecule/viewer-style.js';
-import {
-  createStudioStage, observeCrystalTheme, createGroundShadow,
-  createCylinderBetween, attachOutline, disposeObjectTree,
-} from '../scene/scene-helpers.js';
-import { getStagePalette } from '../modules/stage-theme.js';
+import { createCinemaStage, makeBondCylinder, CPK_STUDIO } from './render-kit.js';
 
-const CAM_HOME = new THREE.Vector3(0.4, 3.6, 5.4);
 const UP_VEC = new THREE.Vector3(0, 1, 0);
 
 function densityAt(tempC) {
-  if (tempC <= 0) return 0.917 + Math.max(0, -tempC) * 0.00015;
+  if (tempC <= 0) return 0.917 + Math.max(0, -tempC) * 0.00014;
   if (tempC <= 4) return 0.917 + 0.083 * (1 - Math.pow(1 - tempC / 4, 2.2));
-  return Math.max(0.996, 1.0 - Math.pow((tempC - 4) / 16, 1.6) * 0.0022);
+  return Math.max(0.996, 1.0 - Math.pow((tempC - 4) / 16, 1.55) * 0.0024);
 }
 
-function collapseFactor(tempC) {
-  return tempC <= 0 ? 0 : Math.min(1, 1 - Math.pow(1 - Math.min(1, tempC / 4.2), 2.1));
-}
+const collapseAt = (t) => (t <= 0 ? 0 : Math.min(1, 1 - Math.pow(1 - Math.min(1, t / 4.2), 2.15)));
 
 function buildIceCageData() {
-  const nodes = [], edges = [], R = 1.56;
+  const nodes = [], edges = [], R = 1.86;
   for (let layer = 0; layer < 2; layer++) {
     for (let i = 0; i < 6; i++) {
-      const a = (i * Math.PI) / 3;
-      const sign = layer === 0 ? 1 : -1;
-      const y = (layer === 0 ? -0.78 : 0.78) + (i % 2 === 0 ? 0.22 : -0.22) * sign;
+      const a = (i * Math.PI) / 3, sign = layer === 0 ? 1 : -1;
+      const y = (layer === 0 ? -0.92 : 0.92) + (i % 2 === 0 ? 0.26 : -0.26) * sign;
       nodes.push({ ice: new THREE.Vector3(Math.cos(a) * R, y, Math.sin(a) * R), ring: layer });
     }
   }
   for (let k = 0; k < 3; k++) {
     const a = ((k * 2 + 1) * Math.PI) / 3;
-    nodes.push({ ice: new THREE.Vector3(Math.cos(a) * 2.42, -1.24, Math.sin(a) * 2.42), ring: 2 });
-    nodes.push({ ice: new THREE.Vector3(Math.cos(a) * 2.42, 1.24, Math.sin(a) * 2.42), ring: 2 });
+    nodes.push({ ice: new THREE.Vector3(Math.cos(a) * 2.86, -1.42, Math.sin(a) * 2.86), ring: 2 });
+    nodes.push({ ice: new THREE.Vector3(Math.cos(a) * 2.86, 1.42, Math.sin(a) * 2.86), ring: 2 });
   }
-  for (let i = 0; i < 6; i++) { edges.push([i, (i + 1) % 6], [6 + i, 6 + ((i + 1) % 6)]); }
+  for (let i = 0; i < 6; i++) edges.push([i, (i + 1) % 6], [6 + i, 6 + ((i + 1) % 6)]);
   for (let i = 0; i < 6; i += 2) edges.push([i, 6 + i]);
   for (let k = 0; k < 3; k++) { const o = k * 2 + 1; edges.push([o, 12 + k * 2], [6 + o, 13 + k * 2]); }
 
   const infill = [
-    new THREE.Vector3(0.32, -0.34, 0.26), new THREE.Vector3(-0.34, 0.36, -0.22),
-    new THREE.Vector3(-0.24, -0.28, 0.42), new THREE.Vector3(0.28, 0.32, -0.38),
+    new THREE.Vector3(0.36, -0.38, 0.30), new THREE.Vector3(-0.38, 0.40, -0.26),
+    new THREE.Vector3(-0.28, -0.32, 0.46), new THREE.Vector3(0.32, 0.36, -0.42),
   ];
   let inf = 0;
   nodes.forEach((n, idx) => {
-    const liq = n.ice.clone().multiplyScalar(n.ring === 2 ? 0.60 : 0.67);
+    const liq = n.ice.clone().multiplyScalar(n.ring === 2 ? 0.56 : 0.64);
     if (n.ring === 2 && inf < infill.length) liq.copy(infill[inf++]);
-    else liq.add(new THREE.Vector3(Math.sin(idx * 4.3) * 0.16, Math.cos(idx * 3.1) * 0.16, Math.sin(idx * 2.7 + 1) * 0.16));
-    n.liq = liq;
-    n.phase = idx * 1.37;
+    else liq.add(new THREE.Vector3(Math.sin(idx * 4.3) * 0.2, Math.cos(idx * 3.1) * 0.18, Math.sin(idx * 2.7 + 1) * 0.2));
+    n.liq = liq; n.phase = idx * 1.37;
     n.spinAxis = new THREE.Vector3(Math.sin(idx * 2.1), Math.cos(idx * 1.7), Math.sin(idx * 3.3)).normalize();
   });
 
   const bonds = edges.map(([u, v], idx) => ({
-    u, v, breakTemp: idx < 12 ? 0.8 + (idx % 6) * 2.2 : 0.4 + (idx % 5) * 1.1, survives: idx % 3 === 0,
+    u, v, breakTemp: idx < 12 ? 0.7 + (idx % 6) * 2.1 : 0.35 + (idx % 5) * 1.05, survives: idx % 3 === 0,
   }));
   return { nodes, bonds };
 }
 
-function buildWaterMolecule(style, oGeo, hGeo, oMat, hMat, covMat) {
+function buildWaterMol(oGeo, hGeo, oMat, hMat, covMat) {
   const g = new THREE.Group();
-  const oMesh = new THREE.Mesh(oGeo, oMat);
-  oMesh.userData.sharedGeometry = true; oMesh.userData.sharedMaterial = true;
-  if (style.outline) attachOutline(oMesh, oGeo, 0.21, style);
-  g.add(oMesh);
-
-  const half = THREE.MathUtils.degToRad(52.25), seg = style.id === 'pixel' ? 4 : 10;
+  g.add(new THREE.Mesh(oGeo, oMat));
+  const half = THREE.MathUtils.degToRad(52.25), origin = new THREE.Vector3();
   for (const sgn of [1, -1]) {
-    const hp = new THREE.Vector3(sgn * Math.sin(half) * 0.31, Math.cos(half) * 0.31, 0);
+    const hp = new THREE.Vector3(sgn * Math.sin(half) * 0.36, Math.cos(half) * 0.36, 0);
     const hm = new THREE.Mesh(hGeo, hMat);
-    hm.position.copy(hp);
-    hm.userData.sharedGeometry = true; hm.userData.sharedMaterial = true;
-    if (style.outline) attachOutline(hm, hGeo, 0.125, style);
-    g.add(hm);
-    const cyl = createCylinderBetween(new THREE.Vector3(), hp, 0.042, covMat, seg);
-    if (cyl) { cyl.userData.sharedMaterial = true; g.add(cyl); }
+    hm.position.copy(hp); g.add(hm);
+    const cyl = makeBondCylinder(origin, hp, 0.048, covMat);
+    if (cyl) g.add(cyl);
   }
   return g;
 }
 
-function buildIceSceneRig(data, style, isDark) {
-  const root = new THREE.Group();
-  const oGeo = style.atomGeometry(0.21), hGeo = style.atomGeometry(0.125);
-  const dashGeo = new THREE.CylinderGeometry(0.036, 0.036, 0.14, style.id === 'pixel' ? 4 : 8);
-  const oMat = style.atomMaterial(isDark ? 0xfb7185 : 0xef4444, 'O');
-  const hMat = style.atomMaterial(style.hydrogen ?? 0xf1f5f9, 'H');
-  const covMat = style.bondMaterial(style.neutralBond, '');
-  const hbBase = new THREE.MeshBasicMaterial({ color: isDark ? 0x38bdf8 : 0x0284c7, transparent: true, opacity: 0.85 });
-
-  const mols = data.nodes.map((n, idx) => {
-    const m = buildWaterMolecule(style, oGeo, hGeo, oMat, hMat, covMat);
-    m.position.copy(n.ice);
-    const baseRot = new THREE.Euler((idx % 3 - 1) * 0.65, (idx * Math.PI) / 3, idx % 2 === 0 ? 0.45 : -0.45);
-    m.rotation.copy(baseRot);
-    root.add(m);
-    return { group: m, node: n, baseQuat: new THREE.Quaternion().setFromEuler(baseRot) };
+function buildHexVoidRings() {
+  const group = new THREE.Group();
+  const sleeveMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.11, side: THREE.DoubleSide, depthWrite: false });
+  group.add(new THREE.Mesh(new THREE.CylinderGeometry(1.34, 1.34, 1.72, 6, 1, true), sleeveMat));
+  const ringMats = [-0.82, 0, 0.82].map((ry) => {
+    const r = ry === 0 ? 1.36 : 1.24;
+    const pts = Array.from({ length: 6 }, (_, i) => new THREE.Vector3(Math.cos((i * Math.PI) / 3) * r, ry, Math.sin((i * Math.PI) / 3) * r));
+    const mat = new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: ry === 0 ? 0.65 : 0.42 });
+    group.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), mat));
+    return mat;
   });
-
-  const hBonds = data.bonds.map((b) => {
-    const mat = hbBase.clone(), g = new THREE.Group();
-    const segs = Array.from({ length: 4 }, () => {
-      const mesh = new THREE.Mesh(dashGeo, mat);
-      mesh.userData.sharedGeometry = true; mesh.userData.sharedMaterial = true;
-      g.add(mesh); return mesh;
-    });
-    root.add(g);
-    return { ...b, group: g, segs, mat };
-  });
-
-  const voidGeo = new THREE.CylinderGeometry(1.12, 1.12, 1.45, 6, 1, true);
-  const voidMat = new THREE.MeshBasicMaterial({
-    color: isDark ? 0x38bdf8 : 0x0ea5e9, transparent: true, opacity: isDark ? 0.14 : 0.11,
-    side: THREE.DoubleSide, depthWrite: false,
-  });
-  const voidMesh = new THREE.Mesh(voidGeo, voidMat);
-  const voidWire = new THREE.LineSegments(
-    new THREE.EdgesGeometry(voidGeo, 15),
-    new THREE.LineBasicMaterial({ color: isDark ? 0x7dd3fc : 0x0284c7, transparent: true, opacity: 0.42 }),
-  );
-  voidMesh.add(voidWire);
-  root.add(voidMesh);
-
-  const shadow = createGroundShadow(style, 5.2, -1.92);
-  if (shadow) root.add(shadow);
-
-  root.userData._extra = [oGeo, hGeo, dashGeo, oMat, hMat, covMat, hbBase, ...hBonds.map((b) => b.mat)];
-  return { root, mols, hBonds, voidMesh, voidMat, voidWire };
+  return { group, sleeveMat, ringMats };
 }
 
-export function mountIce3DStage(stageEl, actionbarEl, { onCaption } = {}) {
-  stageEl.innerHTML = '';
-  const stage = createStudioStage(stageEl);
-  const { scene, camera, renderer, controls } = stage;
-  camera.position.copy(CAM_HOME);
-  controls.minDistance = 3.5; controls.maxDistance = 15;
-
+function createTelemetryHud() {
   const hud = document.createElement('div');
-  hud.style.cssText = 'position:absolute;top:10px;right:12px;z-index:5;pointer-events:none;width:186px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--surface,#fff) 92%,transparent);border:var(--ui-stroke,1px) solid var(--border-ink,var(--border));color:var(--ink);box-shadow:var(--shadow-print-sm);font-size:11px;';
+  hud.style.cssText = 'position:absolute;top:14px;right:16px;z-index:5;pointer-events:none;width:214px;padding:11px 13px;border-radius:12px;background:rgba(9,15,29,0.78);backdrop-filter:blur(12px);border:1px solid rgba(125,211,252,0.24);color:#e2e8f0;box-shadow:0 12px 32px rgba(2,6,23,0.45);font-size:11.5px;';
   hud.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-      <strong data-hud="phase" style="font-size:12px;">0℃ 固态冰</strong>
-      <span data-hud="rho" style="font-family:var(--font-mono,monospace);font-weight:800;color:var(--accent);">0.917 g/cm³</span>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <span data-hud="temp" style="font-family:ui-monospace,monospace;font-size:14px;font-weight:800;color:#7dd3fc;">0.0 ℃</span>
+      <span data-hud="rho" style="font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:#f8fafc;">0.917 g/cm³</span>
     </div>
-    <div style="height:6px;border-radius:999px;background:var(--surface-2,rgba(148,163,184,0.22));overflow:hidden;margin-bottom:5px;">
-      <div data-hud="bar" style="height:100%;width:22%;border-radius:999px;background:var(--accent);transition:width 0.12s ease;"></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:3px;">
+      <span>0.917</span><span>密度对比</span><span>1.000</span>
     </div>
-    <div data-hud="buoy" style="font-weight:700;color:var(--muted);line-height:1.3;">🧊 浮于水面 · 六方空心笼</div>
+    <div style="height:6px;border-radius:999px;background:rgba(148,163,184,0.18);overflow:hidden;margin-bottom:8px;">
+      <div data-hud="bar" style="height:100%;width:16%;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#22d3ee,#34d399);transition:width 0.14s ease;"></div>
+    </div>
+    <div data-hud="pill" style="padding:4px 8px;border-radius:999px;text-align:center;font-size:10.5px;font-weight:700;background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.34);color:#bae6fd;">
+      冰密度更小 · 浮于水面
+    </div>
   `;
+  return hud;
+}
+
+export function mountIce3DStage(spec, stageEl, actionbarEl, { onCaption } = {}) {
+  const stage = createCinemaStage(stageEl, {
+    cameraPos: [0, 3.6, 9.2], target: [0, 0, 0], fov: 38, minDist: 4.5, maxDist: 18, autoRotate: true, floorY: -2.5,
+  });
+
+  const hud = createTelemetryHud();
   stageEl.appendChild(hud);
-  const hudPhase = hud.querySelector('[data-hud="phase"]');
-  const hudRho = hud.querySelector('[data-hud="rho"]');
-  const hudBar = hud.querySelector('[data-hud="bar"]');
-  const hudBuoy = hud.querySelector('[data-hud="buoy"]');
+  const [hudTemp, hudRho, hudBar, hudPill] = ['temp', 'rho', 'bar', 'pill'].map((k) => hud.querySelector(`[data-hud="${k}"]`));
 
   actionbarEl.innerHTML = `
-    <label class="crystal-dock-group" style="font-size:0.78rem;color:var(--ink-soft,var(--muted));">
+    <label class="crystal-dock-group" style="font-size:0.78rem;color:#cbd5e1;gap:0.45rem;">
       <span>温度</span>
-      <input type="range" min="-10" max="20" step="0.5" value="0" data-el="slider" style="width:128px;accent-color:var(--accent);" />
-      <strong data-el="temp" style="font-family:var(--font-mono,monospace);min-width:46px;">0.0°C</strong>
+      <input type="range" min="-10" max="20" step="0.5" value="0" data-el="slider" style="width:132px;accent-color:#38bdf8;" />
+      <strong data-el="temp" style="font-family:ui-monospace,monospace;min-width:46px;color:#7dd3fc;">0.0℃</strong>
     </label>
     <div class="crystal-dock-group">
       <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-preset="0">0℃ 冰</button>
@@ -173,7 +126,6 @@ export function mountIce3DStage(stageEl, actionbarEl, { onCaption } = {}) {
       <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">复位</button>
     </div>
   `;
-
   const slider = actionbarEl.querySelector('[data-el="slider"]');
   const tempReadout = actionbarEl.querySelector('[data-el="temp"]');
   const presetBtns = actionbarEl.querySelectorAll('[data-preset]');
@@ -181,72 +133,39 @@ export function mountIce3DStage(stageEl, actionbarEl, { onCaption } = {}) {
   const btnReset = actionbarEl.querySelector('[data-act="reset"]');
 
   const data = buildIceCageData();
-  let rig = null, tempC = 0, highlightHb = true, clock = 0;
-  let paused = false, destroyed = false, rafId = 0, lastTs = 0;
+  const oGeo = new THREE.SphereGeometry(0.24, 24, 18);
+  const hGeo = new THREE.SphereGeometry(0.145, 18, 14);
+  const dashGeo = new THREE.CylinderGeometry(0.036, 0.036, 0.16, 10);
+  const oMat = new THREE.MeshPhysicalMaterial({ color: CPK_STUDIO.O, metalness: 0.08, roughness: 0.18, clearcoat: 0.95, clearcoatRoughness: 0.08, emissive: 0x881337, emissiveIntensity: 0.16 });
+  const hMat = new THREE.MeshPhysicalMaterial({ color: CPK_STUDIO.H, metalness: 0.04, roughness: 0.22, clearcoat: 0.75 });
+  const covMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.25, roughness: 0.35 });
 
-  function disposeRig() {
-    if (!rig) return;
-    rig.root.userData._extra?.forEach((x) => x?.dispose?.());
-    disposeObjectTree(rig.root); scene.remove(rig.root); rig = null;
-  }
+  const mols = data.nodes.map((n, idx) => {
+    const m = buildWaterMol(oGeo, hGeo, oMat, hMat, covMat);
+    m.position.copy(n.ice);
+    const baseRot = new THREE.Euler((idx % 3 - 1) * 0.62, (idx * Math.PI) / 3, idx % 2 === 0 ? 0.45 : -0.45);
+    m.rotation.copy(baseRot);
+    stage.root.add(m);
+    return { group: m, node: n, baseQuat: new THREE.Quaternion().setFromEuler(baseRot) };
+  });
 
+  const hBonds = data.bonds.map((b) => {
+    const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
+    const g = new THREE.Group();
+    const segs = Array.from({ length: 4 }, () => { const s = new THREE.Mesh(dashGeo, mat); g.add(s); return s; });
+    stage.root.add(g);
+    return { ...b, group: g, segs, mat };
+  });
+
+  const voidRig = buildHexVoidRings();
+  stage.root.add(voidRig.group);
+
+  let tempC = 0, highlightHb = true, elapsed = 0;
   const tmpDir = new THREE.Vector3(), tmpPos = new THREE.Vector3(), tmpQuat = new THREE.Quaternion();
-  function updateMolecules(t) {
-    if (!rig) return;
-    const c = collapseFactor(tempC);
-    const thermExpand = tempC > 4 ? 1 + (tempC - 4) * 0.0045 : 1;
-    const jitter = tempC <= 0 ? 0.015 : 0.03 + (tempC / 20) * 0.065;
-
-    for (const m of rig.mols) {
-      const n = m.node;
-      m.group.position.lerpVectors(n.ice, n.liq, c).multiplyScalar(thermExpand);
-      m.group.position.x += Math.sin(t * 3.4 + n.phase) * jitter;
-      m.group.position.y += Math.cos(t * 2.9 + n.phase * 1.3) * jitter;
-      m.group.position.z += Math.sin(t * 3.1 + n.phase * 0.7) * jitter;
-      tmpQuat.setFromAxisAngle(n.spinAxis, c * (0.65 + (tempC / 20) * 0.9) * Math.sin(t * 1.4 + n.phase));
-      m.group.quaternion.copy(m.baseQuat).premultiply(tmpQuat);
-    }
-
-    const pulse = highlightHb ? 0.86 + 0.14 * Math.sin(t * 4.5) : 0.65;
-    for (const hb of rig.hBonds) {
-      const pA = rig.mols[hb.u].group.position, pB = rig.mols[hb.v].group.position, dist = pA.distanceTo(pB);
-      let intact = 1;
-      if (tempC > hb.breakTemp) {
-        intact = hb.survives ? Math.max(0.28, 1 - (tempC - hb.breakTemp) * 0.09) : Math.max(0, 1 - (tempC - hb.breakTemp) * 0.32);
-      }
-      if (dist > 2.35) intact *= 0.25;
-      hb.group.visible = intact > 0.04;
-      if (!hb.group.visible) continue;
-      hb.mat.opacity = intact * (highlightHb ? 0.94 : 0.48) * pulse;
-      tmpDir.subVectors(pB, pA).normalize();
-      tmpQuat.setFromUnitVectors(UP_VEC, tmpDir);
-      const rad = highlightHb ? 1.25 : 0.85;
-      hb.segs.forEach((seg, s) => {
-        tmpPos.lerpVectors(pA, pB, 0.24 + (s / 3) * 0.52);
-        seg.position.copy(tmpPos); seg.quaternion.copy(tmpQuat);
-        seg.scale.set(rad, Math.max(0.5, dist * 0.45), rad);
-      });
-    }
-
-    const voidVis = (1 - c) * (highlightHb ? 1 : 0.45);
-    rig.voidMesh.visible = voidVis > 0.05;
-    rig.voidMesh.scale.setScalar(Math.max(0.1, 1 - c * 0.72));
-    rig.voidMat.opacity = voidVis * 0.14;
-    rig.voidWire.material.opacity = voidVis * 0.55;
-  }
-
-  function rebuildTheme() {
-    if (destroyed) return;
-    const style = getViewerStyle(currentThemeId()), p = getStagePalette();
-    stage.applyStyle(style);
-    disposeRig();
-    rig = buildIceSceneRig(data, style, p.isDark);
-    scene.add(rig.root);
-    updateMolecules(clock);
-  }
 
   function syncUi() {
-    slider.value = String(tempC); tempReadout.textContent = `${tempC.toFixed(1)}°C`;
+    slider.value = String(tempC);
+    tempReadout.textContent = `${tempC.toFixed(1)}℃`;
     presetBtns.forEach((b) => {
       const on = Math.abs(Number(b.dataset.preset) - tempC) < 0.25;
       b.classList.toggle('crystal-btn-primary', on); b.classList.toggle('crystal-btn-ghost', !on);
@@ -255,61 +174,77 @@ export function mountIce3DStage(stageEl, actionbarEl, { onCaption } = {}) {
     btnHb.classList.toggle('crystal-btn-ghost', !highlightHb);
 
     const rho = densityAt(tempC);
+    hudTemp.textContent = `${tempC.toFixed(1)} ℃`;
     hudRho.textContent = `${rho.toFixed(3)} g/cm³`;
-    hudBar.style.width = `${Math.max(8, Math.min(100, ((rho - 0.90) / 0.105) * 100)).toFixed(1)}%`;
-    if (tempC <= 0.25) {
-      hudPhase.textContent = `${tempC.toFixed(0)}℃ 固态冰`;
-      hudBuoy.textContent = '🧊 浮于水面 · 氢键撑出大空隙';
-      onCaption?.('0℃ 固态冰 · 四面体氢键构成六方空心笼，密度仅 0.917 g/cm³');
+    hudBar.style.width = `${Math.max(8, Math.min(100, ((rho - 0.905) / 0.098) * 100)).toFixed(1)}%`;
+
+    if (tempC <= 0.5) {
+      hudPill.textContent = '冰密度更小 · 浮于水面';
+      Object.assign(hudPill.style, { background: 'rgba(56,189,248,0.16)', borderColor: 'rgba(56,189,248,0.36)', color: '#bae6fd' });
+      onCaption?.(`${spec?.label || '冰 Ih 氢键笼'} · 0℃ 固态冰由定向氢键撑开六方大空隙，ρ = ${rho.toFixed(3)} g/cm³`);
     } else if (tempC <= 6) {
-      hudPhase.textContent = tempC >= 3.5 && tempC <= 4.5 ? '4℃ 液态水（最密）' : '冰水坍缩过渡';
-      hudBuoy.textContent = '💧 坍缩最密 · 4℃ 密度最大';
-      onCaption?.('升温破键 · 水分子坍缩填入空心笼，4℃ 密度达峰值 1.000 g/cm³');
+      hudPill.textContent = '空隙坍塌 · 液态水更致密';
+      Object.assign(hudPill.style, { background: 'rgba(52,211,153,0.16)', borderColor: 'rgba(52,211,153,0.38)', color: '#a7f3d0' });
+      onCaption?.('升温破键 · 氢键逐步断裂，水分子向内坍缩填满空隙，4℃ 时密度达最大 1.000 g/cm³');
     } else {
-      hudPhase.textContent = `${tempC.toFixed(0)}℃ 液态水`;
-      hudBuoy.textContent = '💧 热运动加剧 · 体积微胀';
-      onCaption?.(`${tempC.toFixed(0)}℃ 液态水 · 部分氢键断裂，水分子剧烈热运动`);
+      hudPill.textContent = '空隙坍塌 · 液态水更致密';
+      Object.assign(hudPill.style, { background: 'rgba(251,146,60,0.16)', borderColor: 'rgba(251,146,60,0.36)', color: '#fed7aa' });
+      onCaption?.(`${tempC.toFixed(1)}℃ 液态水 · 多数氢键断裂且分子热运动加剧，密度随温度略微下降`);
     }
   }
 
   slider.addEventListener('input', () => { tempC = Number(slider.value); syncUi(); });
   presetBtns.forEach((b) => b.addEventListener('click', () => { tempC = Number(b.dataset.preset); syncUi(); }));
   btnHb.addEventListener('click', () => { highlightHb = !highlightHb; syncUi(); });
-  btnReset.addEventListener('click', () => { camera.position.copy(CAM_HOME); controls.target.set(0, 0, 0); controls.update(); });
+  btnReset.addEventListener('click', () => stage.resetView());
+  syncUi();
 
-  function resize() {
-    const r = stageEl.getBoundingClientRect();
-    const w = Math.max(300, Math.floor(r.width || 640)), h = Math.max(260, Math.floor(r.height || 420));
-    camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h);
-  }
+  stage.start((rawDt) => {
+    const dt = typeof rawDt === 'number' && rawDt > 0 && rawDt < 0.1 ? rawDt : 0.016;
+    elapsed += dt;
+    const c = collapseAt(tempC), expand = tempC > 4 ? 1 + (tempC - 4) * 0.0045 : 1;
+    const jitter = tempC <= 0 ? 0.016 : 0.032 + (tempC / 20) * 0.075;
 
-  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
-  ro?.observe(stageEl);
-  const stopTheme = observeCrystalTheme(rebuildTheme);
+    for (const m of mols) {
+      const n = m.node;
+      m.group.position.lerpVectors(n.ice, n.liq, c).multiplyScalar(expand);
+      m.group.position.x += Math.sin(elapsed * 3.4 + n.phase) * jitter;
+      m.group.position.y += Math.cos(elapsed * 2.9 + n.phase * 1.3) * jitter;
+      m.group.position.z += Math.sin(elapsed * 3.1 + n.phase * 0.7) * jitter;
+      tmpQuat.setFromAxisAngle(n.spinAxis, c * (0.7 + (tempC / 20) * 1.0) * Math.sin(elapsed * 1.45 + n.phase));
+      m.group.quaternion.copy(m.baseQuat).premultiply(tmpQuat);
+    }
 
-  function frame(ts) {
-    if (destroyed || paused) { rafId = 0; return; }
-    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
-    lastTs = ts; clock += dt;
-    if (rig) { rig.root.rotation.y += dt * 0.24; updateMolecules(clock); }
-    controls.update(); renderer.render(scene, camera);
-    rafId = requestAnimationFrame(frame);
-  }
+    const pulse = highlightHb ? 0.84 + 0.16 * Math.sin(elapsed * 4.5) : 0.55;
+    for (const hb of hBonds) {
+      const pA = mols[hb.u].group.position, pB = mols[hb.v].group.position, dist = pA.distanceTo(pB);
+      let intact = tempC > hb.breakTemp
+        ? (hb.survives ? Math.max(0.24, 1 - (tempC - hb.breakTemp) * 0.085) : Math.max(0, 1 - (tempC - hb.breakTemp) * 0.34))
+        : 1;
+      if (dist > 2.7) intact *= 0.25;
+      hb.group.visible = intact > 0.04;
+      if (!hb.group.visible) continue;
+      hb.mat.opacity = intact * (highlightHb ? 0.96 : 0.44) * pulse;
+      tmpQuat.setFromUnitVectors(UP_VEC, tmpDir.subVectors(pB, pA).normalize());
+      const rad = highlightHb ? 1.28 : 0.82;
+      hb.segs.forEach((seg, s) => {
+        seg.position.copy(tmpPos.lerpVectors(pA, pB, 0.23 + (s / 3) * 0.54));
+        seg.quaternion.copy(tmpQuat);
+        seg.scale.set(rad, Math.max(0.55, dist * 0.42), rad);
+      });
+    }
 
-  rebuildTheme(); resize(); syncUi();
-  rafId = requestAnimationFrame(frame);
+    const voidVis = (1 - c) * (highlightHb ? 1 : 0.42);
+    voidRig.group.visible = voidVis > 0.04;
+    voidRig.group.scale.setScalar(Math.max(0.12, 1 - c * 0.74));
+    voidRig.sleeveMat.opacity = voidVis * 0.12;
+    voidRig.ringMats.forEach((mat, i) => { mat.opacity = voidVis * (i === 1 ? 0.68 : 0.42); });
+  });
 
   return {
-    pause() { paused = true; if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } },
-    resume() { if (destroyed || !paused) return; paused = false; lastTs = 0; rafId = requestAnimationFrame(frame); },
-    resize,
-    destroy() {
-      if (destroyed) return;
-      destroyed = true; paused = true;
-      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-      stopTheme(); ro?.disconnect(); disposeRig();
-      controls.dispose(); stage.disposeEnv(); renderer.dispose();
-      stageEl.innerHTML = ''; actionbarEl.innerHTML = '';
-    },
+    pause: () => stage.pause(),
+    resume: () => stage.resume(),
+    resize: () => stage.resize(),
+    destroy() { stage.dispose(); hud.remove(); stageEl.innerHTML = ''; actionbarEl.innerHTML = ''; },
   };
 }
