@@ -1,30 +1,124 @@
-/* 晶胞模块 · 底部悬浮控制 Dock、均摊算式、考点指标与黑板主题高对比覆盖 */
+/* 晶胞模块 · Row 3 专有底部操作栏、情境模式条与黑板主题高对比覆盖 */
 
-.crystal-dock {
-  position: absolute;
-  left: 50%;
-  bottom: 0.85rem;
-  transform: translateX(-50%);
-  z-index: 8;
+.crystal-actionbar {
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  max-width: calc(100% - 1.7rem);
-  padding: 0.38rem 0.56rem;
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 88%, transparent);
-  border: var(--ui-stroke-strong) solid var(--border-ink);
-  box-shadow: var(--shadow-card, var(--shadow-print));
-  backdrop-filter: blur(12px);
+  gap: 0.45rem;
+  padding: 8px 14px;
+  background: var(--surface, var(--card-elevated));
+  border-top: 1px solid var(--border);
+  z-index: 6;
 }
 
-.crystal-dock-group { display: inline-flex; align-items: center; gap: 0.28rem; }
-.crystal-dock-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+.crystal-actionbar:empty { display: none; }
 
-/* [球棍 | 填充] 分段切换 */
+/* 情境模式条：仅激活切开/拼晶胞/配位数/最短距离/密度时展示 */
+.crystal-mode-strip {
+  flex: 0 0 100%;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  padding: 0.36rem 0.62rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2, var(--paper));
+  border: 1px solid var(--border);
+}
+
+.crystal-strip-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.crystal-strip-actions { display: inline-flex; align-items: center; gap: 0.32rem; flex-shrink: 0; }
+
+.crystal-strip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.26rem;
+  padding: 0.14rem 0.46rem;
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 0.76rem;
+}
+
+.crystal-strip-chip code,
+.crystal-strip-formula {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.crystal-strip-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.5rem;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.crystal-strip-text {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.crystal-strip-note {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.crystal-strip-note.is-ok { color: var(--ok, var(--accent)); }
+
+/* 主控单行（外观 + 探究） */
+.crystal-actionbar-row {
+  flex: 0 0 100%;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.crystal-action-group,
+.crystal-dock-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.crystal-action-sep,
+.crystal-dock-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* [球棍 | 填充] 及通用分段切换 */
 .crystal-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
   padding: 0.16rem;
   border-radius: var(--radius-sm);
   background: var(--surface-2, var(--paper));
@@ -33,125 +127,101 @@
 
 .crystal-seg-btn {
   appearance: none;
-  min-height: 28px;
-  padding: 0.2rem 0.58rem;
+  min-height: 27px;
+  padding: 0.18rem 0.56rem;
   border: 1px solid transparent;
   border-radius: var(--radius-xs);
   background: transparent;
   color: var(--muted, var(--text-muted));
   font-family: var(--font-main);
-  font-size: 0.78rem;
+  font-size: 0.77rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
 }
 
+.crystal-seg-btn:hover { color: var(--ink); }
+
 .crystal-seg-btn.is-active {
-  background: var(--surface, var(--card-elevated));
+  background: var(--surface);
   border-color: var(--border-ink);
   color: var(--ink);
   box-shadow: var(--shadow-print-sm);
 }
 
-/* [- | 1/8 晶胞 | + 拼] 步进器 */
-.crystal-stepper {
-  padding: 0.16rem;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2, var(--paper));
-  border: 1px solid var(--border);
-  gap: 0.16rem;
-}
-
-.crystal-step-btn,
-.crystal-step-val {
+/* 互斥探究按钮组（切开均摊 / 拼晶胞 / 配位数 / 最短距离 / 密度） */
+.crystal-tool-btn {
   appearance: none;
-  min-height: 28px;
-  padding: 0.18rem 0.5rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-xs);
-  background: var(--surface, var(--card-elevated));
-  color: var(--ink);
-  font-family: var(--font-main);
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.crystal-step-val {
-  background: transparent;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: var(--ink-soft);
-  padding: 0.18rem 0.42rem;
-}
-
-.crystal-step-btn:hover:not(:disabled),
-.crystal-step-val:hover:not(:disabled) {
-  border-color: var(--border-ink);
-  background: var(--diagram-soft, var(--surface));
-}
-
-.crystal-step-btn:disabled,
-.crystal-step-val:disabled { opacity: 0.42; cursor: not-allowed; }
-
-/* [配位数 | 最短距离 | 密度] 考点按钮 */
-.crystal-exam-tab {
-  appearance: none;
-  min-height: 31px;
-  padding: 0.24rem 0.56rem;
+  min-height: 30px;
+  padding: 0.22rem 0.62rem;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: var(--ui-stroke) solid var(--border-ink);
   background: var(--surface-2, var(--paper));
   color: var(--ink-soft);
   font-family: var(--font-main);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease;
 }
 
-.crystal-exam-tab:hover { border-color: var(--border-ink); color: var(--ink); }
-.crystal-exam-tab.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; }
+.crystal-tool-btn:hover { background: var(--diagram-soft, var(--surface)); color: var(--ink); }
 
-/* 均摊法实时算式（切开时显示于左上悬浮卡） */
-.crystal-avg-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
-  margin-top: 0.15rem;
-  padding-top: 0.4rem;
-  border-top: 1.5px dashed color-mix(in srgb, var(--ink) 18%, transparent);
+.crystal-tool-btn.is-active {
+  background: var(--accent);
+  border-color: var(--border-ink);
+  color: #ffffff;
+  box-shadow: var(--shadow-print-sm);
 }
 
-.crystal-avg-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.78rem; }
-.crystal-avg-species { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--ink); }
-.crystal-avg-eq { font-family: var(--font-mono); font-weight: 800; color: var(--accent); }
+/* 拼晶胞步进器 */
+.crystal-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.14rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
 
-/* 考点详情指标 */
-.crystal-exam-metric { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-.crystal-exam-k { font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); }
-.crystal-exam-v { font-family: var(--font-mono); font-size: 1.05rem; font-weight: 800; color: var(--accent); }
-
-.crystal-exam-formula {
-  margin: 0.1rem 0 0;
-  padding: 0.32rem 0.5rem;
+.crystal-step-btn {
+  appearance: none;
+  min-height: 26px;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   background: var(--surface-2, var(--paper));
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
   color: var(--ink);
+  font-family: var(--font-main);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.crystal-exam-desc { margin: 0; font-size: 0.78rem; color: var(--muted, var(--text-muted)); line-height: 1.48; }
+.crystal-step-btn:hover:not(:disabled) { border-color: var(--border-ink); background: var(--diagram-soft, var(--surface)); }
+.crystal-step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Dock 内通用滑块（供模块 01 / 03 复用） */
-.crystal-dock input[type='range'] { accent-color: var(--accent); cursor: pointer; }
+.crystal-step-val {
+  padding: 0 0.42rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* 操作栏内滑块（供模块 01 / 03 复用） */
+.crystal-actionbar input[type='range'] { accent-color: var(--accent); cursor: pointer; }
 
 /* 黑板主题高对比主强调按钮文字（粉笔黄底配深墨字） */
 html[data-theme='blackboard'] .crystal-mode-btn.is-active,
 html[data-theme='blackboard'] .crystal-cat-tab.is-active,
 html[data-theme='blackboard'] .crystal-btn-primary,
-html[data-theme='blackboard'] .crystal-exam-tab.is-active,
-html[data-theme='blackboard'] .crystal-action-btn.is-active {
+html[data-theme='blackboard'] .crystal-tool-btn.is-active,
+html[data-theme='blackboard'] .crystal-topbar-btn.is-active,
+html[data-theme='blackboard'] .crystal-topbar-btn-ai:hover,
+html[data-theme='blackboard'] .crystal-inspector-tab.is-active {
   color: #132e26;
 }

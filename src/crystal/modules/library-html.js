@@ -1,15 +1,15 @@
 /**
- * 模块 02：晶体结构库 — 开放舞台模板与纯 HTML 渲染函数
+ * 模块 02：晶体结构库 — 零遮挡三行外壳与纯 HTML 渲染函数
  */
 
 import { computeAveragingBreakdown, computeDensity } from '../math/lattice.js';
 import { formulaHtml } from '../../chem/formula-html.js';
 
 export const SYSTEM_LABELS = {
-  cubic: '立方晶系',
-  tetragonal: '四方晶系',
-  orthorhombic: '正交晶系',
-  hexagonal: '六方晶系',
+  cubic: '立方',
+  tetragonal: '四方',
+  orthorhombic: '正交',
+  hexagonal: '六方',
 };
 
 export const SHORT_CATEGORY_LABELS = {
@@ -68,45 +68,25 @@ export function buildSpeciesEquation(stat) {
   return parts.length ? `${parts.join(' + ')} = ${totalStr}` : `= ${totalStr}`;
 }
 
-export const STAGE_TEMPLATE = `
-  <div class="crystal-stage-canvas"></div>
-
-  <div class="crystal-float-info" aria-live="polite"></div>
-
-  <div class="crystal-float-actions" aria-label="舞台操作">
-    <button type="button" class="crystal-action-btn" data-act="qa" aria-expanded="false" title="课堂思考题">思考题 💡</button>
-    <button type="button" class="crystal-action-btn" data-act="autorotate" aria-pressed="false" title="自动慢转">慢转</button>
-    <button type="button" class="crystal-action-btn" data-act="reset" title="复位视角">复位</button>
-  </div>
-
-  <div class="crystal-qa-popover" role="dialog" aria-label="课堂思考题" hidden></div>
-  <div class="crystal-hex-toast" aria-live="polite" hidden></div>
-  <div class="crystal-exam-popover" role="region" aria-label="考点详情" hidden></div>
-
-  <div class="crystal-dock" role="toolbar" aria-label="晶胞交互控制">
-    <div class="crystal-dock-group crystal-seg" role="group" aria-label="显示模型">
-      <button type="button" class="crystal-seg-btn is-active" data-mode="ball-stick">球棍</button>
-      <button type="button" class="crystal-seg-btn" data-mode="space-filling">填充</button>
+export function renderActionbarHtml() {
+  return `
+    <div class="crystal-mode-strip" aria-live="polite" hidden></div>
+    <div class="crystal-actionbar-row" role="toolbar" aria-label="晶胞交互控制">
+      <div class="crystal-action-group crystal-seg" role="group" aria-label="外观模型">
+        <button type="button" class="crystal-seg-btn is-active" data-mode="ball-stick">球棍</button>
+        <button type="button" class="crystal-seg-btn" data-mode="space-filling">填充</button>
+      </div>
+      <span class="crystal-action-sep" aria-hidden="true"></span>
+      <div class="crystal-action-group crystal-inquiry-group" role="group" aria-label="晶胞探究模式">
+        <button type="button" class="crystal-tool-btn" data-tool="slice" aria-pressed="false">切开均摊</button>
+        <button type="button" class="crystal-tool-btn" data-tool="tile" aria-pressed="false">拼晶胞 1/8</button>
+        <button type="button" class="crystal-tool-btn" data-tool="coordination" aria-pressed="false">配位数</button>
+        <button type="button" class="crystal-tool-btn" data-tool="distance" aria-pressed="false">最短距离</button>
+        <button type="button" class="crystal-tool-btn" data-tool="density" aria-pressed="false">密度</button>
+      </div>
     </div>
-    <span class="crystal-dock-sep" aria-hidden="true"></span>
-    <div class="crystal-dock-group crystal-slice-group">
-      <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-slice="toggle">切开数原子</button>
-      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-slice="restore" hidden>还原</button>
-    </div>
-    <span class="crystal-dock-sep" aria-hidden="true"></span>
-    <div class="crystal-dock-group crystal-stepper" role="group" aria-label="拼晶胞数量">
-      <button type="button" class="crystal-step-btn" data-tile="sub" aria-label="减少一个晶胞" disabled>−</button>
-      <button type="button" class="crystal-step-val" data-tile="reset" title="点击恢复单晶胞">1/8 晶胞</button>
-      <button type="button" class="crystal-step-btn crystal-step-add" data-tile="add" aria-label="再拼一个晶胞">+ 拼</button>
-    </div>
-    <span class="crystal-dock-sep" aria-hidden="true"></span>
-    <div class="crystal-dock-group crystal-exam-group" role="group" aria-label="高考考点工具">
-      <button type="button" class="crystal-exam-tab" data-exam="coordination" aria-pressed="false">配位数</button>
-      <button type="button" class="crystal-exam-tab" data-exam="distance" aria-pressed="false">最短距离</button>
-      <button type="button" class="crystal-exam-tab" data-exam="density" aria-pressed="false">密度</button>
-    </div>
-  </div>
-`;
+  `;
+}
 
 export function renderCrystalItemHtml(c) {
   const dotsHtml = (c.species || [])
@@ -116,144 +96,208 @@ export function renderCrystalItemHtml(c) {
     )
     .join('');
 
+  const customControls = c.isCustom
+    ? `<span class="crystal-custom-tag">自定义</span>
+       <button type="button" class="crystal-item-del" data-del-id="${escapeHtml(c.id)}" aria-label="删除 ${escapeHtml(c.name)}" title="删除自定义晶胞">×</button>`
+    : '';
+
   return `
     <div class="crystal-drawer-item-top">
       <strong class="crystal-drawer-item-formula">${formulaHtml(c.formula)}</strong>
-      <span class="crystal-drawer-item-dots">${dotsHtml}</span>
+      <span class="crystal-drawer-item-meta">
+        <span class="crystal-drawer-item-dots">${dotsHtml}</span>
+        ${customControls}
+      </span>
     </div>
     <span class="crystal-drawer-item-name">${escapeHtml(c.name)}</span>
     ${c.subtitle ? `<span class="crystal-drawer-item-sub">${escapeHtml(c.subtitle)}</span>` : ''}
   `;
 }
 
-export function renderAveragingBreakdownHtml(crystal) {
-  if (!crystal) return '';
-  const breakdown = computeAveragingBreakdown(crystal);
-  const rowsHtml = (crystal.species || [])
-    .map((sp) => {
-      const stat = breakdown?.bySpecies?.[sp.id];
-      return `
-        <div class="crystal-avg-row">
-          <span class="crystal-avg-species">
-            <i class="crystal-swatch-dot" style="background:${colorIntToCss(sp.color)}"></i>
-            <b>${formulaHtml(sp.symbol)}</b>
-          </span>
-          <span class="crystal-avg-eq">${escapeHtml(buildSpeciesEquation(stat))}</span>
-        </div>
-      `;
-    })
-    .join('');
-  return `<div class="crystal-avg-breakdown">${rowsHtml}</div>`;
-}
-
-export function renderFloatInfoHtml(crystal, { sliced }) {
+export function renderTopbarInfoHtml(crystal) {
   if (!crystal) return '';
   const lat = crystal.lattice || {};
   const sysLabel = SYSTEM_LABELS[crystal.system] || crystal.system || '';
   const isCubic = lat.a === lat.b && lat.b === lat.c && (lat.gamma ?? 90) === 90;
-  const paramHtml = isCubic
-    ? `<span class="crystal-param-pill">a = b = c = ${formatNum(lat.a, 1)} pm</span>`
-    : `
-      <span class="crystal-param-pill">a = ${formatNum(lat.a, 1)}</span>
-      <span class="crystal-param-pill">b = ${formatNum(lat.b, 1)}</span>
-      <span class="crystal-param-pill">c = ${formatNum(lat.c, 1)} pm</span>
-      ${crystal.system === 'hexagonal' || lat.gamma === 120 ? `<span class="crystal-param-pill">γ=${lat.gamma || 120}°</span>` : ''}
-    `;
+  const latText = isCubic
+    ? `a=${formatNum(lat.a, 1)} pm`
+    : lat.a === lat.b
+      ? `a=${formatNum(lat.a, 1)} · c=${formatNum(lat.c, 1)} pm`
+      : `a=${formatNum(lat.a, 0)} b=${formatNum(lat.b, 0)} c=${formatNum(lat.c, 0)} pm`;
 
-  const speciesHtml = (crystal.species || [])
+  const zChip = crystal.density?.Z != null
+    ? `<span class="crystal-topbar-chip">Z=${formatNum(crystal.density.Z, 2)}</span>`
+    : '';
+
+  const speciesChips = (crystal.species || [])
+    .slice(0, 4)
     .map(
       (sp) => `
-        <span class="crystal-species-chip">
+        <span class="crystal-topbar-chip crystal-topbar-species">
           <i class="crystal-swatch-dot" style="background:${colorIntToCss(sp.color)}"></i>
-          <span>${formulaHtml(sp.symbol)}</span>
-          <em>×${formatNum(sp.countPerCell, 2)}</em>
+          <span>${formulaHtml(sp.symbol)}</span><em>×${formatNum(sp.countPerCell, 2)}</em>
         </span>
       `,
     )
     .join('');
 
   return `
-    <div class="crystal-float-head">
-      <div class="crystal-float-titles">
-        <strong class="crystal-float-formula">${formulaHtml(crystal.formula)}</strong>
-        <span class="crystal-float-name">${escapeHtml(crystal.name)}</span>
-      </div>
-      <span class="crystal-sys-badge">${escapeHtml(sysLabel)}</span>
-    </div>
-    <div class="crystal-species-row">${speciesHtml}</div>
-    <div class="crystal-param-row">${paramHtml}</div>
-    ${sliced ? renderAveragingBreakdownHtml(crystal) : ''}
+    <strong class="crystal-topbar-formula">${formulaHtml(crystal.formula)}</strong>
+    <span class="crystal-topbar-name">${escapeHtml(crystal.name)}</span>
+    ${sysLabel ? `<span class="crystal-topbar-chip">${escapeHtml(sysLabel)}</span>` : ''}
+    <span class="crystal-topbar-chip">${escapeHtml(latText)}</span>
+    ${zChip}
+    ${speciesChips}
   `;
 }
 
-export function renderExamPopoverHtml(crystal, examTab) {
-  if (!crystal || examTab === 'none') return '';
-  let title = '';
-  let body = '';
+export function renderModeStripHtml(crystal, { activeTool, exploded, tileCount }) {
+  if (!crystal || activeTool === 'none') return '';
 
-  if (examTab === 'coordination' && crystal.coordination) {
-    const c = crystal.coordination;
-    title = '配位数 (CN)';
-    body = `
-      <div class="crystal-exam-metric">
-        <span class="crystal-exam-k">最近邻配位数</span>
-        <strong class="crystal-exam-v">${escapeHtml(c.number)}</strong>
+  if (activeTool === 'slice') {
+    const breakdown = computeAveragingBreakdown(crystal);
+    const eqChips = (crystal.species || [])
+      .map((sp) => {
+        const eq = buildSpeciesEquation(breakdown?.bySpecies?.[sp.id]);
+        return `
+          <span class="crystal-strip-chip">
+            <i class="crystal-swatch-dot" style="background:${colorIntToCss(sp.color)}"></i>
+            <b>${formulaHtml(sp.symbol)}</b>: <code>${escapeHtml(eq)}</code>
+          </span>
+        `;
+      })
+      .join('');
+    return `
+      <div class="crystal-strip-content">${eqChips}</div>
+      <div class="crystal-strip-actions">
+        <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-strip="toggle-explode">
+          ${exploded ? '拼回去' : '炸开查看'}
+        </button>
       </div>
-      <p class="crystal-exam-desc">${escapeHtml(c.label || '')}</p>
-    `;
-  } else if (examTab === 'distance' && crystal.shortestDistance) {
-    const sd = crystal.shortestDistance;
-    title = '最短距离';
-    body = `
-      <div class="crystal-exam-metric">
-        <span class="crystal-exam-k">${escapeHtml(sd.formula)}</span>
-        ${sd.valuePm ? `<strong class="crystal-exam-v">${escapeHtml(sd.valuePm)} pm</strong>` : ''}
-      </div>
-      <p class="crystal-exam-desc">${escapeHtml(sd.desc || '')}</p>
-    `;
-  } else if (examTab === 'density' && crystal.density) {
-    const d = crystal.density;
-    const computed = computeDensity(d.Z, d.molarMass, crystal.lattice);
-    const val = Number.isFinite(computed) ? computed.toFixed(2) : formatNum(d.valueGcm3, 2);
-    title = '晶胞理论密度';
-    body = `
-      <div class="crystal-exam-metric">
-        <span class="crystal-exam-k">Z = ${formatNum(d.Z, 2)} · M = ${formatNum(d.molarMass, 2)} g/mol</span>
-        <strong class="crystal-exam-v">${val} g/cm³</strong>
-      </div>
-      <p class="crystal-exam-formula">${escapeHtml(d.formulaText || 'ρ = (Z · M) / (Nₐ · V)')}</p>
     `;
   }
 
-  if (!body) return '';
+  if (activeTool === 'tile') {
+    const hexHint = crystal.hexPrismHighlight
+      ? `<span class="crystal-strip-note${tileCount >= 3 ? ' is-ok' : ''}">${
+          tileCount >= 3 ? '✨ 正六棱柱已显现（3 晶胞无缝拼合）' : '提示：拼至 3 个六方晶胞可显现正六棱柱'
+        }</span>`
+      : '';
+    return `
+      <div class="crystal-strip-content">
+        <div class="crystal-stepper" role="group" aria-label="拼晶胞数量">
+          <button type="button" class="crystal-step-btn" data-tile="sub" aria-label="减少一个晶胞" ${tileCount <= 1 ? 'disabled' : ''}>−</button>
+          <span class="crystal-step-val">${tileCount} / 8 晶胞</span>
+          <button type="button" class="crystal-step-btn" data-tile="add" ${tileCount >= 8 ? 'disabled' : ''}>+ 再拼一个</button>
+        </div>
+        <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-tile="reset" ${tileCount <= 1 ? 'disabled' : ''}>重置单胞</button>
+        ${hexHint}
+      </div>
+    `;
+  }
+
+  if (activeTool === 'coordination' && crystal.coordination) {
+    const c = crystal.coordination;
+    return `
+      <div class="crystal-strip-content">
+        <span class="crystal-strip-badge">配位数 CN = ${escapeHtml(c.number)}</span>
+        <span class="crystal-strip-text">${escapeHtml(c.label || '')}</span>
+      </div>
+    `;
+  }
+
+  if (activeTool === 'distance' && crystal.shortestDistance) {
+    const sd = crystal.shortestDistance;
+    return `
+      <div class="crystal-strip-content">
+        <span class="crystal-strip-badge">${escapeHtml(sd.formula)}${sd.valuePm ? ` = ${escapeHtml(sd.valuePm)} pm` : ''}</span>
+        <span class="crystal-strip-text">${escapeHtml(sd.desc || '')}</span>
+      </div>
+    `;
+  }
+
+  if (activeTool === 'density' && crystal.density) {
+    const d = crystal.density;
+    const computed = computeDensity(d.Z, d.molarMass, crystal.lattice);
+    const val = Number.isFinite(computed) ? computed.toFixed(2) : formatNum(d.valueGcm3, 2);
+    return `
+      <div class="crystal-strip-content">
+        <span class="crystal-strip-badge">ρ = ${val} g/cm³</span>
+        <code class="crystal-strip-formula">${escapeHtml(d.formulaText || 'ρ = (Z · M) / (Nₐ · V)')}</code>
+        <span class="crystal-strip-text">Z = ${formatNum(d.Z, 2)} · M = ${formatNum(d.molarMass, 2)} g/mol</span>
+      </div>
+    `;
+  }
+
+  return `<div class="crystal-strip-content"><span class="crystal-strip-text">该晶胞暂无此项数据。</span></div>`;
+}
+
+export function renderInspectorDetailsHtml(crystal) {
+  if (!crystal) return '';
+  const breakdown = computeAveragingBreakdown(crystal);
+  const avgRows = (crystal.species || [])
+    .map((sp) => `
+      <div class="crystal-avg-row">
+        <span class="crystal-avg-species">
+          <i class="crystal-swatch-dot" style="background:${colorIntToCss(sp.color)}"></i>
+          <b>${formulaHtml(sp.symbol)}</b>
+        </span>
+        <span class="crystal-avg-eq">${escapeHtml(buildSpeciesEquation(breakdown?.bySpecies?.[sp.id]))}</span>
+      </div>
+    `)
+    .join('');
+
+  const d = crystal.density;
+  const computed = d ? computeDensity(d.Z, d.molarMass, crystal.lattice) : NaN;
+  const rho = Number.isFinite(computed) ? computed.toFixed(2) : formatNum(d?.valueGcm3, 2);
+  const densityHtml = d
+    ? `
+      <div class="crystal-detail-block">
+        <h4 class="crystal-detail-title">晶胞密度公式</h4>
+        <div class="crystal-exam-metric">
+          <span class="crystal-exam-k">Z = ${formatNum(d.Z, 2)} · M = ${formatNum(d.molarMass, 2)} g/mol</span>
+          <strong class="crystal-exam-v">${rho} g/cm³</strong>
+        </div>
+        <p class="crystal-exam-formula">${escapeHtml(d.formulaText || 'ρ = (Z · M) / (Nₐ · V)')}</p>
+      </div>
+    `
+    : '';
+
   return `
-    <div class="crystal-pop-head">
-      <h4 class="crystal-pop-title">${title}</h4>
-      <button type="button" class="crystal-pop-close" data-exam-close aria-label="关闭">×</button>
+    <div class="crystal-detail-block">
+      <h4 class="crystal-detail-title">均摊法粒子数拆解</h4>
+      <div class="crystal-avg-breakdown">${avgRows}</div>
     </div>
-    ${body}
+    ${densityHtml}
   `;
 }
 
-export function renderQaPopoverHtml(qa, qaRevealed) {
-  if (!qa) return '';
-  return `
-    <div class="crystal-pop-head">
-      <h4 class="crystal-pop-title">课堂思考题 💡</h4>
-      <div class="crystal-pop-head-right">
-        <span class="crystal-tag crystal-tag-qa">${qaRevealed ? '已揭晓' : '先思考'}</span>
-        <button type="button" class="crystal-pop-close" data-qa-close aria-label="关闭">×</button>
-      </div>
-    </div>
-    <p class="crystal-qa-question">${escapeHtml(qa.question)}</p>
-    <div class="crystal-qa-answer-box ${qaRevealed ? 'is-revealed' : 'is-covered'}">
-      <p class="crystal-qa-answer">${escapeHtml(qa.answer)}</p>
-      <div class="crystal-qa-cover" ${qaRevealed ? 'hidden' : ''}>
-        <button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm crystal-qa-reveal-btn">点击揭晓结论</button>
-      </div>
-    </div>
-    <div class="crystal-qa-foot" ${qaRevealed ? '' : 'hidden'}>
-      <button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm crystal-qa-hide-btn">重新遮挡</button>
-    </div>
-  `;
+export function buildCrystalSummary(crystal) {
+  if (!crystal) return '';
+  const lat = crystal.lattice || {};
+  const parts = [
+    crystal.subtitle,
+    `晶系:${SYSTEM_LABELS[crystal.system] || crystal.system || ''}`,
+    lat.a ? `a=${formatNum(lat.a, 1)}pm` : '',
+    crystal.averagingFormula ? `均摊:${crystal.averagingFormula}` : '',
+    crystal.coordination?.number != null ? `CN=${crystal.coordination.number}` : '',
+    crystal.shortestDistance?.formula ? `最短距离:${crystal.shortestDistance.formula}` : '',
+  ].filter(Boolean);
+  return parts.join('；');
+}
+
+export function buildQuickQuestions(crystal) {
+  const f = crystal?.formula || '该晶胞';
+  if (crystal?.hexPrismHighlight) {
+    return [
+      `${f} 六方晶胞的均摊法怎么算？`,
+      `为什么 3 个 ${f} 晶胞能拼出正六棱柱？`,
+      `${f} 的配位数与晶胞密度怎么推导？`,
+    ];
+  }
+  return [
+    `${f} 晶胞用均摊法怎么算出粒子数？`,
+    `${f} 的配位数和最短距离怎么看？`,
+    `${f} 晶胞密度公式怎么推导？`,
+  ];
 }

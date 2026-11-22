@@ -1,5 +1,6 @@
 /* 晶胞（3D 晶体与晶胞实验室）样式入口 — barrel，全部按 layer(components) 载入 */
 @import './_crystal/layout.css' layer(components);
 @import './_crystal/stage.css' layer(components);
-@import './_crystal/inspector.css' layer(components);
 @import './_crystal/tools.css' layer(components);
+@import './_crystal/inspector.css' layer(components);
+@import './_crystal/modal.css' layer(components);

@@ -1,156 +1,163 @@
 /**
- * 模块 02：晶体结构库 — 状态与悬浮交互控制
- * 导出 mountLibraryView(stageEl, { drawerBodyEl } = {}) -> { pause(), resume(), resize(), destroy() }
+ * 模块 02：晶体结构库 — 零遮挡三行交互 + AI 生成晶胞 + AI 助教 3D 联动
+ * 导出 mountLibraryView(stageEl, shell) -> { pause(), resume(), resize(), destroy() }
  */
 
 import { CRYSTAL_CATEGORIES, CRYSTALS, getCrystalById } from '../data/crystals.js';
 import { createCrystalViewer } from '../scene/crystal-viewer.js';
+import { createAiCrystalModal, loadCustomCrystals, saveCustomCrystals } from './ai-crystal-modal.js';
 import {
   SHORT_CATEGORY_LABELS,
-  STAGE_TEMPLATE,
+  renderActionbarHtml,
   renderCrystalItemHtml,
-  renderFloatInfoHtml,
-  renderExamPopoverHtml,
-  renderQaPopoverHtml,
+  renderTopbarInfoHtml,
+  renderModeStripHtml,
+  renderInspectorDetailsHtml,
+  buildCrystalSummary,
+  buildQuickQuestions,
 } from './library-html.js';
 
-export function mountLibraryView(stageEl, { drawerBodyEl } = {}) {
+const VALID_CATS = new Set(CRYSTAL_CATEGORIES.map((c) => c.id));
+const normalizeCat = (cat) => (VALID_CATS.has(cat) ? cat : 'mixed');
+
+export function mountLibraryView(stageEl, shell = {}) {
   if (!stageEl) return { pause() {}, resume() {}, resize() {}, destroy() {} };
 
+  const { drawerBodyEl, topbarInfoEl, topbarActionsEl, actionbarEl, setInspectorContext } = shell;
+  let customCrystals = loadCustomCrystals(VALID_CATS);
   const defaultCrystal = getCrystalById('nacl') || CRYSTALS[0];
   let activeCategory = defaultCrystal?.category || CRYSTAL_CATEGORIES[0]?.id || 'ionic';
   let currentCrystal = defaultCrystal;
   let displayMode = 'ball-stick';
+  let activeTool = 'none';
   let sliced = false;
   let exploded = false;
   let tileCount = 1;
-  let examTab = 'none';
   let autoRotate = false;
-  let qaOpen = false;
-  let qaRevealed = false;
 
-  stageEl.innerHTML = '';
-  const stageRoot = document.createElement('div');
-  stageRoot.className = 'crystal-stage-inner';
-  stageRoot.innerHTML = STAGE_TEMPLATE;
-  stageEl.appendChild(stageRoot);
+  stageEl.innerHTML = `
+    <div class="crystal-stage-inner">
+      <div class="crystal-stage-canvas"></div>
+      <div class="crystal-hex-toast" aria-live="polite" hidden></div>
+    </div>
+  `;
+  const hexToastEl = stageEl.querySelector('.crystal-hex-toast');
 
   const navHost = drawerBodyEl || document.createElement('div');
-  if (drawerBodyEl) {
-    drawerBodyEl.innerHTML = '';
-  } else {
-    navHost.className = 'crystal-fallback-nav';
-    stageRoot.prepend(navHost);
-  }
+  if (drawerBodyEl) drawerBodyEl.innerHTML = '';
+  else { navHost.className = 'crystal-fallback-nav'; stageEl.prepend(navHost); }
   navHost.innerHTML = `
+    <button type="button" class="crystal-btn-add" data-act="ai-add">
+      <span class="crystal-add-plus">+</span><span>AI 生成晶胞</span>
+    </button>
     <div class="crystal-cat-tabs" role="tablist" aria-label="晶体类型"></div>
     <div class="crystal-drawer-list crystal-lib-grid" role="listbox" aria-label="晶体列表"></div>
   `;
-
-  const q = (sel) => stageRoot.querySelector(sel);
+  const btnAiAdd = navHost.querySelector('[data-act="ai-add"]');
   const catTabsEl = navHost.querySelector('.crystal-cat-tabs');
   const listEl = navHost.querySelector('.crystal-lib-grid');
-  const floatInfoEl = q('.crystal-float-info');
-  const btnQa = q('[data-act="qa"]');
-  const btnAutoRotate = q('[data-act="autorotate"]');
-  const btnResetView = q('[data-act="reset"]');
-  const qaPopoverEl = q('.crystal-qa-popover');
-  const hexToastEl = q('.crystal-hex-toast');
-  const examPopoverEl = q('.crystal-exam-popover');
-  const modeBtns = stageRoot.querySelectorAll('.crystal-seg-btn[data-mode]');
-  const btnSliceToggle = q('[data-slice="toggle"]');
-  const btnSliceRestore = q('[data-slice="restore"]');
-  const btnTileSub = q('[data-tile="sub"]');
-  const btnTileReset = q('[data-tile="reset"]');
-  const btnTileAdd = q('[data-tile="add"]');
-  const examTabBtns = stageRoot.querySelectorAll('.crystal-exam-tab');
 
-  const viewer = createCrystalViewer(q('.crystal-stage-canvas'));
+  if (topbarActionsEl) {
+    topbarActionsEl.innerHTML = `
+      <button type="button" class="crystal-topbar-btn" data-act="autorotate" aria-pressed="false" title="自动慢转">慢转</button>
+      <button type="button" class="crystal-topbar-btn" data-act="reset" title="复位视角">复位</button>
+    `;
+  }
+  const btnAutoRotate = topbarActionsEl?.querySelector('[data-act="autorotate"]');
+  const btnResetView = topbarActionsEl?.querySelector('[data-act="reset"]');
+
+  const barHost = actionbarEl || document.createElement('div');
+  barHost.innerHTML = renderActionbarHtml();
+  const modeStripEl = barHost.querySelector('.crystal-mode-strip');
+  const modeBtns = barHost.querySelectorAll('.crystal-seg-btn[data-mode]');
+  const toolBtns = barHost.querySelectorAll('.crystal-tool-btn[data-tool]');
+  const tileToolBtn = barHost.querySelector('.crystal-tool-btn[data-tool="tile"]');
+
+  const viewer = createCrystalViewer(stageEl.querySelector('.crystal-stage-canvas'));
+
+  function getVisibleCrystals(catId) {
+    if (catId === 'custom') return customCrystals;
+    return [...customCrystals.filter((c) => c.category === catId), ...CRYSTALS.filter((c) => c.category === catId)];
+  }
 
   function renderCategoryTabs() {
+    const tabs = CRYSTAL_CATEGORIES.map((cat) => ({
+      id: cat.id,
+      label: SHORT_CATEGORY_LABELS[cat.id] || cat.label.replace(/晶体$/, ''),
+      title: cat.label,
+    }));
+    if (customCrystals.length > 0) tabs.push({ id: 'custom', label: '自定义', title: `自定义晶胞 (${customCrystals.length})` });
+    else if (activeCategory === 'custom') activeCategory = currentCrystal?.category || 'ionic';
+
+    catTabsEl.classList.toggle('has-custom', customCrystals.length > 0);
     catTabsEl.innerHTML = '';
-    for (const cat of CRYSTAL_CATEGORIES) {
+    for (const tab of tabs) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'crystal-cat-tab' + (cat.id === activeCategory ? ' is-active' : '');
+      btn.className = 'crystal-cat-tab' + (tab.id === activeCategory ? ' is-active' : '');
       btn.setAttribute('role', 'tab');
-      btn.setAttribute('aria-selected', cat.id === activeCategory ? 'true' : 'false');
-      btn.textContent = SHORT_CATEGORY_LABELS[cat.id] || cat.label.replace(/晶体$/, '');
-      btn.title = cat.label;
+      btn.setAttribute('aria-selected', String(tab.id === activeCategory));
+      btn.textContent = tab.label;
+      btn.title = tab.title;
       btn.addEventListener('click', () => {
-        if (activeCategory === cat.id) return;
-        activeCategory = cat.id;
+        if (activeCategory === tab.id) return;
+        activeCategory = tab.id;
         renderCategoryTabs();
         renderCrystalList();
-        const inCat = CRYSTALS.filter((c) => c.category === activeCategory);
-        if (inCat.length && currentCrystal?.category !== activeCategory) selectCrystal(inCat[0]);
+        const items = getVisibleCrystals(activeCategory);
+        if (items.length && !items.some((c) => c.id === currentCrystal?.id)) selectCrystal(items[0], { keepCategory: true });
       });
       catTabsEl.appendChild(btn);
     }
   }
 
+  function deleteCustomCrystal(id) {
+    customCrystals = customCrystals.filter((c) => c.id !== id);
+    saveCustomCrystals(customCrystals);
+    if (currentCrystal?.id === id) {
+      selectCrystal(getVisibleCrystals(activeCategory)[0] || getCrystalById('nacl') || CRYSTALS[0]);
+    } else {
+      renderCategoryTabs();
+      renderCrystalList();
+    }
+  }
+
   function renderCrystalList() {
     listEl.innerHTML = '';
-    for (const c of CRYSTALS.filter((item) => item.category === activeCategory)) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'crystal-drawer-item' + (c.id === currentCrystal?.id ? ' is-active' : '');
-      btn.setAttribute('role', 'option');
-      btn.setAttribute('aria-selected', c.id === currentCrystal?.id ? 'true' : 'false');
-      btn.innerHTML = renderCrystalItemHtml(c);
-      btn.title = `${c.name} · ${c.subtitle || ''}`;
-      btn.addEventListener('click', () => selectCrystal(c));
-      listEl.appendChild(btn);
+    for (const c of getVisibleCrystals(activeCategory)) {
+      const item = document.createElement('div');
+      item.className = 'crystal-drawer-item' + (c.id === currentCrystal?.id ? ' is-active' : '');
+      item.setAttribute('role', 'option');
+      item.setAttribute('tabindex', '0');
+      item.setAttribute('aria-selected', String(c.id === currentCrystal?.id));
+      item.innerHTML = renderCrystalItemHtml(c);
+      item.title = `${c.name}${c.subtitle ? ` · ${c.subtitle}` : ''}`;
+      item.addEventListener('click', (e) => {
+        const delBtn = e.target.closest('[data-del-id]');
+        if (delBtn) { e.stopPropagation(); deleteCustomCrystal(delBtn.dataset.delId); return; }
+        selectCrystal(c, { keepCategory: true });
+      });
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCrystal(c, { keepCategory: true }); }
+      });
+      listEl.appendChild(item);
     }
   }
 
-  function renderQaPopover() {
-    const qa = currentCrystal?.qa;
-    btnQa.hidden = !qa;
-    btnQa.classList.toggle('is-active', qaOpen);
-    btnQa.setAttribute('aria-expanded', qaOpen ? 'true' : 'false');
-    if (!qa || !qaOpen) {
-      qaPopoverEl.hidden = true;
-      return;
-    }
-    qaPopoverEl.hidden = false;
-    qaPopoverEl.innerHTML = renderQaPopoverHtml(qa, qaRevealed);
-    qaPopoverEl.querySelector('[data-qa-close]')?.addEventListener('click', () => {
-      qaOpen = false;
-      renderQaPopover();
-    });
-    qaPopoverEl.querySelector('.crystal-qa-reveal-btn')?.addEventListener('click', () => {
-      qaRevealed = true;
-      renderQaPopover();
-    });
-    qaPopoverEl.querySelector('.crystal-qa-hide-btn')?.addEventListener('click', () => {
-      qaRevealed = false;
-      renderQaPopover();
-    });
-  }
-
-  function renderExamPopover() {
-    examTabBtns.forEach((btn) => {
-      const on = btn.dataset.exam === examTab;
+  function syncAllControls() {
+    if (topbarInfoEl) topbarInfoEl.innerHTML = renderTopbarInfoHtml(currentCrystal);
+    modeBtns.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.mode === displayMode));
+    toolBtns.forEach((btn) => {
+      const on = btn.dataset.tool === activeTool;
       btn.classList.toggle('is-active', on);
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-pressed', String(on));
     });
-    const html = renderExamPopoverHtml(currentCrystal, examTab);
-    if (!html) {
-      examPopoverEl.hidden = true;
-      examPopoverEl.innerHTML = '';
-      return;
-    }
-    examPopoverEl.hidden = false;
-    examPopoverEl.innerHTML = html;
-    examPopoverEl.querySelector('[data-exam-close]')?.addEventListener('click', () => {
-      examTab = 'none';
-      viewer.setOverlay('none');
-      syncAllControls();
-    });
-  }
+    if (tileToolBtn) tileToolBtn.textContent = `拼晶胞 ${tileCount}/8`;
 
-  function renderHexToast() {
+    const stripHtml = renderModeStripHtml(currentCrystal, { activeTool, exploded, tileCount });
+    modeStripEl.hidden = !stripHtml;
+    modeStripEl.innerHTML = stripHtml;
+
     if (currentCrystal?.hexPrismHighlight && tileCount >= 3) {
       hexToastEl.hidden = false;
       hexToastEl.className = 'crystal-hex-toast is-revealed';
@@ -158,46 +165,123 @@ export function mountLibraryView(stageEl, { drawerBodyEl } = {}) {
     } else if (currentCrystal?.hexPrismHighlight && tileCount === 2) {
       hexToastEl.hidden = false;
       hexToastEl.className = 'crystal-hex-toast';
-      hexToastEl.textContent = '再点一次「+ 拼」，看看 3 个六方晶胞拼出什么形状';
+      hexToastEl.textContent = '再拼 1 个晶胞，观察 3 个六方晶胞如何拼成正六棱柱';
     } else {
       hexToastEl.hidden = true;
       hexToastEl.textContent = '';
     }
   }
 
-  function syncAllControls() {
-    floatInfoEl.innerHTML = renderFloatInfoHtml(currentCrystal, { sliced });
-    modeBtns.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.mode === displayMode));
-
-    btnSliceToggle.textContent = !sliced ? '切开数原子' : exploded ? '拼回去' : '展开数原子';
-    btnSliceToggle.classList.toggle('is-active', sliced);
-    btnSliceRestore.hidden = !sliced;
-
-    btnTileReset.textContent = `${tileCount}/8 晶胞`;
-    btnTileReset.disabled = tileCount <= 1;
-    btnTileSub.disabled = tileCount <= 1;
-    btnTileAdd.disabled = tileCount >= 8;
-
-    renderHexToast();
-    renderExamPopover();
+  function clearInquiryModes() {
+    if (sliced || exploded) { sliced = false; exploded = false; viewer.setSliced(false); }
+    if (tileCount > 1) { tileCount = 1; viewer.setTileCount(1); }
+    viewer.setOverlay('none');
   }
 
-  function selectCrystal(crystal) {
+  function setTileCount(next) {
+    const clamped = Math.max(1, Math.min(8, next));
+    if (clamped === tileCount && activeTool === 'tile') return;
+    if (sliced || exploded) { sliced = false; exploded = false; viewer.setSliced(false); }
+    viewer.setOverlay('none');
+    tileCount = clamped;
+    viewer.setTileCount(tileCount);
+    syncAllControls();
+  }
+
+  function activateTool(tool) {
+    if (tool === activeTool) {
+      activeTool = 'none';
+      clearInquiryModes();
+    } else {
+      clearInquiryModes();
+      activeTool = tool;
+      if (tool === 'slice') { sliced = true; exploded = true; viewer.setExploded(true); }
+      else if (tool === 'tile') { tileCount = 2; viewer.setTileCount(2); }
+      else if (tool === 'coordination' || tool === 'distance') viewer.setOverlay(tool);
+    }
+    syncAllControls();
+  }
+
+  function handleAiAction(action) {
+    if (!currentCrystal) return;
+    if (action === 'ball-stick' || action === 'space-filling') {
+      displayMode = action;
+      viewer.setDisplayMode(displayMode);
+    } else if (action === 'slice' || action === 'explode') {
+      clearInquiryModes();
+      activeTool = 'slice';
+      sliced = true;
+      exploded = action === 'explode';
+      if (exploded) viewer.setExploded(true);
+      else { viewer.setSliced(true); viewer.setExploded(false); }
+    } else if (action === 'tile-2' || action === 'tile-3') {
+      clearInquiryModes();
+      activeTool = 'tile';
+      tileCount = action === 'tile-3' ? 3 : 2;
+      viewer.setTileCount(tileCount);
+    } else if (action === 'coordination' || action === 'distance') {
+      clearInquiryModes();
+      activeTool = action;
+      viewer.setOverlay(action);
+    } else if (action === 'reset') {
+      activeTool = 'none';
+      displayMode = 'ball-stick';
+      clearInquiryModes();
+      viewer.setDisplayMode('ball-stick');
+      viewer.resetCamera();
+    }
+    syncAllControls();
+  }
+
+  function selectCrystal(crystal, { keepCategory = false } = {}) {
     if (!crystal) return;
     currentCrystal = crystal;
-    activeCategory = crystal.category;
+    if (!keepCategory) activeCategory = normalizeCat(crystal.category);
+    activeTool = 'none';
     sliced = false;
     exploded = false;
     tileCount = 1;
-    examTab = 'none';
-    qaOpen = false;
-    qaRevealed = false;
     viewer.setCrystal(crystal);
     renderCategoryTabs();
     renderCrystalList();
-    renderQaPopover();
     syncAllControls();
+
+    setInspectorContext?.({
+      title: crystal.name,
+      formula: crystal.formula,
+      module: 'library',
+      summary: buildCrystalSummary(crystal),
+      qa: crystal.qa || null,
+      detailsHtml: renderInspectorDetailsHtml(crystal),
+      quickQuestions: buildQuickQuestions(crystal),
+      onAiAction: handleAiAction,
+    });
   }
+
+  const aiModal = createAiCrystalModal({
+    onCreated(crystal) {
+      const normalized = { ...crystal, isCustom: true, category: normalizeCat(crystal.category) };
+      customCrystals = [normalized, ...customCrystals.filter((c) => c.id !== normalized.id)];
+      saveCustomCrystals(customCrystals);
+      activeCategory = 'custom';
+      selectCrystal(normalized, { keepCategory: true });
+    },
+  });
+
+  btnAiAdd?.addEventListener('click', () => aiModal.open());
+
+  modeStripEl.addEventListener('click', (e) => {
+    if (e.target.closest('[data-strip="toggle-explode"]')) {
+      exploded = !exploded;
+      viewer.setExploded(exploded);
+      syncAllControls();
+      return;
+    }
+    const tileAct = e.target.closest('[data-tile]')?.dataset.tile;
+    if (tileAct === 'sub') setTileCount(tileCount - 1);
+    else if (tileAct === 'add') setTileCount(tileCount + 1);
+    else if (tileAct === 'reset') setTileCount(1);
+  });
 
   modeBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -208,96 +292,19 @@ export function mountLibraryView(stageEl, { drawerBodyEl } = {}) {
     });
   });
 
-  btnSliceToggle.addEventListener('click', () => {
-    if (!sliced) {
-      tileCount = 1;
-      examTab = 'none';
-      sliced = true;
-      exploded = true;
-      viewer.setExploded(true);
-    } else {
-      exploded = !exploded;
-      viewer.setExploded(exploded);
-    }
-    syncAllControls();
-  });
+  toolBtns.forEach((btn) => btn.addEventListener('click', () => activateTool(btn.dataset.tool)));
 
-  btnSliceRestore.addEventListener('click', () => {
-    sliced = false;
-    exploded = false;
-    viewer.setSliced(false);
-    syncAllControls();
-  });
-
-  function updateTileCount(next) {
-    const clamped = Math.max(1, Math.min(8, next));
-    if (clamped === tileCount) return;
-    if (clamped > 1) {
-      sliced = false;
-      exploded = false;
-      examTab = 'none';
-    }
-    tileCount = clamped;
-    viewer.setTileCount(tileCount);
-    syncAllControls();
-  }
-
-  btnTileAdd.addEventListener('click', () => updateTileCount(tileCount + 1));
-  btnTileSub.addEventListener('click', () => updateTileCount(tileCount - 1));
-  btnTileReset.addEventListener('click', () => updateTileCount(1));
-
-  examTabBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.exam;
-      examTab = examTab === tab ? 'none' : tab;
-      if (examTab !== 'none') {
-        if (sliced || exploded) {
-          sliced = false;
-          exploded = false;
-          viewer.setSliced(false);
-        }
-        if (tileCount > 1) {
-          tileCount = 1;
-          viewer.setTileCount(1);
-        }
-      }
-      viewer.setOverlay(examTab === 'coordination' || examTab === 'distance' ? examTab : 'none');
-      syncAllControls();
-    });
-  });
-
-  btnQa.addEventListener('click', () => {
-    qaOpen = !qaOpen;
-    renderQaPopover();
-  });
-
-  btnAutoRotate.addEventListener('click', () => {
+  btnAutoRotate?.addEventListener('click', () => {
     autoRotate = !autoRotate;
     btnAutoRotate.classList.toggle('is-active', autoRotate);
-    btnAutoRotate.setAttribute('aria-pressed', autoRotate ? 'true' : 'false');
+    btnAutoRotate.setAttribute('aria-pressed', String(autoRotate));
     viewer.setAutoRotate(autoRotate);
   });
 
-  btnResetView.addEventListener('click', () => viewer.resetCamera());
-
-  const onKeyDown = (e) => {
-    if (e.key !== 'Escape') return;
-    if (qaOpen) {
-      qaOpen = false;
-      renderQaPopover();
-    } else if (examTab !== 'none') {
-      examTab = 'none';
-      viewer.setOverlay('none');
-      syncAllControls();
-    }
-  };
-  window.addEventListener('keydown', onKeyDown);
+  btnResetView?.addEventListener('click', () => viewer.resetCamera());
 
   if (currentCrystal) selectCrystal(currentCrystal);
-  else {
-    renderCategoryTabs();
-    renderCrystalList();
-  }
+  else { renderCategoryTabs(); renderCrystalList(); }
   viewer.start();
 
   return {
@@ -305,10 +312,13 @@ export function mountLibraryView(stageEl, { drawerBodyEl } = {}) {
     resume() { viewer.start(); },
     resize() { viewer.resize(); },
     destroy() {
-      window.removeEventListener('keydown', onKeyDown);
+      aiModal.destroy();
       viewer.dispose();
       stageEl.innerHTML = '';
       if (drawerBodyEl) drawerBodyEl.innerHTML = '';
+      if (topbarInfoEl) topbarInfoEl.innerHTML = '';
+      if (topbarActionsEl) topbarActionsEl.innerHTML = '';
+      if (actionbarEl) actionbarEl.innerHTML = '';
     },
   };
 }

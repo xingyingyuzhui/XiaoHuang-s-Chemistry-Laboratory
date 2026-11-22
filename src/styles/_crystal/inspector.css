@@ -1,198 +1,100 @@
-/* 晶胞模块 · 悬浮信息卡、右上操作栏、思考题浮层与考点详情浮卡 */
+/* 晶胞模块 · 按需右侧滑出 Inspector 抽屉（思考题 + AI 3D 助教） */
 
-/* 左上悬浮信息卡（对齐 .mol-info-card 风格） */
-.crystal-float-info {
+.crystal-inspector {
   position: absolute;
-  top: 0.85rem;
-  left: 0.85rem;
-  z-index: 6;
-  max-width: min(310px, calc(100% - 14rem));
-  max-height: min(52vh, 360px);
-  overflow-y: auto;
-  padding: 0.68rem 0.85rem;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 92%, transparent);
-  border: var(--ui-stroke-strong) solid var(--border-ink);
-  box-shadow: var(--shadow-card, var(--shadow-print));
-  backdrop-filter: blur(10px);
+  top: 46px;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 92%;
+  z-index: 20;
   display: flex;
   flex-direction: column;
-  gap: 0.36rem;
-}
-
-.crystal-float-info h3,
-.crystal-float-title {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: 0.96rem;
-  font-weight: 800;
-  color: var(--ink);
-  line-height: 1.3;
-}
-
-.crystal-float-info p,
-.crystal-float-caption {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--muted, var(--text-muted));
-  line-height: 1.45;
-}
-
-.crystal-float-head { display: flex; align-items: center; justify-content: space-between; gap: 0.45rem; }
-.crystal-float-titles { display: flex; align-items: baseline; gap: 0.42rem; min-width: 0; }
-
-.crystal-float-formula {
-  font-family: var(--font-formula);
-  font-size: 1.28rem;
-  font-weight: 800;
-  color: var(--ink);
-  line-height: 1.1;
-}
-
-.crystal-float-name {
-  font-size: 0.84rem;
-  font-weight: 700;
-  color: var(--ink-soft);
-  white-space: nowrap;
+  background: var(--surface, var(--card-elevated));
+  border-left: var(--ui-stroke-strong) solid var(--border-ink);
+  box-shadow: var(--shadow-card, var(--shadow-print));
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.crystal-sys-badge {
-  flex-shrink: 0;
-  padding: 0.14rem 0.45rem;
-  border-radius: var(--radius-xs);
-  background: var(--surface-2, var(--paper));
-  border: 1px solid var(--border);
-  color: var(--ink-soft);
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-
-.crystal-species-row,
-.crystal-param-row,
-.crystal-float-legend { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-
-.crystal-species-chip,
-.crystal-legend-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
-  padding: 0.14rem 0.45rem;
-  border-radius: var(--radius-pill, 999px);
-  background: var(--surface-2, var(--paper));
-  border: 1px solid var(--border);
-  color: var(--ink);
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.crystal-species-chip em { font-style: normal; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); }
-
-.crystal-param-pill {
-  padding: 0.12rem 0.42rem;
-  border-radius: var(--radius-xs);
-  background: var(--surface-2, var(--paper));
-  color: var(--muted, var(--text-muted));
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-/* 右上悬浮操作栏 */
-.crystal-float-actions {
-  position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
-  z-index: 7;
+.crystal-inspector-head {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 0.38rem;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2, var(--paper));
 }
 
-.crystal-action-btn {
+.crystal-inspector-tabs { display: inline-flex; align-items: center; gap: 0.22rem; padding: 0.16rem; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); }
+
+.crystal-inspector-tab {
   appearance: none;
-  min-height: 34px;
-  padding: 0.3rem 0.68rem;
-  border-radius: var(--radius-sm);
-  border: var(--ui-stroke) solid var(--border-ink);
-  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 92%, transparent);
-  color: var(--ink);
+  min-height: 27px;
+  padding: 0.18rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--ink-soft);
   font-family: var(--font-main);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-print-sm);
-  backdrop-filter: blur(10px);
-  transition: background var(--dur-fast) ease, transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
 
-.crystal-action-btn:hover { background: var(--diagram-soft, var(--surface-2)); transform: translateY(-1px); box-shadow: var(--shadow-print); }
-.crystal-action-btn.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; }
+.crystal-inspector-tab:hover { color: var(--ink); }
+.crystal-inspector-tab.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; }
 
-/* 思考题悬浮气泡（默认遮挡答案，不占常驻布局空间） */
-.crystal-qa-popover {
-  position: absolute;
-  top: 3.55rem;
-  right: 0.85rem;
-  z-index: 12;
-  width: min(350px, calc(100% - 1.7rem));
-  padding: 0.78rem 0.9rem;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 96%, transparent);
-  border: var(--ui-stroke-strong) solid var(--border-ink);
-  box-shadow: var(--shadow-card, var(--shadow-print));
-  backdrop-filter: blur(12px);
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.crystal-pop-head,
-.crystal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.crystal-pop-head-right { display: inline-flex; align-items: center; gap: 0.35rem; }
-
-.crystal-pop-title,
-.crystal-card-title {
-  margin: 0;
-  font-family: var(--font-heading);
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--ink);
-}
-
-.crystal-pop-close {
+.crystal-inspector-close {
   appearance: none;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
-  background: var(--surface-2, var(--paper));
+  background: var(--surface);
   color: var(--ink-soft);
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1;
-  cursor: pointer;
   display: grid;
   place-items: center;
+  cursor: pointer;
   padding: 0;
 }
 
-.crystal-pop-close:hover { color: var(--ink); border-color: var(--border-ink); }
+.crystal-inspector-close:hover { color: var(--ink); border-color: var(--border-ink); }
 
-.crystal-qa-question { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--ink); line-height: 1.5; }
-
-.crystal-qa-answer-box {
-  position: relative;
-  padding: 0.62rem 0.7rem;
-  border-radius: var(--radius-sm);
-  background: var(--surface-2, var(--paper));
-  border: 1px solid var(--border);
-  min-height: 64px;
-  overflow: hidden;
+.crystal-inspector-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.68rem;
 }
 
-.crystal-qa-answer { margin: 0; font-size: 0.81rem; color: var(--ink); line-height: 1.55; transition: filter 0.2s ease, opacity 0.2s ease; }
+.crystal-ai-context { display: flex; align-items: baseline; gap: 0.4rem; padding: 0.36rem 0.56rem; border-radius: var(--radius-sm); background: var(--surface-2, var(--paper)); border: 1px solid var(--border); }
+.crystal-ctx-formula { font-family: var(--font-formula, var(--font-mono)); font-size: 0.96rem; font-weight: 800; color: var(--ink); }
+.crystal-ctx-title { font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); }
 
+/* 思考题卡片 */
+.crystal-qa-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem 0.72rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2, var(--paper));
+  border: var(--ui-stroke) solid var(--border-ink);
+}
+
+.crystal-qa-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; }
+.crystal-qa-label { font-size: 0.8rem; font-weight: 800; color: var(--ink); }
+.crystal-qa-question { margin: 0; font-size: 0.84rem; font-weight: 700; color: var(--ink); line-height: 1.5; }
+
+.crystal-qa-answer-box { position: relative; padding: 0.58rem 0.66rem; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); min-height: 62px; overflow: hidden; }
+.crystal-qa-answer { margin: 0; font-size: 0.8rem; color: var(--ink); line-height: 1.55; transition: filter 0.2s ease, opacity 0.2s ease; }
 .crystal-qa-answer-box.is-covered .crystal-qa-answer { filter: blur(7px); opacity: 0.38; user-select: none; pointer-events: none; }
 
 .crystal-qa-cover {
@@ -201,48 +103,87 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--surface-2, var(--paper)) 62%, transparent);
+  background: color-mix(in srgb, var(--surface-2, var(--paper)) 64%, transparent);
   backdrop-filter: blur(3px);
 }
 
 .crystal-qa-foot { display: flex; justify-content: flex-end; }
 
-/* 考点详情与镁正六棱柱浮卡（紧贴底部 dock 上方） */
-.crystal-exam-popover {
-  position: absolute;
-  left: 50%;
-  bottom: 4.55rem;
-  transform: translateX(-50%);
-  z-index: 10;
-  width: min(390px, calc(100% - 1.7rem));
-  padding: 0.68rem 0.85rem;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 95%, transparent);
-  border: var(--ui-stroke-strong) solid var(--border-ink);
-  box-shadow: var(--shadow-card, var(--shadow-print));
-  backdrop-filter: blur(12px);
+/* 模块 02 详情拆解（均摊法 + 密度） */
+.crystal-inspector-details { display: flex; flex-direction: column; gap: 0.6rem; }
+.crystal-detail-block { padding: 0.6rem 0.7rem; border-radius: var(--radius-md); background: var(--surface-2, var(--paper)); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.38rem; }
+.crystal-detail-title { margin: 0; font-size: 0.78rem; font-weight: 800; color: var(--ink); }
+.crystal-avg-breakdown { display: flex; flex-direction: column; gap: 0.26rem; }
+.crystal-avg-row { display: flex; align-items: center; justify-content: space-between; gap: 0.45rem; font-size: 0.77rem; }
+.crystal-avg-species { display: inline-flex; align-items: center; gap: 0.28rem; color: var(--ink); }
+.crystal-avg-eq { font-family: var(--font-mono); font-weight: 800; color: var(--accent); }
+.crystal-exam-metric { display: flex; align-items: baseline; justify-content: space-between; gap: 0.45rem; }
+.crystal-exam-k { font-size: 0.76rem; font-weight: 700; color: var(--ink-soft); }
+.crystal-exam-v { font-family: var(--font-mono); font-size: 0.96rem; font-weight: 800; color: var(--accent); }
+.crystal-exam-formula { margin: 0; padding: 0.3rem 0.48rem; border-radius: var(--radius-xs); background: var(--surface); border: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.76rem; color: var(--ink); }
+
+/* AI 助教交互 */
+.crystal-ai-chips { display: flex; flex-direction: column; gap: 0.34rem; }
+
+.crystal-ai-chip {
+  appearance: none;
+  text-align: left;
+  padding: 0.4rem 0.56rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2, var(--paper));
+  color: var(--ink);
+  font-family: var(--font-main);
+  font-size: 0.77rem;
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease;
+}
+
+.crystal-ai-chip:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.crystal-ai-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.crystal-ai-form { display: flex; gap: 0.35rem; align-items: center; }
+
+.crystal-ai-input {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 31px;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: var(--ui-stroke) solid var(--border-ink);
+  background: var(--surface-2, var(--paper));
+  color: var(--ink);
+  font-family: var(--font-main);
+  font-size: 0.79rem;
+  outline: none;
+}
+
+.crystal-ai-input:focus { border-color: var(--accent); }
+.crystal-ai-result { display: flex; flex-direction: column; gap: 0.52rem; }
+.crystal-inspector-empty, .crystal-ai-status { padding: 0.6rem 0.68rem; border-radius: var(--radius-sm); background: var(--surface-2, var(--paper)); border: 1px dashed var(--border); font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+.crystal-ai-error { padding: 0.58rem 0.68rem; border-radius: var(--radius-sm); background: var(--bad-soft, var(--surface-2)); border: 1px solid var(--bad, #dc2626); color: var(--ink); font-size: 0.78rem; line-height: 1.48; }
+.crystal-ai-error p { margin: 0; }
+.crystal-ai-key-tip { margin-top: 0.35rem !important; color: var(--muted); font-size: 0.74rem; }
+.crystal-ai-answer { padding: 0.6rem 0.68rem; border-radius: var(--radius-sm); background: var(--note-soft, var(--surface-2)); border: 1px solid var(--border); font-size: 0.81rem; color: var(--ink); line-height: 1.55; }
+.crystal-ai-steps { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.crystal-ai-step {
+  padding: 0.52rem 0.62rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2, var(--paper));
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 0.36rem;
+  gap: 0.28rem;
 }
 
-.crystal-hex-toast {
-  position: absolute;
-  left: 50%;
-  bottom: 4.55rem;
-  transform: translateX(-50%);
-  z-index: 9;
-  max-width: calc(100% - 1.7rem);
-  padding: 0.38rem 0.82rem;
-  border-radius: var(--radius-pill, 999px);
-  background: color-mix(in srgb, var(--surface, var(--card-elevated)) 94%, transparent);
-  border: var(--ui-stroke) solid var(--border-ink);
-  color: var(--ink);
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: var(--shadow-print-sm);
-  backdrop-filter: blur(10px);
-}
+.crystal-ai-step.is-actionable { cursor: pointer; border-color: var(--border-ink); }
+.crystal-ai-step.is-actionable:hover { background: var(--diagram-soft, var(--surface)); }
+.crystal-ai-step.is-active { border-color: var(--accent); background: var(--accent-soft); }
 
-.crystal-hex-toast.is-revealed { background: var(--ok-soft, var(--accent-soft)); border-color: var(--ok, var(--accent)); }
+.crystal-ai-step-head { display: flex; align-items: center; gap: 0.36rem; flex-wrap: wrap; }
+.crystal-ai-step-num { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #ffffff; font-size: 0.7rem; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
+.crystal-ai-step-title { font-size: 0.8rem; font-weight: 800; color: var(--ink); flex: 1 1 auto; }
+.crystal-ai-step-action { font-size: 0.71rem; font-weight: 700; color: var(--accent); }
+.crystal-ai-step-detail { margin: 0; font-size: 0.77rem; color: var(--ink-soft); line-height: 1.48; }
