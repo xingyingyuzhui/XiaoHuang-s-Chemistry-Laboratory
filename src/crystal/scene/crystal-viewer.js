@@ -10,7 +10,7 @@ import {
   buildNormalCellGroup, computeCrystalFraming, disposeObjectTree, disposeGroupWithExtras,
 } from './scene-helpers.js';
 import { createBadgeLayer } from './badge-layer.js';
-import { buildSlicedCellGroup, applyExplodeTransform } from './slicer-caps.js';
+import { buildSlicedCellGroup, applyExplodeTransform, sanitizeCrystalRadii } from './slicer-caps.js';
 import { createSupercellTiler } from './supercell-tiler.js';
 import {
   buildCoordinationOverlay, buildDistanceOverlay, updateOverlayBillboards,
@@ -220,7 +220,7 @@ export function createCrystalViewer(container) {
   ro?.observe(container);
 
   function setCrystal(crystal) {
-    currentCrystal = crystal;
+    currentCrystal = crystal ? sanitizeCrystalRadii(crystal) : null;
     resetSliceFlags(); tileCount = 1; overlay = 'none';
     tiler.clear(); tiler.snapToOrigin();
     rebuildScene();
@@ -306,10 +306,11 @@ export function createCrystalViewer(container) {
     renderStill();
   }
 
-  function setShowFrame(on) {
-    showFrame = Boolean(on);
-    applyFrameVisibility();
-    renderStill();
+  function setShowFrame(on) { showFrame = Boolean(on); applyFrameVisibility(); renderStill(); }
+
+  function setShowLabels(visible) {
+    badges.setShowLabels(visible);
+    if (badges.getShowLabels()) badges.update(camera, worldRoot.position, { sliced, explodeProgress });
   }
 
   function start() {
@@ -339,6 +340,8 @@ export function createCrystalViewer(container) {
   return {
     setCrystal, setDisplayMode, setSliced, setExploded, setTileCount, setOverlay,
     setAutoRotate(on) { controls.autoRotate = Boolean(on); },
-    stepRotate, stepZoom, setShowFrame, resetCamera, start, stop, resize, dispose,
+    stepRotate, stepZoom, setShowFrame, setShowLabels,
+    getShowLabels: badges.getShowLabels,
+    resetCamera, start, stop, resize, dispose,
   };
 }

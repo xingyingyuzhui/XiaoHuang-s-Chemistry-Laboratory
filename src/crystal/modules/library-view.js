@@ -39,7 +39,7 @@ export function mountLibraryView(stageEl, shell = {}) {
   let activeCategory = 'all', editMode = false;
   let currentCrystal = getCrystalById('nacl') || CRYSTALS[0];
   let displayMode = 'ball-stick', activeTool = 'none';
-  let sliced = false, exploded = false, tileCount = 1, autoRotate = false, showFrame = true;
+  let sliced = false, exploded = false, tileCount = 1, autoRotate = false, showFrame = true, showLabels = true;
 
   stageEl.innerHTML = renderStageOverlayHtml();
   const q = (sel) => stageEl.querySelector(sel);
@@ -50,7 +50,8 @@ export function mountLibraryView(stageEl, shell = {}) {
   const modeBtns = stageEl.querySelectorAll('.crystal-seg-btn[data-mode]');
   const toolBtns = stageEl.querySelectorAll('.crystal-tool-btn[data-tool]');
   const tileToolBtn = q('.crystal-tool-btn[data-tool="tile"]');
-  const btnFrameToggle = q('.crystal-frame-toggle');
+  const btnFrameToggle = q('[data-action="toggle-frame"]');
+  const btnLabelToggle = q('[data-action="toggle-labels"]');
   const camPadEl = q('.crystal-cam-pad');
   const btnAutoRotate = camPadEl?.querySelector('[data-cam="auto"]');
 
@@ -270,8 +271,16 @@ export function mountLibraryView(stageEl, shell = {}) {
 
   btnFrameToggle?.addEventListener('click', () => {
     showFrame = !showFrame;
+    btnFrameToggle.classList.toggle('is-active', showFrame);
     btnFrameToggle.setAttribute('aria-pressed', String(showFrame));
     viewer.setShowFrame(showFrame);
+  });
+
+  btnLabelToggle?.addEventListener('click', () => {
+    showLabels = !showLabels;
+    btnLabelToggle.classList.toggle('is-active', showLabels);
+    btnLabelToggle.setAttribute('aria-pressed', String(showLabels));
+    viewer.setShowLabels(showLabels);
   });
 
   const aiModal = createAiCrystalModal({

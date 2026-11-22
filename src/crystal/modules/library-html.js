@@ -105,13 +105,22 @@ export function renderStageOverlayHtml() {
         </div>
       </div>
     </div>
-    <button
-      type="button"
-      class="mol-label-toggle crystal-frame-toggle"
-      data-cam="toggle-frame"
-      title="显示/隐藏晶胞边框"
-      aria-pressed="true"
-    >边框</button>
+    <div class="crystal-pad-toggles" role="group" aria-label="晶胞视图开关">
+      <button
+        type="button"
+        class="mol-label-toggle crystal-frame-toggle is-active"
+        data-action="toggle-frame"
+        title="显示/隐藏晶胞边框"
+        aria-pressed="true"
+      >边框</button>
+      <button
+        type="button"
+        class="mol-label-toggle crystal-label-toggle is-active"
+        data-action="toggle-labels"
+        title="显示/隐藏晶胞标签"
+        aria-pressed="true"
+      >标签</button>
+    </div>
     <div class="mol-controls crystal-cam-pad" aria-label="视角控制">
       <button type="button" class="mol-ctrl" data-cam="left" title="左转">←</button>
       <button type="button" class="mol-ctrl" data-cam="right" title="右转">→</button>

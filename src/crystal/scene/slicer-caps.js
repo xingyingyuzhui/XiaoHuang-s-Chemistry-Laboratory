@@ -31,6 +31,78 @@ import {
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
+const isInteriorSite = (siteInfo) => siteInfo?.site === 'interior' || (siteInfo?.weight ?? 0) >= 0.999;
+
+/**
+ * 计算考虑硬球物理接触与晶胞内壁约束后的安全原子半径
+ * - 填充 / 切开模式：任意成对粒子若 rA + rB > d * 1.06，按比例等比缩放避免互相吞噬
+ * - 切开模式下的体内粒子（site === 'interior' / weight === 1）：额外限制 r <= minDistToCellPlanes * 0.98
+ */
+export function computeSafeAtomRadii(
+  crystal,
+  { displayMode = 'space-filling', isSliced = false, clipPlanes = null } = {},
+) {
+  const atoms = crystal?.atoms || [];
+  const spMap = buildSpeciesMap(crystal);
+  const positions = atoms.map((a) => toVec3(fracToCartesian(a.u, a.v, a.w, crystal.lattice, CELL_SCALE)));
+  const rawRadii = atoms.map((a) => getAtomRadius(spMap.get(a.species), displayMode, isSliced));
+
+  let dMin = Infinity;
+  let scale = 1;
+  const applyHardCap = displayMode === 'space-filling' || isSliced;
+  for (let i = 0; i < atoms.length; i++) {
+    for (let j = i + 1; j < atoms.length; j++) {
+      const d = positions[i].distanceTo(positions[j]);
+      if (d <= 1e-4) continue;
+      if (d < dMin) dMin = d;
+      if (applyHardCap) {
+        const rSum = rawRadii[i] + rawRadii[j];
+        if (rSum > d * 1.06) scale = Math.min(scale, (d * 1.06) / rSum);
+      }
+    }
+  }
+
+  const planes = isSliced
+    ? (clipPlanes || makeNormalizedPlanes(getCellClipPlanes(crystal.lattice, CELL_SCALE)))
+    : null;
+  const system = crystal?.system || 'cubic';
+  const radii = rawRadii.map((raw, i) => {
+    let r = raw * scale;
+    if (isSliced && planes?.length) {
+      const siteInfo = classifySite(atoms[i].u, atoms[i].v, atoms[i].w, system);
+      if (isInteriorSite(siteInfo)) {
+        let minPlaneDist = Infinity;
+        for (const bp of planes) minPlaneDist = Math.min(minPlaneDist, bp.distanceToPoint(positions[i]));
+        if (Number.isFinite(minPlaneDist) && minPlaneDist > 0) {
+          r = Math.min(r, minPlaneDist * 0.98);
+        }
+      }
+    }
+    return r;
+  });
+
+  return { dMin, scale, radii, positions };
+}
+
+/**
+ * 为展示晶胞生成硬球半径受控副本（防止历史缓存/AI 晶胞的超大 spaceRadius 互相吞噬）
+ */
+export function sanitizeCrystalRadii(crystal) {
+  if (!crystal?.atoms?.length || !crystal?.species?.length) return crystal;
+  const { scale } = computeSafeAtomRadii(crystal, { displayMode: 'space-filling', isSliced: false });
+  if (scale >= 0.9999) return crystal;
+  return {
+    ...crystal,
+    species: crystal.species.map((sp) => {
+      const nextSpace = Number(((sp.spaceRadius ?? 0.52) * scale).toFixed(3));
+      const nextBall = sp.ballRadius != null
+        ? Math.min(sp.ballRadius, Number((nextSpace * 0.9).toFixed(3)))
+        : sp.ballRadius;
+      return { ...sp, spaceRadius: nextSpace, ...(nextBall != null ? { ballRadius: nextBall } : {}) };
+    }),
+  };
+}
+
 function makeCapMaterial(style, atomColor, otherPlanes, isDark) {
   const capColor = isDark
     ? atomColor.clone().lerp(new THREE.Color(0xffffff), 0.34)
@@ -85,47 +157,58 @@ export function buildSlicedCellGroup(
   group.add(createWireframe(crystal.lattice, tokens.sliceWireColor, 0.86));
 
   const atoms = crystal.atoms || [];
+  const { radii, positions } = computeSafeAtomRadii(crystal, {
+    displayMode,
+    isSliced: true,
+    clipPlanes: baseClipPlanes,
+  });
+
   for (let i = 0; i < atoms.length; i++) {
     const a = atoms[i];
     const sp = spMap.get(a.species);
-    const basePos = toVec3(fracToCartesian(a.u, a.v, a.w, crystal.lattice, CELL_SCALE));
-    const radius = getAtomRadius(sp, displayMode, true);
+    const basePos = positions[i];
+    const radius = radii[i];
     const siteInfo = classifySite(a.u, a.v, a.w, crystal.system || 'cubic');
+    const interior = isInteriorSite(siteInfo);
     const atomColor = parseColor(resolveAtomColorHex(sp, style));
 
-    // 每个原子独立的 6 个裁剪面，便于展开时刚体同步平移
-    const atomPlanes = baseClipPlanes.map((bp) => bp.clone());
+    // 体内粒子（weight === 1）绝不裁剪、绝不生成切面封盖，始终保持完整整球
+    const atomPlanes = interior ? [] : baseClipPlanes.map((bp) => bp.clone());
     const atomGroup = new THREE.Group();
     atomGroup.position.copy(basePos);
 
-    // 1) 外球面：全部 6 个裁剪面裁剪，FrontSide 防止空壳内壁穿帮
-    const sphereMat = makeAtomMaterial(style, sp, crystal, {
-      clippingPlanes: atomPlanes,
-      side: THREE.FrontSide,
-    });
+    // 1) 外球面：边界原子挂 6 个局部裁剪面；体内原子不挂裁剪面
+    const sphereMat = makeAtomMaterial(
+      style,
+      sp,
+      crystal,
+      interior ? { side: THREE.FrontSide } : { clippingPlanes: atomPlanes, side: THREE.FrontSide },
+    );
     const sphereMesh = new THREE.Mesh(sharedUnitSphere, sphereMat);
     sphereMesh.userData.sharedGeometry = true;
     sphereMesh.scale.setScalar(radius);
     atomGroup.add(sphereMesh);
 
-    // 2) 实心截面封盖（Solid Cross-Section Caps）
+    // 2) 实心截面封盖（Solid Cross-Section Caps，仅边界原子生成）
     const hitNormals = [];
-    for (let k = 0; k < baseClipPlanes.length; k++) {
-      const bp = baseClipPlanes[k];
-      const dist = bp.distanceToPoint(basePos);
-      if (Math.abs(dist) < radius - 1e-4) {
-        const capR = Math.sqrt(Math.max(0, radius * radius - dist * dist));
-        if (capR < 0.015) continue;
+    if (!interior) {
+      for (let k = 0; k < baseClipPlanes.length; k++) {
+        const bp = baseClipPlanes[k];
+        const dist = bp.distanceToPoint(basePos);
+        if (Math.abs(dist) < radius - 1e-4) {
+          const capR = Math.sqrt(Math.max(0, radius * radius - dist * dist));
+          if (capR < 0.015) continue;
 
-        hitNormals.push(bp.normal);
-        const otherPlanes = atomPlanes.filter((_, idx) => idx !== k);
-        const capMat = makeCapMaterial(style, atomColor, otherPlanes, tokens.isDark);
-        const capGeom = new THREE.CircleGeometry(capR * 1.004, 42);
-        const capMesh = new THREE.Mesh(capGeom, capMat);
-        capMesh.position.copy(bp.normal).multiplyScalar(-dist + 0.0008);
-        const outward = bp.normal.clone().negate();
-        capMesh.quaternion.setFromUnitVectors(Z_AXIS, outward);
-        atomGroup.add(capMesh);
+          hitNormals.push(bp.normal);
+          const otherPlanes = atomPlanes.filter((_, idx) => idx !== k);
+          const capMat = makeCapMaterial(style, atomColor, otherPlanes, tokens.isDark);
+          const capGeom = new THREE.CircleGeometry(capR * 1.004, 42);
+          const capMesh = new THREE.Mesh(capGeom, capMat);
+          capMesh.position.copy(bp.normal).multiplyScalar(-dist + 0.0008);
+          const outward = bp.normal.clone().negate();
+          capMesh.quaternion.setFromUnitVectors(Z_AXIS, outward);
+          atomGroup.add(capMesh);
+        }
       }
     }
 
@@ -168,6 +251,8 @@ export function buildSlicedCellGroup(
       planes: atomPlanes,
       badgeBasePos,
       badge,
+      siteInfo,
+      radius,
     });
   }
 

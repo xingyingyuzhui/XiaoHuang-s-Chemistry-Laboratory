@@ -15,7 +15,18 @@ export function createBadgeLayer(container) {
   container.appendChild(layer);
 
   let badges = [];
+  let showLabels = true;
   const projVec = new THREE.Vector3();
+
+  function setShowLabels(visible) {
+    showLabels = Boolean(visible);
+    layer.hidden = !showLabels;
+    layer.style.display = showLabels ? '' : 'none';
+  }
+
+  function getShowLabels() {
+    return showLabels;
+  }
 
   function clear(kindFilter = null) {
     badges = badges.filter((b) => {
@@ -49,7 +60,7 @@ export function createBadgeLayer(container) {
   }
 
   function update(camera, worldOffset, { sliced, explodeProgress }) {
-    if (!badges.length) return;
+    if (!showLabels || !badges.length) return;
     const width = container.clientWidth || 1;
     const height = container.clientHeight || 1;
 
@@ -77,5 +88,5 @@ export function createBadgeLayer(container) {
     layer.remove();
   }
 
-  return { add, clear, update, dispose };
+  return { add, clear, update, setShowLabels, getShowLabels, dispose };
 }

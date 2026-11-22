@@ -299,3 +299,47 @@ test('computeCellBoundRadius and computeCrystalFraming frame all 21 crystals cle
     assert.ok(f8.dist > fLandscape.dist && f8.maxDistance > f8.dist * 2, `${c.id} 8-cell framing invalid`);
   }
 });
+
+test('hard-sphere radius cap on Diamond keeps interior r < 0.25 * scale and skips clippingPlanes for interior', async () => {
+  const THREE = await import('three');
+  const { validateCrystalPayload } = require('../server/utils/crystal-validate');
+  const { getCrystalById } = await loadEsm('src/crystal/data/crystals.js');
+  const { getViewerStyle } = await loadEsm('src/molecule/viewer-style.js');
+  const { computeSafeAtomRadii, sanitizeCrystalRadii, buildSlicedCellGroup } = await loadEsm('src/crystal/scene/slicer-caps.js');
+  const { CELL_SCALE } = await loadEsm('src/crystal/scene/scene-helpers.js');
+
+  const basisAtoms = [
+    [0, 0, 0], [0.5, 0.5, 0], [0.5, 0, 0.5], [0, 0.5, 0.5],
+    [0.25, 0.25, 0.25], [0.75, 0.75, 0.25], [0.75, 0.25, 0.75], [0.25, 0.75, 0.75],
+  ].map(([u, v, w]) => ({ species: 'C', u, v, w }));
+  const aiDiamond = validateCrystalPayload({
+    name: '金刚石', formula: 'C', category: 'covalent', system: 'cubic', lattice: { a: 356.7 },
+    species: [{ id: 'C', symbol: 'C', spaceRadius: 0.95, ballRadius: 0.2 }], basisAtoms,
+  });
+  assert.ok(aiDiamond.species[0].spaceRadius < 0.25 * CELL_SCALE);
+  assert.ok(Math.abs(aiDiamond.species[0].spaceRadius - 0.52) <= 0.02);
+
+  const diamond = getCrystalById('diamond');
+  const oversized = { ...diamond, species: [{ ...diamond.species[0], spaceRadius: 1.1 }] };
+  const safe = computeSafeAtomRadii(oversized, { displayMode: 'space-filling', isSliced: true });
+  assert.ok(safe.radii.every((r) => r < 0.25 * CELL_SCALE));
+  assert.ok(safe.radii[0] * 2 <= safe.dMin * 1.06 + 1e-6);
+  assert.ok(sanitizeCrystalRadii(oversized).species[0].spaceRadius < 0.25 * CELL_SCALE);
+
+  const sphere = new THREE.SphereGeometry(1, 8, 6);
+  const state = buildSlicedCellGroup(oversized, {
+    displayMode: 'space-filling', sharedUnitSphere: sphere, style: getViewerStyle('default'),
+    addBadge: (b) => b, clearBadges: () => {}, explodeProgress: 1,
+  });
+  const interiors = state.slicedEntries.filter((e) => e.siteInfo.site === 'interior');
+  const boundaries = state.slicedEntries.filter((e) => e.siteInfo.site !== 'interior');
+  assert.equal(interiors.length, 4);
+  for (const e of interiors) {
+    assert.equal(e.planes.length, 0);
+    assert.equal(e.group.children.length, 1);
+    assert.equal(e.group.children[0].material.clippingPlanes, null);
+    assert.ok(e.group.children[0].scale.x < 0.25 * CELL_SCALE);
+  }
+  assert.ok(boundaries.every((e) => e.planes.length === 6 && e.group.children[0].material.clippingPlanes?.length === 6 && e.group.children.length > 1));
+  sphere.dispose();
+});

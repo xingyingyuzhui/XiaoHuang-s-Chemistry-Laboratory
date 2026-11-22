@@ -158,6 +158,37 @@ function computeAveraging(species, atoms, system) {
   return parts.join('；') || '按晶胞均摊法计算';
 }
 
+function clampSpaceRadii(species, basis, lattice) {
+  const maxLen = Math.max(lattice.a, lattice.b, lattice.c) || 1;
+  const k = 2.4 / maxLen;
+  const spMap = new Map(species.map((s) => [s.id, s]));
+  let scale = 1;
+  for (let i = 0; i < basis.length; i += 1) {
+    const a = basis[i];
+    const spA = spMap.get(a.species);
+    if (!spA) continue;
+    for (let j = i; j < basis.length; j += 1) {
+      const b = basis[j];
+      const spB = spMap.get(b.species);
+      if (!spB) continue;
+      const rSum = spA.spaceRadius + spB.spaceRadius;
+      for (let du = -1; du <= 1; du += 1)
+        for (let dv = -1; dv <= 1; dv += 1)
+          for (let dw = -1; dw <= 1; dw += 1) {
+            if (i === j && du === 0 && dv === 0 && dw === 0) continue;
+            const dScene = distPm([a.u, a.v, a.w], [b.u + du, b.v + dv, b.w + dw], lattice) * k;
+            if (dScene > 1e-4 && rSum > dScene) scale = Math.min(scale, dScene / rSum);
+          }
+    }
+  }
+  if (scale < 1) {
+    for (const sp of species) {
+      sp.spaceRadius = Number(Math.max(0.12, sp.spaceRadius * scale).toFixed(2));
+      sp.ballRadius = Number(Math.min(sp.ballRadius, Math.max(0.1, sp.spaceRadius * 0.75)).toFixed(2));
+    }
+  }
+}
+
 function validateCrystalPayload(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('晶胞结构数据无效');
   const system = String(raw.system || '').trim().toLowerCase();
@@ -191,6 +222,7 @@ function validateCrystalPayload(raw) {
 
   const atoms = expandPeriodic(basis);
   if (atoms.length < 1 || atoms.length > 120) throw new Error('展开后的晶胞原子数超出合理范围');
+  clampSpaceRadii(species, basis, lattice);
   const averagingFormula = computeAveraging(species, atoms, system);
 
   let centerIndex = Number.isInteger(raw.coordination?.centerIndex) ? raw.coordination.centerIndex : -1;
