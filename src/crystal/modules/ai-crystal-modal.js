@@ -63,7 +63,7 @@ export function createAiCrystalModal({ onCreated } = {}) {
           <h3 id="crystal-ai-modal-title" class="crystal-ai-dialog-title">AI 生成 3D 晶胞</h3>
           <p class="crystal-ai-dialog-sub">输入化学式、合金结构或高考题干，自动构建可切开、可拼接的 3D 晶胞并本地校验均摊数与密度。</p>
         </div>
-        <button type="button" class="crystal-inspector-close" data-modal-close aria-label="关闭弹窗">×</button>
+        <button type="button" class="crystal-modal-close" data-modal-close aria-label="关闭弹窗">×</button>
       </div>
 
       <div class="crystal-ai-presets-wrap">

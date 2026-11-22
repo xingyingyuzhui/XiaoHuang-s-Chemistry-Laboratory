@@ -1,5 +1,5 @@
 /**
- * 模块 02：晶体结构库 — 零遮挡三行外壳与纯 HTML 渲染函数
+ * 3D 晶体库 — 零遮挡三行外壳与纯 HTML 渲染函数
  */
 
 import { computeAveragingBreakdown, computeDensity } from '../math/lattice.js';
@@ -13,6 +13,7 @@ export const SYSTEM_LABELS = {
 };
 
 export const SHORT_CATEGORY_LABELS = {
+  all: '全部',
   metallic: '金属',
   ionic: '离子',
   covalent: '共价',
@@ -89,28 +90,24 @@ export function renderActionbarHtml() {
 }
 
 export function renderCrystalItemHtml(c) {
-  const dotsHtml = (c.species || [])
-    .map(
-      (sp) =>
-        `<i class="crystal-swatch-dot" style="background:${colorIntToCss(sp.color)}" title="${escapeHtml(sp.symbol)}"></i>`,
-    )
-    .join('');
+  const firstColor = c.species?.[0]?.color;
+  const markerHtml = c.isCustom
+    ? '<span class="crystal-ai-badge">AI</span>'
+    : firstColor != null
+      ? `<i class="crystal-swatch-dot" style="background:${colorIntToCss(firstColor)}" aria-hidden="true"></i>`
+      : '';
 
-  const customControls = c.isCustom
-    ? `<span class="crystal-custom-tag">自定义</span>
-       <button type="button" class="crystal-item-del" data-del-id="${escapeHtml(c.id)}" aria-label="删除 ${escapeHtml(c.name)}" title="删除自定义晶胞">×</button>`
+  const delBtn = c.isCustom
+    ? `<button type="button" class="crystal-item-del" data-del-id="${escapeHtml(c.id)}" aria-label="删除 ${escapeHtml(c.name)}" title="删除 AI 晶胞">×</button>`
     : '';
 
   return `
+    ${delBtn}
     <div class="crystal-drawer-item-top">
       <strong class="crystal-drawer-item-formula">${formulaHtml(c.formula)}</strong>
-      <span class="crystal-drawer-item-meta">
-        <span class="crystal-drawer-item-dots">${dotsHtml}</span>
-        ${customControls}
-      </span>
+      ${markerHtml}
     </div>
     <span class="crystal-drawer-item-name">${escapeHtml(c.name)}</span>
-    ${c.subtitle ? `<span class="crystal-drawer-item-sub">${escapeHtml(c.subtitle)}</span>` : ''}
   `;
 }
 
@@ -229,47 +226,7 @@ export function renderModeStripHtml(crystal, { activeTool, exploded, tileCount }
     `;
   }
 
-  return `<div class="crystal-strip-content"><span class="crystal-strip-text">该晶胞暂无此项数据。</span></div>`;
-}
-
-export function renderInspectorDetailsHtml(crystal) {
-  if (!crystal) return '';
-  const breakdown = computeAveragingBreakdown(crystal);
-  const avgRows = (crystal.species || [])
-    .map((sp) => `
-      <div class="crystal-avg-row">
-        <span class="crystal-avg-species">
-          <i class="crystal-swatch-dot" style="background:${colorIntToCss(sp.color)}"></i>
-          <b>${formulaHtml(sp.symbol)}</b>
-        </span>
-        <span class="crystal-avg-eq">${escapeHtml(buildSpeciesEquation(breakdown?.bySpecies?.[sp.id]))}</span>
-      </div>
-    `)
-    .join('');
-
-  const d = crystal.density;
-  const computed = d ? computeDensity(d.Z, d.molarMass, crystal.lattice) : NaN;
-  const rho = Number.isFinite(computed) ? computed.toFixed(2) : formatNum(d?.valueGcm3, 2);
-  const densityHtml = d
-    ? `
-      <div class="crystal-detail-block">
-        <h4 class="crystal-detail-title">晶胞密度公式</h4>
-        <div class="crystal-exam-metric">
-          <span class="crystal-exam-k">Z = ${formatNum(d.Z, 2)} · M = ${formatNum(d.molarMass, 2)} g/mol</span>
-          <strong class="crystal-exam-v">${rho} g/cm³</strong>
-        </div>
-        <p class="crystal-exam-formula">${escapeHtml(d.formulaText || 'ρ = (Z · M) / (Nₐ · V)')}</p>
-      </div>
-    `
-    : '';
-
-  return `
-    <div class="crystal-detail-block">
-      <h4 class="crystal-detail-title">均摊法粒子数拆解</h4>
-      <div class="crystal-avg-breakdown">${avgRows}</div>
-    </div>
-    ${densityHtml}
-  `;
+  return '<div class="crystal-strip-content"><span class="crystal-strip-text">该晶胞暂无此项数据。</span></div>';
 }
 
 export function buildCrystalSummary(crystal) {

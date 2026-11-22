@@ -44,6 +44,28 @@
   gap: 0.6rem;
 }
 
+.crystal-modal-close {
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface, var(--card-elevated));
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.crystal-modal-close:hover {
+  color: var(--ink);
+  border-color: var(--border-ink);
+}
+
 .crystal-ai-dialog-title {
   margin: 0;
   font-family: var(--font-heading, var(--font-main));

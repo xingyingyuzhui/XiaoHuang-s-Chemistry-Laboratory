@@ -1,5 +1,5 @@
 /**
- * 模块 02：晶体结构库 — 零遮挡三行交互 + AI 生成晶胞 + AI 助教 3D 联动
+ * 3D 晶体结构库 — 零遮挡三行交互 + AI 生成晶胞 + 全站小黄助教 3D 联动
  * 导出 mountLibraryView(stageEl, shell) -> { pause(), resume(), resize(), destroy() }
  */
 
@@ -12,7 +12,6 @@ import {
   renderCrystalItemHtml,
   renderTopbarInfoHtml,
   renderModeStripHtml,
-  renderInspectorDetailsHtml,
   buildCrystalSummary,
   buildQuickQuestions,
 } from './library-html.js';
@@ -20,13 +19,22 @@ import {
 const VALID_CATS = new Set(CRYSTAL_CATEGORIES.map((c) => c.id));
 const normalizeCat = (cat) => (VALID_CATS.has(cat) ? cat : 'mixed');
 
+const CATEGORY_TABS = [
+  { id: 'all', label: SHORT_CATEGORY_LABELS.all || '全部', title: '全部晶胞' },
+  ...CRYSTAL_CATEGORIES.map((cat) => ({
+    id: cat.id,
+    label: SHORT_CATEGORY_LABELS[cat.id] || cat.label.replace(/晶体$/, ''),
+    title: cat.label,
+  })),
+];
+
 export function mountLibraryView(stageEl, shell = {}) {
   if (!stageEl) return { pause() {}, resume() {}, resize() {}, destroy() {} };
 
-  const { drawerBodyEl, topbarInfoEl, topbarActionsEl, actionbarEl, setInspectorContext } = shell;
+  const { drawerBodyEl, topbarInfoEl, topbarActionsEl, actionbarEl, setPageContext } = shell;
   let customCrystals = loadCustomCrystals(VALID_CATS);
   const defaultCrystal = getCrystalById('nacl') || CRYSTALS[0];
-  let activeCategory = defaultCrystal?.category || CRYSTAL_CATEGORIES[0]?.id || 'ionic';
+  let activeCategory = 'all';
   let currentCrystal = defaultCrystal;
   let displayMode = 'ball-stick';
   let activeTool = 'none';
@@ -51,7 +59,7 @@ export function mountLibraryView(stageEl, shell = {}) {
       <span class="crystal-add-plus">+</span><span>AI 生成晶胞</span>
     </button>
     <div class="crystal-cat-tabs" role="tablist" aria-label="晶体类型"></div>
-    <div class="crystal-drawer-list crystal-lib-grid" role="listbox" aria-label="晶体列表"></div>
+    <div class="crystal-drawer-list crystal-lib-grid" role="listbox" aria-label="常见晶胞列表"></div>
   `;
   const btnAiAdd = navHost.querySelector('[data-act="ai-add"]');
   const catTabsEl = navHost.querySelector('.crystal-cat-tabs');
@@ -76,22 +84,13 @@ export function mountLibraryView(stageEl, shell = {}) {
   const viewer = createCrystalViewer(stageEl.querySelector('.crystal-stage-canvas'));
 
   function getVisibleCrystals(catId) {
-    if (catId === 'custom') return customCrystals;
+    if (catId === 'all') return [...customCrystals, ...CRYSTALS];
     return [...customCrystals.filter((c) => c.category === catId), ...CRYSTALS.filter((c) => c.category === catId)];
   }
 
   function renderCategoryTabs() {
-    const tabs = CRYSTAL_CATEGORIES.map((cat) => ({
-      id: cat.id,
-      label: SHORT_CATEGORY_LABELS[cat.id] || cat.label.replace(/晶体$/, ''),
-      title: cat.label,
-    }));
-    if (customCrystals.length > 0) tabs.push({ id: 'custom', label: '自定义', title: `自定义晶胞 (${customCrystals.length})` });
-    else if (activeCategory === 'custom') activeCategory = currentCrystal?.category || 'ionic';
-
-    catTabsEl.classList.toggle('has-custom', customCrystals.length > 0);
     catTabsEl.innerHTML = '';
-    for (const tab of tabs) {
+    for (const tab of CATEGORY_TABS) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'crystal-cat-tab' + (tab.id === activeCategory ? ' is-active' : '');
@@ -105,7 +104,9 @@ export function mountLibraryView(stageEl, shell = {}) {
         renderCategoryTabs();
         renderCrystalList();
         const items = getVisibleCrystals(activeCategory);
-        if (items.length && !items.some((c) => c.id === currentCrystal?.id)) selectCrystal(items[0], { keepCategory: true });
+        if (items.length && !items.some((c) => c.id === currentCrystal?.id)) {
+          selectCrystal(items[0], { keepCategory: true });
+        }
       });
       catTabsEl.appendChild(btn);
     }
@@ -115,9 +116,9 @@ export function mountLibraryView(stageEl, shell = {}) {
     customCrystals = customCrystals.filter((c) => c.id !== id);
     saveCustomCrystals(customCrystals);
     if (currentCrystal?.id === id) {
-      selectCrystal(getVisibleCrystals(activeCategory)[0] || getCrystalById('nacl') || CRYSTALS[0]);
+      const next = getVisibleCrystals(activeCategory)[0] || getCrystalById('nacl') || CRYSTALS[0];
+      selectCrystal(next, { keepCategory: true });
     } else {
-      renderCategoryTabs();
       renderCrystalList();
     }
   }
@@ -126,12 +127,12 @@ export function mountLibraryView(stageEl, shell = {}) {
     listEl.innerHTML = '';
     for (const c of getVisibleCrystals(activeCategory)) {
       const item = document.createElement('div');
-      item.className = 'crystal-drawer-item' + (c.id === currentCrystal?.id ? ' is-active' : '');
+      item.className = 'crystal-drawer-item' + (c.isCustom ? ' is-custom' : '') + (c.id === currentCrystal?.id ? ' is-active' : '');
       item.setAttribute('role', 'option');
       item.setAttribute('tabindex', '0');
       item.setAttribute('aria-selected', String(c.id === currentCrystal?.id));
       item.innerHTML = renderCrystalItemHtml(c);
-      item.title = `${c.name}${c.subtitle ? ` · ${c.subtitle}` : ''}`;
+      item.title = c.name;
       item.addEventListener('click', (e) => {
         const delBtn = e.target.closest('[data-del-id]');
         if (delBtn) { e.stopPropagation(); deleteCustomCrystal(delBtn.dataset.delId); return; }
@@ -236,7 +237,7 @@ export function mountLibraryView(stageEl, shell = {}) {
   function selectCrystal(crystal, { keepCategory = false } = {}) {
     if (!crystal) return;
     currentCrystal = crystal;
-    if (!keepCategory) activeCategory = normalizeCat(crystal.category);
+    if (!keepCategory && activeCategory !== 'all') activeCategory = normalizeCat(crystal.category);
     activeTool = 'none';
     sliced = false;
     exploded = false;
@@ -246,13 +247,12 @@ export function mountLibraryView(stageEl, shell = {}) {
     renderCrystalList();
     syncAllControls();
 
-    setInspectorContext?.({
+    setPageContext?.({
       title: crystal.name,
       formula: crystal.formula,
       module: 'library',
       summary: buildCrystalSummary(crystal),
       qa: crystal.qa || null,
-      detailsHtml: renderInspectorDetailsHtml(crystal),
       quickQuestions: buildQuickQuestions(crystal),
       onAiAction: handleAiAction,
     });
@@ -263,7 +263,7 @@ export function mountLibraryView(stageEl, shell = {}) {
       const normalized = { ...crystal, isCustom: true, category: normalizeCat(crystal.category) };
       customCrystals = [normalized, ...customCrystals.filter((c) => c.id !== normalized.id)];
       saveCustomCrystals(customCrystals);
-      activeCategory = 'custom';
+      activeCategory = 'all';
       selectCrystal(normalized, { keepCategory: true });
     },
   });
@@ -303,7 +303,7 @@ export function mountLibraryView(stageEl, shell = {}) {
 
   btnResetView?.addEventListener('click', () => viewer.resetCamera());
 
-  if (currentCrystal) selectCrystal(currentCrystal);
+  if (currentCrystal) selectCrystal(currentCrystal, { keepCategory: true });
   else { renderCategoryTabs(); renderCrystalList(); }
   viewer.start();
 

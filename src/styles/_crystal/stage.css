@@ -11,7 +11,7 @@
   background: var(--stage-3d-bg, var(--paper));
 }
 
-/* Row 1: 46px 顶栏（左单行标题参数 + 右工具与思考题/AI助教） */
+/* Row 1: 46px 顶栏（左单行标题参数 + 右慢转/复位工具） */
 .crystal-topbar {
   flex: 0 0 46px;
   height: 46px;
@@ -68,9 +68,7 @@
 .crystal-topbar-species em { font-style: normal; color: var(--accent); }
 .crystal-topbar-right { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.34rem; }
 .crystal-topbar-actions { display: inline-flex; align-items: center; gap: 0.32rem; }
-.crystal-topbar-actions:empty,
-.crystal-topbar-actions:empty + .crystal-topbar-sep { display: none; }
-.crystal-topbar-sep { width: 1px; height: 18px; background: var(--border); margin: 0 0.08rem; }
+.crystal-topbar-actions:empty { display: none; }
 
 .crystal-topbar-btn,
 .crystal-topbar-actions .crystal-btn,
@@ -96,9 +94,6 @@
 
 .crystal-topbar-btn:hover { background: var(--diagram-soft, var(--surface)); }
 .crystal-topbar-btn.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; }
-.crystal-topbar-btn-ai { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-.crystal-topbar-btn-ai:hover,
-.crystal-topbar-btn-ai.is-active { background: var(--accent); border-color: var(--border-ink); color: #ffffff; }
 
 /* Row 2: 100% 无遮挡画布/3D 舞台 */
 .crystal-stage-viewport { flex: 1 1 0; min-width: 0; min-height: 0; position: relative; overflow: hidden; background: var(--stage-3d-bg, var(--paper)); }
@@ -169,7 +164,7 @@
 
 .crystal-hex-toast.is-revealed { background: var(--ok-soft, var(--accent-soft)); border-color: var(--ok, var(--accent)); }
 
-/* 通用按钮与标签（模块 01 / 02 / 03 共用） */
+/* 通用按钮与标签（晶体库 + 课堂晶体探究共用） */
 .crystal-btn {
   appearance: none;
   display: inline-flex;

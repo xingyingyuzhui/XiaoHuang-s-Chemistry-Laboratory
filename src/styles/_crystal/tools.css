@@ -216,12 +216,9 @@
 .crystal-actionbar input[type='range'] { accent-color: var(--accent); cursor: pointer; }
 
 /* 黑板主题高对比主强调按钮文字（粉笔黄底配深墨字） */
-html[data-theme='blackboard'] .crystal-mode-btn.is-active,
 html[data-theme='blackboard'] .crystal-cat-tab.is-active,
 html[data-theme='blackboard'] .crystal-btn-primary,
 html[data-theme='blackboard'] .crystal-tool-btn.is-active,
-html[data-theme='blackboard'] .crystal-topbar-btn.is-active,
-html[data-theme='blackboard'] .crystal-topbar-btn-ai:hover,
-html[data-theme='blackboard'] .crystal-inspector-tab.is-active {
+html[data-theme='blackboard'] .crystal-topbar-btn.is-active {
   color: #132e26;
 }
