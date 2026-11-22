@@ -4,15 +4,14 @@
 
 import * as THREE from 'three';
 import { fracToCartesian } from '../math/lattice.js';
+import { getViewerStyle, currentThemeId } from '../../molecule/viewer-style.js';
 import {
   CELL_SCALE,
-  COORD_CENTER_COLOR,
-  COORD_NEIGHBOR_COLOR,
-  DIST_COLOR,
+  getCrystalThemeTokens,
   toVec3,
   buildSpeciesMap,
   getAtomRadius,
-  parseColor,
+  makeAtomMaterial,
   createCylinderBetween,
 } from './scene-helpers.js';
 
@@ -21,12 +20,20 @@ import {
  */
 export function buildCoordinationOverlay(
   crystal,
-  { displayMode, sharedUnitSphere, sharedRingGeom, addBadge },
+  {
+    displayMode,
+    sharedUnitSphere,
+    sharedUnitBox,
+    sharedRingGeom,
+    style = getViewerStyle(currentThemeId()),
+    addBadge,
+  },
 ) {
   const coord = crystal?.coordination;
   const atoms = crystal?.atoms || [];
   if (!coord || !atoms.length) return { group: null, opacityMap: null };
 
+  const tokens = getCrystalThemeTokens(style);
   const spMap = buildSpeciesMap(crystal);
   let centerIdx = Number.isInteger(coord.centerIndex) ? coord.centerIndex : 0;
   if (centerIdx < 0 || centerIdx >= atoms.length) {
@@ -90,7 +97,7 @@ export function buildCoordinationOverlay(
 
   const opacityMap = new Map();
   for (let i = 0; i < atoms.length; i++) {
-    opacityMap.set(i, highlightedIndices.has(i) ? 1.0 : 0.2);
+    opacityMap.set(i, highlightedIndices.has(i) ? 1.0 : 0.22);
   }
 
   const group = new THREE.Group();
@@ -99,9 +106,9 @@ export function buildCoordinationOverlay(
   const centerSp = spMap.get(centerAtom.species);
   const centerR = getAtomRadius(centerSp, displayMode, false);
   const centerHaloMat = new THREE.MeshBasicMaterial({
-    color: COORD_CENTER_COLOR,
+    color: tokens.coordCenterColor,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.94,
   });
   const centerHalo = new THREE.Mesh(sharedRingGeom, centerHaloMat);
   centerHalo.userData.sharedGeometry = true;
@@ -112,19 +119,15 @@ export function buildCoordinationOverlay(
   group.add(centerHalo);
   extraMats.push(centerHaloMat);
 
-  const rodMat = new THREE.MeshStandardMaterial({
-    color: COORD_NEIGHBOR_COLOR,
-    emissive: 0x0284c7,
-    emissiveIntensity: 0.65,
-    roughness: 0.25,
-  });
+  const rodMat = new THREE.MeshBasicMaterial({ color: tokens.coordNeighborColor });
   const neighborHaloMat = new THREE.MeshBasicMaterial({
-    color: COORD_NEIGHBOR_COLOR,
+    color: tokens.coordNeighborColor,
     transparent: true,
-    opacity: 0.78,
+    opacity: 0.84,
   });
   extraMats.push(rodMat, neighborHaloMat);
 
+  const ghostGeom = style.id === 'pixel' && sharedUnitBox ? sharedUnitBox : sharedUnitSphere;
   for (const n of chosen) {
     const rod = createCylinderBetween(centerPos, n.pos, 0.044, rodMat, 10);
     if (rod) {
@@ -134,15 +137,8 @@ export function buildCoordinationOverlay(
     const nSp = spMap.get(n.species);
     const nR = getAtomRadius(nSp, displayMode, false);
     if (!n.isPrimary) {
-      const ghostMat = new THREE.MeshStandardMaterial({
-        color: parseColor(nSp?.color),
-        emissive: 0x0ea5e9,
-        emissiveIntensity: 0.28,
-        roughness: 0.3,
-        transparent: true,
-        opacity: 0.78,
-      });
-      const ghost = new THREE.Mesh(sharedUnitSphere, ghostMat);
+      const ghostMat = makeAtomMaterial(style, nSp, crystal, { opacity: 0.78 });
+      const ghost = new THREE.Mesh(ghostGeom, ghostMat);
       ghost.userData.sharedGeometry = true;
       ghost.scale.setScalar(nR * 0.96);
       ghost.position.copy(n.pos);
@@ -176,7 +172,7 @@ export function buildCoordinationOverlay(
  */
 export function buildDistanceOverlay(
   crystal,
-  { displayMode, sharedRingGeom, addBadge },
+  { displayMode, sharedRingGeom, style = getViewerStyle(currentThemeId()), addBadge },
 ) {
   const sd = crystal?.shortestDistance;
   const pair = sd?.pair;
@@ -184,6 +180,7 @@ export function buildDistanceOverlay(
     return { group: null, opacityMap: null };
   }
 
+  const tokens = getCrystalThemeTokens(style);
   const p1 = toVec3(fracToCartesian(pair[0][0], pair[0][1], pair[0][2], crystal.lattice, CELL_SCALE));
   const p2 = toVec3(fracToCartesian(pair[1][0], pair[1][1], pair[1][2], crystal.lattice, CELL_SCALE));
   const mid = p1.clone().add(p2).multiplyScalar(0.5);
@@ -208,20 +205,15 @@ export function buildDistanceOverlay(
 
   const opacityMap = new Map();
   for (let i = 0; i < atoms.length; i++) {
-    opacityMap.set(i, highlightPair.has(i) ? 1.0 : 0.32);
+    opacityMap.set(i, highlightPair.has(i) ? 1.0 : 0.3);
   }
 
   const group = new THREE.Group();
-  const segMat = new THREE.MeshStandardMaterial({
-    color: DIST_COLOR,
-    emissive: 0xe11d48,
-    emissiveIntensity: 0.78,
-    roughness: 0.25,
-  });
+  const segMat = new THREE.MeshBasicMaterial({ color: tokens.distColor });
   const ringMat = new THREE.MeshBasicMaterial({
-    color: DIST_COLOR,
+    color: tokens.distColor,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.94,
   });
 
   const seg = createCylinderBetween(p1, p2, 0.056, segMat, 14);

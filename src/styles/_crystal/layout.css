@@ -1,10 +1,18 @@
-/* 晶胞模块 · 外壳布局、顶栏 3 模块切换轨与左侧目录 */
+/* 晶胞模块 · 原生双列可收起抽屉布局、3 模块切换与左侧导航目录 */
+
+#panel-crystal {
+  --bg: var(--bg-body);
+  --surface: var(--card-elevated);
+  --surface-2: var(--paper);
+  --muted: var(--text-muted);
+  --radius: var(--radius-md);
+  --shadow: var(--shadow-print-sm);
+  --shadow-card: var(--shadow-print);
+}
 
 #panel-crystal.active {
   display: flex;
   flex-direction: column;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   height: 100%;
   min-height: 0;
@@ -24,244 +32,229 @@
   overflow: hidden;
 }
 
+/* 与 #panel-molecule 一致的原生 2 列结构（左可收起抽屉 + 右全幅开放舞台） */
 .crystal-shell {
   flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  overflow: hidden;
-}
-
-.crystal-topbar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.75rem;
-  padding: 0 0.1rem;
-}
-
-.crystal-mod-rail {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.28rem;
-  background: var(--card-bg, var(--surface, #ffffff));
-  border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
-  border-radius: var(--radius-lg, 14px);
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.08));
-}
-
-.crystal-mod-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 38px;
-  padding: 0.42rem 0.95rem;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md, 10px);
-  background: transparent;
-  color: var(--ink-soft, var(--muted, #475569));
-  font-family: var(--font-main, system-ui, sans-serif);
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background var(--dur-fast, 0.15s) ease,
-    color var(--dur-fast, 0.15s) ease,
-    border-color var(--dur-fast, 0.15s) ease,
-    transform var(--dur-fast, 0.15s) ease;
-  white-space: nowrap;
-}
-
-.crystal-mod-tab:hover {
-  background: var(--paper, var(--surface-2, #f1f5f9));
-  color: var(--ink, #0f172a);
-}
-
-.crystal-mod-tab.is-active {
-  background: var(--accent, #3b82f6);
-  color: #ffffff;
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(59, 130, 246, 0.25));
-}
-
-.crystal-mod-num {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.78rem;
-  font-weight: 700;
-  opacity: 0.85;
-}
-
-.crystal-module-host {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 通用 3 栏工作台（左导航 | 中舞台 | 右参数与思考题） */
-.crystal-workbench {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(290px, 340px);
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  gap: 0.75rem;
+  gap: 0.85rem;
+  align-items: stretch;
   overflow: hidden;
 }
 
-.crystal-lib-sidebar {
+.crystal-shell.has-drawer-collapsed,
+#panel-crystal.has-drawer-collapsed .crystal-shell {
+  grid-template-columns: 2.35rem minmax(0, 1fr);
+  gap: 0.55rem;
+}
+
+.crystal-drawer { min-width: 0; min-height: 0; }
+
+.crystal-drawer-wrap {
+  padding: 2px 2px 4px 2px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* 侧栏顶部 3 段模块切换（认识 | 晶体库 | 性质） */
+.crystal-mode-seg {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.24rem;
+  padding: 0.22rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2, var(--paper));
+  border: var(--ui-stroke) solid var(--border-ink);
+}
+
+.crystal-mode-btn {
+  appearance: none;
+  min-height: 32px;
+  padding: 0.28rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-main);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
+}
+
+.crystal-mode-btn:hover { background: var(--surface, var(--card-elevated)); color: var(--ink); }
+
+.crystal-mode-btn.is-active {
+  background: var(--accent);
+  border-color: var(--border-ink);
+  color: #ffffff;
+  box-shadow: var(--shadow-print-sm);
+}
+
+.crystal-drawer-body {
+  flex: 1;
   min-height: 0;
-  background: var(--card-bg, var(--surface, #ffffff));
-  border: var(--ui-stroke, 1.5px) solid var(--border, #e2e8f0);
-  border-radius: var(--radius-lg, 16px);
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(15, 23, 42, 0.06));
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   overflow: hidden;
 }
 
+/* 5 类晶体筛选胶囊 */
 .crystal-cat-tabs {
   flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.22rem;
-  padding: 0.5rem;
-  background: var(--paper, var(--surface-2, #f1f5f9));
-  border-bottom: 1px solid var(--border, #e2e8f0);
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2, var(--paper));
+  border: 1px solid var(--border);
 }
 
 .crystal-cat-tab {
-  min-height: 34px;
-  padding: 0.3rem 0.2rem;
+  appearance: none;
+  min-height: 29px;
+  padding: 0.2rem 0.15rem;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm, 8px);
+  border-radius: var(--radius-xs);
   background: transparent;
-  color: var(--ink-soft, var(--muted, #475569));
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--dur-fast, 0.15s) ease, color var(--dur-fast, 0.15s) ease;
-}
-
-.crystal-cat-tab:hover {
-  background: var(--card-bg, #ffffff);
-  color: var(--ink, #0f172a);
-}
-
-.crystal-cat-tab.is-active {
-  background: var(--accent, #3b82f6);
-  color: #ffffff;
+  color: var(--muted, var(--text-muted));
+  font-family: var(--font-main);
+  font-size: 0.75rem;
   font-weight: 700;
+  cursor: pointer;
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease;
 }
 
-.crystal-list {
+.crystal-cat-tab:hover { background: var(--surface, var(--card-elevated)); color: var(--ink); }
+.crystal-cat-tab.is-active { background: var(--accent); color: #ffffff; }
+
+/* 共享侧栏列表（供模块 01 / 02 / 03 共用） */
+.crystal-drawer-list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: 0.42rem;
+  gap: 0.45rem;
+  padding: 3px 3px 6px 3px;
+  scrollbar-gutter: stable;
 }
 
-.crystal-list-item {
+.crystal-drawer-list.crystal-lib-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 0.45rem;
+}
+
+.crystal-drawer-item {
+  appearance: none;
   width: 100%;
+  min-width: 0;
   text-align: left;
-  padding: 0.65rem 0.78rem;
-  border: var(--ui-stroke, 1.5px) solid var(--border-soft, var(--border, #e2e8f0));
-  border-radius: var(--radius-md, 12px);
-  background: var(--paper, var(--surface-2, #f8fafc));
-  color: var(--ink, #1e293b);
-  cursor: pointer;
-  transition:
-    border-color var(--dur-fast, 0.15s) ease,
-    background var(--dur-fast, 0.15s) ease,
-    transform var(--dur-fast, 0.15s) ease;
-}
-
-.crystal-list-item:hover {
-  border-color: var(--accent, #3b82f6);
-  background: var(--card-elevated, var(--card-bg, #ffffff));
-}
-
-.crystal-list-item.is-active {
-  border-color: var(--accent, #3b82f6);
-  background: var(--accent-soft, #eff6ff);
-  box-shadow: var(--shadow-sm, 0 2px 6px rgba(59, 130, 246, 0.15));
-}
-
-.crystal-list-top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-  margin-bottom: 0.18rem;
+  flex-direction: column;
+  gap: 0.16rem;
+  padding: 0.5rem 0.56rem;
+  border: var(--ui-stroke) solid var(--border-ink);
+  border-radius: var(--radius-md);
+  background: var(--surface, var(--card-elevated));
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-print-sm);
+  transition: transform var(--dur-fast) ease, background var(--dur-fast) ease, box-shadow var(--dur-fast) ease;
 }
 
-.crystal-list-formula {
-  font-family: var(--font-formula, 'Times New Roman', serif);
-  font-size: 1.05rem;
+.crystal-drawer-item:hover {
+  background: var(--diagram-soft, var(--surface-2));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-print);
+}
+
+.crystal-drawer-item.is-active {
+  border-color: var(--border-ink);
+  background: var(--stamp-soft, var(--accent-soft));
+  box-shadow: var(--shadow-print);
+}
+
+.crystal-drawer-item-top { display: flex; align-items: center; justify-content: space-between; gap: 0.3rem; }
+.crystal-drawer-item-dots { display: inline-flex; align-items: center; gap: 0.22rem; flex-shrink: 0; }
+
+.crystal-drawer-item-formula,
+.crystal-drawer-item strong {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.crystal-drawer-item-name,
+.crystal-drawer-item-title {
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--ink, #0f172a);
+  color: var(--ink);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.crystal-list-dots {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
+.crystal-drawer-item-sub,
+.crystal-drawer-item small {
+  font-size: 0.7rem;
+  color: var(--muted, var(--text-muted));
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .crystal-swatch-dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.25);
+  border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
   flex-shrink: 0;
 }
 
-.crystal-list-name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--ink, #1e293b);
-  line-height: 1.3;
-}
-
-.crystal-list-sub {
-  margin-top: 0.14rem;
-  font-size: 0.76rem;
-  color: var(--text-muted, var(--muted, #64748b));
-  line-height: 1.3;
+.crystal-fallback-nav {
+  position: relative;
+  z-index: 9;
+  padding: 0.5rem;
+  background: var(--surface, var(--card-elevated));
+  border-bottom: 1px solid var(--border);
 }
 
 @media (min-width: 1600px) {
-  .crystal-workbench {
-    grid-template-columns: minmax(250px, 290px) minmax(0, 1fr) minmax(330px, 380px);
-  }
+  .crystal-shell { grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); }
 }
 
-@media (max-width: 1080px) {
-  .crystal-workbench {
-    grid-template-columns: minmax(190px, 220px) minmax(0, 1fr) minmax(260px, 300px);
-    gap: 0.55rem;
-  }
+@media (min-width: 2200px) {
+  .crystal-shell { grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); }
 }
 
-@media (max-width: 860px) {
-  .crystal-workbench {
+@media (max-width: 900px) {
+  .crystal-shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 0.55rem; }
+  .crystal-shell.has-drawer-collapsed,
+  #panel-crystal.has-drawer-collapsed .crystal-shell {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(340px, 1fr) auto;
-    overflow-y: auto;
+    grid-template-rows: 2.5rem minmax(0, 1fr);
   }
-
-  .crystal-lib-sidebar {
-    max-height: 200px;
-  }
+  .crystal-drawer { max-height: 210px; }
+  .crystal-drawer.is-collapsed { max-height: 2.5rem; }
 }

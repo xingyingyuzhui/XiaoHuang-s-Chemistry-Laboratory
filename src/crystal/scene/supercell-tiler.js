@@ -3,14 +3,11 @@
  */
 
 import * as THREE from 'three';
-import {
-  fracToCartesian,
-  computeSupercellOffsets,
-  getHexPrismEdges,
-} from '../math/lattice.js';
+import { fracToCartesian, computeSupercellOffsets, getHexPrismEdges } from '../math/lattice.js';
+import { getViewerStyle, currentThemeId } from '../../molecule/viewer-style.js';
 import {
   CELL_SCALE,
-  HEX_PRISM_COLOR,
+  getCrystalThemeTokens,
   toVec3,
   easeOutCubic,
   createCylinderBetween,
@@ -36,7 +33,13 @@ function sortHexRing(ring) {
 /**
  * 创建超晶胞拼接器
  */
-export function createSupercellTiler({ worldRoot, sharedUnitSphere, addBadge, clearBadges }) {
+export function createSupercellTiler({
+  worldRoot,
+  sharedUnitSphere,
+  sharedUnitBox,
+  addBadge,
+  clearBadges,
+}) {
   let supercellGroup = null;
   let hexPrismGroup = null;
   const tileMap = new Map();
@@ -52,26 +55,21 @@ export function createSupercellTiler({ worldRoot, sharedUnitSphere, addBadge, cl
     clearBadges('hex');
   }
 
-  function buildHexPrismHighlight(crystal, tileCount) {
+  function buildHexPrismHighlight(crystal, tileCount, style) {
     clearHexPrism();
     if (!crystal?.hexPrismHighlight || tileCount < 3) return;
 
     const hexData = getHexPrismEdges(crystal.lattice, CELL_SCALE);
     if (!hexData?.vertices?.length || !hexData?.edges?.length) return;
 
+    const tokens = getCrystalThemeTokens(style);
     const group = new THREE.Group();
     const verts = hexData.vertices.map(toVec3);
 
-    const edgeMat = new THREE.MeshStandardMaterial({
-      color: HEX_PRISM_COLOR,
-      emissive: 0xf59e0b,
-      emissiveIntensity: 0.72,
-      roughness: 0.25,
-      metalness: 0.1,
-    });
+    const edgeMat = new THREE.MeshBasicMaterial({ color: tokens.hexPrismColor });
     for (const [i, j] of hexData.edges) {
       if (!verts[i] || !verts[j]) continue;
-      const rod = createCylinderBetween(verts[i], verts[j], 0.042, edgeMat, 10);
+      const rod = createCylinderBetween(verts[i], verts[j], 0.044, edgeMat, 10);
       if (rod) {
         rod.userData.sharedMaterial = true;
         group.add(rod);
@@ -121,9 +119,9 @@ export function createSupercellTiler({ worldRoot, sharedUnitSphere, addBadge, cl
       faceGeom.setAttribute('position', new THREE.Float32BufferAttribute(facePositions, 3));
       faceGeom.computeVertexNormals();
       const faceMat = new THREE.MeshBasicMaterial({
-        color: HEX_PRISM_COLOR,
+        color: tokens.hexPrismColor,
         transparent: true,
-        opacity: 0.11,
+        opacity: tokens.isDark ? 0.14 : 0.1,
         side: THREE.DoubleSide,
         depthWrite: false,
       });
@@ -144,7 +142,7 @@ export function createSupercellTiler({ worldRoot, sharedUnitSphere, addBadge, cl
     worldRoot.add(hexPrismGroup);
   }
 
-  function syncTiles(crystal, tileCount, displayMode) {
+  function syncTiles(crystal, tileCount, displayMode, style = getViewerStyle(currentThemeId())) {
     if (!supercellGroup) {
       supercellGroup = new THREE.Group();
       worldRoot.add(supercellGroup);
@@ -175,6 +173,8 @@ export function createSupercellTiler({ worldRoot, sharedUnitSphere, addBadge, cl
         const tileGroup = buildNormalCellGroup(crystal, {
           displayMode,
           sharedUnitSphere,
+          sharedUnitBox,
+          style,
           opacity: 1,
           skipPositions,
           cellShift: shift,
@@ -212,7 +212,7 @@ export function createSupercellTiler({ worldRoot, sharedUnitSphere, addBadge, cl
       centerTarget.set(0, 0, 0);
     }
 
-    buildHexPrismHighlight(crystal, tileCount);
+    buildHexPrismHighlight(crystal, tileCount, style);
     return offsets.length;
   }
 
