@@ -147,7 +147,6 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
       fresh.sort((a, b) => a.mpC - b.mpC);
       const last = fresh[fresh.length - 1], meta = CAT[last.category] || CAT.ionic;
       milestone = { text: `里程碑 · ${last.formula}（${last.name}）于 ${last.mpC}°C ${last.subl ? '升华' : '熔化'}`, col: meta.col, pulse: 1 };
-      onCaption?.(`${temp}°C · ${last.formula}（${meta.label}晶体）${last.subl ? '升华' : '熔化'}`);
     }
     statTemp.textContent = `${temp} °C`; slider.value = String(Math.round(u * 1000));
   }
@@ -155,22 +154,21 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
     u = 0; playing = false;
     items.forEach((it) => { it.melted = false; it.flash = 0; it.ripple = 0; });
     milestone = { text: `${Math.round(minT)}°C 初始全固态 · 准备同步升温`, col: '#7dd3fc', pulse: 0 };
-    syncMelted(true); syncPlay();
+    syncMelted(true); syncPlay(); onCaption?.('');
   };
 
   btnPlay.addEventListener('click', () => { if (u >= 1) resetAll(); playing = !playing; syncPlay(); });
-  btnReset.addEventListener('click', () => { resetAll(); onCaption?.('已重置至初始低温固态'); });
+  btnReset.addEventListener('click', resetAll);
   spdBtns.forEach((b) => b.addEventListener('click', () => { speed = Number(b.dataset.spd); spdBtns.forEach((x) => x.classList.toggle('is-active', x === b)); }));
   slider.addEventListener('input', () => { playing = false; u = Number(slider.value) / 1000; syncMelted(true); syncPlay(); });
   resetAll();
-  onCaption?.(`${Math.round(minT)}°C → ${Math.round(maxT)}°C 热成像熔点大比拼（${items.length} 种物质）`);
 
   const [cols, rows] = gridOf(items.length);
   const loop = createCanvasLoop(stageEl, (ctx, w, h, dt) => {
     tAccum += dt;
     if (playing) {
       u = clamp(u + dt * 0.042 * speed, 0, 1); syncMelted(false);
-      if (u >= 1) { playing = false; syncPlay(); onCaption?.(`${Math.round(maxT)}°C 加热终点 · 微粒间作用力越强熔点越高`); }
+      if (u >= 1) { playing = false; syncPlay(); milestone = { text: `${Math.round(maxT)}°C 加热终点 · 微粒间作用力越强熔点越高`, col: '#fef08a', pulse: 1 }; }
     }
     milestone.pulse = Math.max(0, milestone.pulse - dt * 1.4);
 
@@ -192,7 +190,7 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
     }
 
     drawObsidianBg(ctx, w, h, th.rgb, 0.18 + u * 0.14);
-    const padX = 18, botSafe = 28;
+    const padX = 18, botSafe = 18;
     const gridTop = drawRaceHeader(ctx, w, padX, 14, 48, 24, temp, th, u, meltedN, items.length, milestone);
     const gap = rows <= 2 ? 14 : 9, compact = rows >= 4;
     const cw = (w - padX * 2 - gap * (cols - 1)) / cols;
@@ -269,7 +267,7 @@ function mountCurveView(spec, stageEl, actionbarEl, onCaption) {
     const aMelt = clamp((progress - 0.14) / 0.72, 0, 1);
 
     drawObsidianBg(ctx, w, h, '56,189,248', 0.16);
-    const pad = 18, botSafe = 30, gap = 14, innerH = h - pad - botSafe;
+    const pad = 18, botSafe = 48, gap = 14, innerH = h - pad - botSafe;
     const chartW = Math.floor((w - pad * 2 - gap) * 0.6), rightX = pad + chartW + gap, rightW = w - pad - rightX;
 
     fillBox(ctx, pad, pad, chartW, innerH, 14, 'rgba(15,23,42,0.84)', 'rgba(148,163,184,0.22)');
