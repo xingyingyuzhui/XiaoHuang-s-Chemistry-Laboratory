@@ -12,11 +12,18 @@ const CAT = {
   amorphous: { label: '非晶', col: '#fb923c' },
 };
 const DEFAULT_RACE = [
-  ['O₂', '固态氧', 'molecular', -218], ['CO₂', '干冰', 'molecular', -78, 1], ['H₂O', '冰', 'molecular', 0], ['I₂', '碘', 'molecular', 114],
+  ['O₂', '固态氧', 'molecular', -218], ['CO₂', '干冰', 'molecular', -78.5, 1], ['H₂O', '冰', 'molecular', 0], ['I₂', '碘', 'molecular', 114],
   ['Hg', '固态汞', 'metallic', -39], ['Na', '金属钠', 'metallic', 98], ['Cu', '金属铜', 'metallic', 1085], ['W', '金属钨', 'metallic', 3422],
   ['NaCl', '食盐', 'ionic', 801], ['CaF₂', '萤石', 'ionic', 1418], ['Al₂O₃', '刚玉', 'ionic', 2072], ['MgO', '氧化镁', 'ionic', 2852],
   ['Si', '晶体硅', 'covalent', 1414], ['SiO₂', '石英', 'covalent', 1713], ['SiC', '金刚砂', 'covalent', 2730], ['C', '金刚石', 'covalent', 3550],
 ].map(([formula, name, category, mpC, subl]) => ({ formula, name, category, mpC, subl: Boolean(subl) }));
+
+export function formatThermalSummary(meltedN, sublN, total, hasSubl = false) {
+  if (sublN > 0 && meltedN > 0) return `${meltedN} 已熔 · ${sublN} 已升华 / ${total}`;
+  if (sublN > 0) return `${sublN} 已升华 / ${total}`;
+  if (meltedN === 0 && hasSubl) return `0/${total} 已相变`;
+  return `${meltedN}/${total} 已熔`;
+}
 
 const regimeOf = (t) => (
   t < 0 ? { fg: '#7dd3fc', rgb: '56,189,248', label: '极寒霜冻' }
@@ -77,7 +84,7 @@ function drawObsidianBg(ctx, w, h, rgb, alpha) {
   ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
 }
 
-function drawRaceHeader(ctx, w, padX, topY, headH, banH, temp, th, u, meltedN, total, milestone) {
+function drawRaceHeader(ctx, w, padX, topY, headH, banH, temp, th, u, meltedN, sublN, total, hasSubl, milestone) {
   const tempInt = Math.round(temp);
   fillBox(ctx, padX, topY, w - padX * 2, headH, 12, 'rgba(15,23,42,0.84)', `rgba(${th.rgb},0.48)`, 1.4);
   ctx.fillStyle = th.fg; ctx.font = '800 22px ui-monospace, monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
@@ -86,9 +93,11 @@ function drawRaceHeader(ctx, w, padX, topY, headH, banH, temp, th, u, meltedN, t
   fillBox(ctx, tagX, topY + 13, 64, 22, 999, `rgba(${th.rgb},0.22)`);
   ctx.fillStyle = th.fg; ctx.font = '700 10.5px system-ui, sans-serif'; ctx.textAlign = 'center';
   ctx.fillText(th.label, tagX + 32, topY + 24.5);
+  const countText = formatThermalSummary(meltedN, sublN, total, hasSubl);
   ctx.fillStyle = '#cbd5e1'; ctx.font = '700 12px ui-monospace, monospace'; ctx.textAlign = 'right';
-  ctx.fillText(`${meltedN}/${total} 已熔`, countX, topY + headH * 0.5);
-  const barX = tagX + 76, barW = Math.max(90, countX - 78 - barX), barY = topY + headH * 0.5 - 4.5;
+  const countW = ctx.measureText(countText).width;
+  ctx.fillText(countText, countX, topY + headH * 0.5);
+  const barX = tagX + 76, barW = Math.max(80, countX - countW - 14 - barX), barY = topY + headH * 0.5 - 4.5;
   fillBox(ctx, barX, barY, barW, 9, 999, 'rgba(2,6,23,0.72)');
   const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
   grad.addColorStop(0, '#38bdf8'); grad.addColorStop(0.28, '#22d3ee'); grad.addColorStop(0.55, '#f97316'); grad.addColorStop(0.8, '#ef4444'); grad.addColorStop(1, '#fef08a');
@@ -113,8 +122,9 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
       const gx = ((i % side) + 0.5) / side, gy = (Math.floor(i / side) + 0.5) / side;
       return { gx, gy, x: gx, y: gy, vx: (Math.random() - 0.5) * 0.95, vy: (Math.random() - 0.5) * 0.85, ph: Math.random() * Math.PI * 2 };
     });
-    return { formula, name: s.name || formula, category: s.category || 'ionic', mpC, subl: Boolean(s.subl) || formula === 'CO₂', pts, melted: false, flash: 0, ripple: 0, heat: 0.1 };
+    return { formula, name: s.name || formula, category: s.category || 'ionic', mpC, subl: Boolean(s.subl) || formula === 'CO₂' || formula === 'CO2' || s.name === '干冰', pts, melted: false, flash: 0, ripple: 0, heat: 0.1 };
   });
+  const hasSubl = items.some((it) => it.subl);
 
   const mps = items.map((i) => i.mpC);
   const minMp = Math.min(...mps), maxMp = Math.max(...mps);
@@ -128,7 +138,7 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
   };
 
   let u = 0, playing = false, speed = 1, tAccum = 0;
-  let milestone = { text: '点击「开始加热」观察各类晶体依次突破熔点', col: '#7dd3fc', pulse: 0 };
+  let milestone = { text: '点击「开始加热」观察各类晶体依次发生相变', col: '#7dd3fc', pulse: 0 };
 
   actionbarEl.innerHTML = `<div class="crystal-dock-group"><button type="button" class="crystal-btn crystal-btn-primary crystal-btn-sm" data-act="play">开始加热</button><button type="button" class="crystal-btn crystal-btn-ghost crystal-btn-sm" data-act="reset">重置</button></div><div class="crystal-dock-group crystal-seg" role="group" aria-label="加热倍率"><button type="button" class="crystal-seg-btn is-active" data-spd="1">1×</button><button type="button" class="crystal-seg-btn" data-spd="2">2×</button><button type="button" class="crystal-seg-btn" data-spd="4">4×</button></div><label class="crystal-dock-group" style="font-size:0.78rem;color:#cbd5e1;gap:0.4rem;"><input type="range" min="0" max="1000" step="1" value="0" data-act="slider" style="width:124px;accent-color:#fb923c;" /><strong data-stat="temp" style="font-family:ui-monospace,monospace;min-width:60px;color:#7dd3fc;">${Math.round(minT)} °C</strong></label>`;
   const btnPlay = actionbarEl.querySelector('[data-act="play"]'), btnReset = actionbarEl.querySelector('[data-act="reset"]');
@@ -137,9 +147,9 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
   const syncPlay = () => { btnPlay.textContent = playing ? '暂停' : u >= 1 ? '重新加热' : '开始加热'; };
 
   function syncMelted(isScrub) {
-    const temp = Math.round(uToTemp(u)), fresh = [];
+    const rawTemp = uToTemp(u), temp = Math.round(rawTemp), fresh = [];
     for (const it of items) {
-      const now = temp >= it.mpC;
+      const now = rawTemp >= it.mpC;
       if (now && !it.melted) { it.flash = 1; it.ripple = 1; fresh.push(it); }
       it.melted = now;
     }
@@ -168,14 +178,14 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
     tAccum += dt;
     if (playing) {
       u = clamp(u + dt * 0.042 * speed, 0, 1); syncMelted(false);
-      if (u >= 1) { playing = false; syncPlay(); milestone = { text: `${Math.round(maxT)}°C 加热终点 · 微粒间作用力越强熔点越高`, col: '#fef08a', pulse: 1 }; }
+      if (u >= 1) { playing = false; syncPlay(); milestone = { text: `${Math.round(maxT)}°C 加热终点 · 微粒间作用力越强，相变温度越高`, col: '#fef08a', pulse: 1 }; }
     }
     milestone.pulse = Math.max(0, milestone.pulse - dt * 1.4);
 
     const temp = uToTemp(u), th = regimeOf(temp);
-    let meltedN = 0;
+    let meltedN = 0, sublN = 0;
     for (const it of items) {
-      if (it.melted) meltedN++;
+      if (it.melted) { if (it.subl) sublN++; else meltedN++; }
       it.flash = Math.max(0, it.flash - dt * 1.5); it.ripple = Math.max(0, it.ripple - dt * 1.2);
       it.heat = clamp(1 - (it.mpC - temp) / 340, 0.1, 1);
       for (const pt of it.pts) {
@@ -191,7 +201,7 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
 
     drawObsidianBg(ctx, w, h, th.rgb, 0.18 + u * 0.14);
     const padX = 18, botSafe = 18;
-    const gridTop = drawRaceHeader(ctx, w, padX, 14, 48, 24, temp, th, u, meltedN, items.length, milestone);
+    const gridTop = drawRaceHeader(ctx, w, padX, 14, 48, 24, temp, th, u, meltedN, sublN, items.length, hasSubl, milestone);
     const gap = rows <= 2 ? 14 : 9, compact = rows >= 4;
     const cw = (w - padX * 2 - gap * (cols - 1)) / cols;
     const ch = Math.max(56, (h - botSafe - gridTop - gap * (rows - 1)) / rows);
@@ -220,7 +230,7 @@ function mountRaceView(spec, stageEl, actionbarEl, onCaption) {
       ctx.fillText(`${it.name} · ${meta.label}`, x + 10, y + (compact ? 25 : 30));
       ctx.textAlign = 'right'; ctx.fillStyle = it.melted ? meta.col : near ? th.fg : '#94a3b8';
       ctx.font = `700 ${compact ? 10.5 : 12}px ui-monospace, monospace`;
-      ctx.fillText(it.melted ? (it.subl ? '已升华' : '已熔化') : `${it.mpC}°C`, x + cw - 10, y + 10);
+      ctx.fillText(it.melted ? (it.subl ? '已升华' : '已熔化') : (it.subl ? `${it.mpC}°C 升华` : `${it.mpC}°C`), x + cw - 10, y + 10);
 
       const px0 = compact ? x + cw * 0.46 : x + cw * 0.14, py0 = compact ? y + 24 : y + 52;
       const pw = compact ? Math.max(26, cw * 0.48) : cw * 0.72, ph = Math.max(20, y + ch - py0 - 8);

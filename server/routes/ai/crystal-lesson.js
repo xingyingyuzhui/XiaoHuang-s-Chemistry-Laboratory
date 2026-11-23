@@ -111,9 +111,9 @@ function buildSystemPrompt(stepCount) {
    {"type":"lattice-stress","left":{"label":"名称","sublabel":"力学特征","bondType":"metallic|ionic|covalent","colorA":"#e0824a","colorB":"#f5c07a"},"right":{...}}
 3) particle-field（3D 粒子场机制）：
    {"type":"particle-field","mode":"crystal-growth|conductivity|hbond-collapse","label":"标题","substance":"化学式"}
-4) thermal-phase（热成像熔化赛或熔化曲线）：
+4) thermal-phase（热成像相变赛或熔化曲线）：
    {"type":"thermal-phase","view":"race|curve","substances":[{"formula":"NaCl","name":"氯化钠","category":"molecular|metallic|ionic|covalent","mpC":801}],"tempRange":[minC,maxC]}
-   说明：view="race" 时按教师点名的物质定制 2~16 种真实熔点（mpC 范围 -270..4000）；view="curve" 时给 2 种物质（晶体 vs 非晶体）。
+   说明：view="race" 时按教师点名的物质定制 2~16 种真实相变温度（mpC 范围 -270..4000；常压下直接升华的物质如干冰 CO₂ 于 -78.5℃ 升华，请附 "subl":true 并在思考题中写明升华点而非熔点）；view="curve" 时给 2 种物质（晶体 vs 非晶体）。
 5) cell-extract（3D 晶胞提取并置）：
    {"type":"cell-extract","crystalId":"cu|nacl|fe|diamond","label":"标题"}
 

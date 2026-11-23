@@ -7,7 +7,7 @@ import { clamp, mountCanvasLoop } from './canvas-kit.js';
 
 const CRYSTALS = [
   { f: 'O₂', name: '固态氧', type: '分子', kind: 'crystal', mp: -218 },
-  { f: 'CO₂', name: '干冰', type: '分子', kind: 'crystal', mp: -78, subl: true },
+  { f: 'CO₂', name: '干冰', type: '分子', kind: 'crystal', mp: -78.5, subl: true },
   { f: 'H₂O', name: '冰', type: '分子', kind: 'crystal', mp: 0 },
   { f: 'I₂', name: '碘', type: '分子', kind: 'crystal', mp: 114 },
   { f: 'Hg', name: '固态汞', type: '金属', kind: 'amorphous', mp: -39 },
@@ -69,7 +69,7 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
         <input type="range" min="0" max="1000" step="1" value="0" data-act="slider" style="width:120px;accent-color:var(--accent,#3b82f6);" />
         <strong data-stat="temp" style="font-family:var(--font-mono,monospace);min-width:58px;">-250 °C</strong>
       </label>
-      <span class="crystal-param-pill" data-stat="count">0 / 16 熔化</span>
+      <span class="crystal-param-pill" data-stat="count">0 / 16 相变</span>
     </div>
   `;
 
@@ -81,21 +81,23 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
   const statTemp = controlsEl.querySelector('[data-stat="temp"]');
 
   function syncMelted(isScrub) {
-    const temp = Math.round(uToTemp(u));
-    let count = 0;
+    const rawTemp = uToTemp(u), temp = Math.round(rawTemp);
+    let meltedN = 0, sublN = 0;
     const fresh = [];
     for (const it of items) {
-      const now = temp >= it.mp;
+      const now = rawTemp >= it.mp;
       if (now && !it.melted) { it.flash = 1; it.ripple = 1; fresh.push(it); }
       it.melted = now;
-      if (now) count++;
+      if (now) { if (it.subl) sublN++; else meltedN++; }
     }
     if (!isScrub && fresh.length) {
       fresh.sort((a, b) => a.mp - b.mp);
       const last = fresh[fresh.length - 1];
       onCaption?.(`${temp}°C · ${last.f}（${last.type}）${last.subl ? '升华' : '熔化'}`);
     }
-    statCount.textContent = `${count} / 16 熔化`;
+    statCount.textContent = sublN > 0
+      ? (meltedN > 0 ? `${meltedN} 熔 · ${sublN} 升华 / ${items.length}` : `${sublN} 升华 / ${items.length}`)
+      : (meltedN === 0 ? `0 / ${items.length} 相变` : `${meltedN} / ${items.length} 熔化`);
     statTemp.textContent = `${temp} °C`;
     slider.value = String(Math.round(u * 1000));
   }
@@ -231,7 +233,7 @@ export function createMeltRaceExp(stageEl, controlsEl, onCaption) {
       ctx.fillStyle = p.muted; ctx.font = '500 10px system-ui, sans-serif';
       ctx.fillText(`${it.name}·${it.type}`, x + 8, y + 23);
       ctx.textAlign = 'right'; ctx.fillStyle = it.melted ? col : nearMelt ? th.fg : p.muted; ctx.font = '700 10px ui-monospace, monospace';
-      ctx.fillText(it.melted ? (it.subl ? '已升华' : '已熔化') : `${it.mp}°C`, x + cw - 7, y + 8);
+      ctx.fillText(it.melted ? (it.subl ? '已升华' : '已熔化') : (it.subl ? `${it.mp}°C 升华` : `${it.mp}°C`), x + cw - 7, y + 8);
 
       const px0 = x + cw * 0.46, py0 = y + 22, pw = Math.max(24, cw * 0.48), ph = Math.max(20, ch - 28);
       const pr = clamp(Math.min(pw, ph) * 0.11, 2.4, 4.2);

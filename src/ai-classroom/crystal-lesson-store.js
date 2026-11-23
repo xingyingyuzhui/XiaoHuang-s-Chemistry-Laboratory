@@ -16,13 +16,15 @@ const FOUR_CRYSTAL_RACE = {
   type: 'thermal-phase',
   view: 'race',
   substances: [
-    { formula: 'CO₂', name: '干冰', category: 'molecular', mpC: -78.5 },
+    { formula: 'CO₂', name: '干冰', category: 'molecular', mpC: -78.5, subl: true },
     { formula: 'H₂O', name: '冰', category: 'molecular', mpC: 0 },
     { formula: 'NaCl', name: '食盐', category: 'ionic', mpC: 801 },
     { formula: 'C', name: '金刚石', category: 'covalent', mpC: 3550 },
   ],
   tempRange: [-120, 3650],
 };
+
+const LEGACY_DRY_ICE_QA_Q = '同属分子晶体，为何冰（0℃）的熔点远高于干冰（-78.5℃），又远低于 NaCl（801℃）？';
 
 function inferCategory(stage, explicit) {
   if (explicit === 'basics' || explicit === 'properties') return explicit;
@@ -122,7 +124,7 @@ export function createDefaultLessons() {
     {
       id: 'builtin-ice-water',
       title: '第 3 节 · 冰与碳的结构奥秘',
-      subtitle: '氢键空隙坍塌 · 金刚石 vs 石墨 · 四大晶体熔点直击',
+      subtitle: '氢键空隙坍塌 · 金刚石 vs 石墨 · 四大晶体相变直击',
       builtin: true,
       isAi: false,
       slides: [
@@ -136,14 +138,14 @@ export function createDefaultLessons() {
           '金刚石中碳原子以 sp³ 杂化形成三维共价网；石墨层内存在大 π 键（导电），层间靠弱范德华力结合（易滑动）。'),
         normalizeSlide({
           id: 'iw-3',
-          title: '四大晶体熔点直击：CO₂ / H₂O / NaCl / 金刚石',
-          cue: '拖动温度轴依次越过 -78.5℃、0℃、801℃ 与 3550℃，对比范德华力、氢键、离子键与共价键的能级跨越。',
+          title: '四大晶体相变直击：CO₂ / H₂O / NaCl / 金刚石',
+          cue: '拖动温度轴依次越过干冰升华点（-78.5℃）及冰（0℃）、NaCl（801℃）、金刚石（3550℃）熔点，对比范德华力、氢键、离子键与共价键的能级跨越。',
           stage: FOUR_CRYSTAL_RACE,
           category: 'properties',
-          summary: '在暗室热成像舞台中直击干冰、冰、食盐与金刚石跨越近 3600℃ 的熔化历程。',
+          summary: '在暗室热成像舞台中直击干冰（常压 -78.5℃ 直接升华）、冰、食盐与金刚石跨越近 3600℃ 的相变历程。',
           qa: {
-            question: '同属分子晶体，为何冰（0℃）的熔点远高于干冰（-78.5℃），又远低于 NaCl（801℃）？',
-            answer: '冰分子间存在强氢键，强于干冰间的范德华力；但氢键仍远弱于 NaCl 的离子键与金刚石的共价键。',
+            question: '同属分子晶体，为何常压下冰的熔点（0℃）远高于干冰的升华点（-78.5℃），又远低于 NaCl 的熔点（801℃）？',
+            answer: '常压（1 atm）下干冰在 -78.5℃ 直接升华，仅需克服较弱的范德华力；冰分子间还存在较强的氢键，需至 0℃ 才熔化；但氢键仍远弱于 NaCl 的离子键与金刚石的共价键。',
           },
           quickQuestions: ['为什么干冰在常压下直接升华？', '金刚石熔化破坏的是什么作用力？'],
         }),
@@ -173,9 +175,30 @@ function resolveStorage(explicit) {
   catch { return null; }
 }
 
+function migrateCachedBuiltinLessons(lessons) {
+  const freshIw = createDefaultLessons().find((l) => l.id === 'builtin-ice-water');
+  const freshSlide = freshIw?.slides.find((s) => s.id === 'iw-3');
+  if (!freshIw || !freshSlide) return false;
+  let dirty = false;
+  for (const lesson of lessons) {
+    if (lesson.id !== 'builtin-ice-water' || !lesson.builtin) continue;
+    if (lesson.subtitle === '氢键空隙坍塌 · 金刚石 vs 石墨 · 四大晶体熔点直击') {
+      lesson.subtitle = freshIw.subtitle;
+      dirty = true;
+    }
+    const idx = lesson.slides.findIndex((s) => s.id === 'iw-3');
+    if (idx >= 0 && lesson.slides[idx].qa?.question === LEGACY_DRY_ICE_QA_Q) {
+      lesson.slides[idx] = cloneJson(freshSlide);
+      dirty = true;
+    }
+  }
+  return dirty;
+}
+
 export function createCrystalLessonStore({ storage } = {}) {
   const backend = resolveStorage(storage);
   let state = { lessons: createDefaultLessons(), activeLessonId: 'builtin-intro' };
+  const save = () => { try { backend?.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore quota */ } };
 
   if (backend) {
     try {
@@ -185,12 +208,12 @@ export function createCrystalLessonStore({ storage } = {}) {
         if (lessons.length) {
           const activeLessonId = lessons.some((l) => l.id === parsed.activeLessonId) ? parsed.activeLessonId : lessons[0].id;
           state = { lessons, activeLessonId };
+          if (migrateCachedBuiltinLessons(state.lessons)) save();
         }
       }
     } catch { /* ignore corrupted cache */ }
   }
 
-  const save = () => { try { backend?.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore quota */ } };
   const find = (id) => state.lessons.find((l) => l.id === id) || null;
 
   return {

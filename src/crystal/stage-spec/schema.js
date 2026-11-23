@@ -38,9 +38,10 @@ const CELL_META = {
   diamond: '金刚石共价晶胞提取与无隙并置',
 };
 
-const toSub = ([formula, name, category, mpC]) => ({ formula, name, category, mpC });
+const toSub = ([formula, name, category, mpC, subl]) => (subl ? { formula, name, category, mpC, subl: true } : { formula, name, category, mpC });
+const isSublSubstance = (formula, name, subl) => Boolean(subl) || formula === 'CO₂' || formula === 'CO2' || name === '干冰';
 export const CLASSIC_RACE_16 = Object.freeze([
-  ['O₂', '固态氧', 'molecular', -218], ['CO₂', '干冰', 'molecular', -78], ['H₂O', '冰', 'molecular', 0], ['I₂', '碘', 'molecular', 114],
+  ['O₂', '固态氧', 'molecular', -218], ['CO₂', '干冰', 'molecular', -78.5, true], ['H₂O', '冰', 'molecular', 0], ['I₂', '碘', 'molecular', 114],
   ['Hg', '固态汞', 'metallic', -39], ['Na', '金属钠', 'metallic', 98], ['Cu', '金属铜', 'metallic', 1085], ['W', '金属钨', 'metallic', 3422],
   ['NaCl', '食盐', 'ionic', 801], ['CaF₂', '萤石', 'ionic', 1418], ['Al₂O₃', '刚玉', 'ionic', 2072], ['MgO', '氧化镁', 'ionic', 2852],
   ['Si', '晶体硅', 'covalent', 1414], ['SiO₂', '石英', 'covalent', 1713], ['SiC', '金刚砂', 'covalent', 2730], ['C', '金刚石', 'covalent', 3550],
@@ -50,7 +51,7 @@ const DEFAULT_CURVE_2 = [
   ['Na₂S₂O₃·5H₂O', '海波（晶体）', 'ionic', 48], ['CₙH₂ₙ₊₂', '石蜡（非晶体）', 'molecular', 55],
 ].map(toSub);
 const DEFAULT_RACE_4 = [
-  ['CO₂', '干冰', 'molecular', -78], ['H₂O', '冰', 'molecular', 0], ['NaCl', '食盐', 'ionic', 801], ['C', '金刚石', 'covalent', 3550],
+  ['CO₂', '干冰', 'molecular', -78.5, true], ['H₂O', '冰', 'molecular', 0], ['NaCl', '食盐', 'ionic', 801], ['C', '金刚石', 'covalent', 3550],
 ].map(toSub);
 
 const clean = (v, max = 60) => String(v ?? '').replace(/[<>]/g, '').trim().slice(0, max);
@@ -128,7 +129,9 @@ export function validateChemStage(raw, opts = {}) {
       if (!formula || !name || !Number.isFinite(mp)) { if (strict) throw new Error('thermal-phase 物质缺少有效 formula / name / mpC'); continue; }
       if (strict && (mp < -270 || mp > 4000)) throw new Error(`熔点 mpC 超出允许范围: ${mp}`);
       if (strict && !CRYSTAL_CATEGORIES.includes(cat)) throw new Error(`非法晶体分类 category: ${cat}`);
-      subs.push({ formula, name, category: CRYSTAL_CATEGORIES.includes(cat) ? cat : 'ionic', mpC: Math.round(clamp(mp, -270, 4000) * 10) / 10 });
+      const entry = { formula, name, category: CRYSTAL_CATEGORIES.includes(cat) ? cat : 'ionic', mpC: Math.round(clamp(mp, -270, 4000) * 10) / 10 };
+      if (isSublSubstance(formula, name, item.subl)) entry.subl = true;
+      subs.push(entry);
     }
     if (subs.length < 2) {
       if (strict) throw new Error('thermal-phase 至少需要 2 种有效物质');

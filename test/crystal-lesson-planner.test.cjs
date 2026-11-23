@@ -190,3 +190,74 @@ test('POST /api/ai/crystal-lesson is mounted, enforces 400 validation, and docs/
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('dry ice sublimation accuracy: schema subl parity, iw-3 copy & cache migration, and thermal header counter', async () => {
+  const esmSchema = await loadEsmSchema();
+  const storeMod = await import(pathToFileURL(path.join(root, 'src/ai-classroom/crystal-lesson-store.js')).href);
+  const thermalMod = await import(pathToFileURL(path.join(root, 'src/crystal/stages/stage-thermal.js')).href);
+
+  // 1. Schema parity for dry ice (-78.5°C, subl: true)
+  const dryIceStage = {
+    type: 'thermal-phase',
+    view: 'race',
+    substances: [
+      { formula: 'CO₂', name: '干冰', category: 'molecular', mpC: -78.5 },
+      { formula: 'H₂O', name: '冰', category: 'molecular', mpC: 0 },
+    ],
+  };
+  const normEsm = esmSchema.validateChemStage(dryIceStage, { strict: true });
+  const normCjs = cjsSchema.validateChemStage(dryIceStage, { strict: true });
+  assert.deepEqual(normCjs, normEsm);
+  assert.equal(normEsm.substances[0].mpC, -78.5);
+  assert.equal(normEsm.substances[0].subl, true);
+  assert.equal(normEsm.substances[1].subl, undefined);
+
+  const race16Co2 = esmSchema.CLASSIC_RACE_16.find((x) => x.formula === 'CO₂');
+  assert.equal(race16Co2.mpC, -78.5);
+  assert.equal(race16Co2.subl, true);
+
+  // 2. Built-in Lesson 3 Slide 3 (iw-3) copy & CO₂ subl flag
+  const defaults = storeMod.createDefaultLessons();
+  const iw = defaults.find((l) => l.id === 'builtin-ice-water');
+  const iw3 = iw.slides.find((s) => s.id === 'iw-3');
+  assert.match(iw3.qa.question, /干冰的升华点（-78\.5℃）/);
+  assert.match(iw3.qa.answer, /直接升华/);
+  assert.equal(iw3.stage.substances[0].subl, true);
+
+  // 3. Auto-migrate stale v3.2.0 cached iw-3 while preserving user-edited questions
+  const mem = new Map();
+  const mockStorage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => mem.set(k, String(v)),
+  };
+  const stale = storeMod.createDefaultLessons();
+  stale.find((l) => l.id === 'builtin-ice-water').slides.find((s) => s.id === 'iw-3').qa.question =
+    '同属分子晶体，为何冰（0℃）的熔点远高于干冰（-78.5℃），又远低于 NaCl（801℃）？';
+  mockStorage.setItem(storeMod.STORAGE_KEY, JSON.stringify({ lessons: stale, activeLessonId: 'builtin-ice-water' }));
+
+  const migratedStore = storeMod.createCrystalLessonStore({ storage: mockStorage });
+  const migratedIw3 = migratedStore.getActiveLesson().slides.find((s) => s.id === 'iw-3');
+  assert.match(migratedIw3.qa.question, /干冰的升华点（-78\.5℃）/);
+
+  // User-customized question must NOT be overwritten
+  const customMem = new Map();
+  const customStorage = {
+    getItem: (k) => (customMem.has(k) ? customMem.get(k) : null),
+    setItem: (k, v) => customMem.set(k, String(v)),
+  };
+  const customLessons = storeMod.createDefaultLessons();
+  customLessons.find((l) => l.id === 'builtin-ice-water').slides.find((s) => s.id === 'iw-3').qa.question = '老师自定义思考题';
+  customStorage.setItem(storeMod.STORAGE_KEY, JSON.stringify({ lessons: customLessons, activeLessonId: 'builtin-ice-water' }));
+  const customStore = storeMod.createCrystalLessonStore({ storage: customStorage });
+  assert.equal(customStore.getActiveLesson().slides.find((s) => s.id === 'iw-3').qa.question, '老师自定义思考题');
+
+  // 4. Thermal header summary never counts sublimated dry ice into 已熔
+  const fmt = thermalMod.formatThermalSummary;
+  assert.equal(fmt(0, 0, 4, true), '0/4 已相变');
+  assert.equal(fmt(0, 1, 4, true), '1 已升华 / 4');
+  assert.equal(fmt(1, 1, 4, true), '1 已熔 · 1 已升华 / 4');
+  assert.equal(fmt(3, 1, 4, true), '3 已熔 · 1 已升华 / 4');
+  assert.equal(fmt(1, 0, 16, true), '1/16 已熔');
+  assert.equal(fmt(0, 0, 4, false), '0/4 已熔');
+  assert.equal(fmt(2, 0, 4, false), '2/4 已熔');
+});
