@@ -5,6 +5,7 @@
 
 import { studentApi } from './api/client.js';
 import { appConfirm, appPrompt } from './app-dialog.js';
+import { themeBurst, circleMark } from './ai-classroom/quiz-fx.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -181,10 +182,9 @@ function stopSpin() {
 }
 
 /** 点中时的主题反馈（红笔圈 / 粉笔圈 / 纸屑 / 气泡 / 像素块） */
-async function celebrateWinner() {
+function celebrateWinner() {
   if (prefersReducedMotion()) return;
   try {
-    const { themeBurst, circleMark } = await import('./ai-classroom/quiz-fx.js');
     const reel = document.querySelector('#rollcallCard .rollcall-reel');
     if (!circleMark(reel)) themeBurst($('#rollcallCardName'));
   } catch {

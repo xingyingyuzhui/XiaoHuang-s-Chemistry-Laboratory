@@ -2,7 +2,7 @@ const { queryOne, run, runBatch } = require('../db/sqlite');
 const { BUILTIN_MOLECULES } = require('./builtin-molecules');
 
 /** 升版本时同步内置数据；custom=1 的教师/学生自建数据永不覆盖。 */
-const BUILTIN_MOLECULES_VERSION = 2;
+const BUILTIN_MOLECULES_VERSION = 3;
 
 function readSeedVersion() {
   const row = queryOne(

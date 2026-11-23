@@ -27,7 +27,7 @@ const MOLECULE_PROPERTIES = {
   },
   h2o: {
     physics: { state: '液态', density: '1 g/cm³', meltingPoint: '0°C', boilingPoint: '100°C' },
-    chemistry: { acidity: '中性', solubility: '易溶', reactivity: '稳定' },
+    chemistry: { acidity: '中性', solubility: '常见溶剂', reactivity: '稳定' },
   },
   h2o2: {
     physics: { state: '液态', density: '1.463 g/cm³', meltingPoint: '-0.43°C', boilingPoint: '150.2°C' },
@@ -50,7 +50,7 @@ const MOLECULE_PROPERTIES = {
     chemistry: { acidity: '中性', solubility: '微溶', reactivity: '有毒，可燃烧' },
   },
   co2: {
-    physics: { state: '气态', density: '1.977 g/L', meltingPoint: '-78.5°C（升华）', boilingPoint: '-56.6°C（加压）' },
+    physics: { state: '气态', density: '1.977 g/L', meltingPoint: '-56.6°C（5.11 atm 加压）', boilingPoint: '-78.5°C（常压直接升华）' },
     chemistry: { acidity: '酸性', solubility: '溶于水', reactivity: '稳定' },
   },
   so2: {
@@ -86,7 +86,7 @@ const MOLECULE_PROPERTIES = {
     chemistry: { acidity: '中性', solubility: '难溶', reactivity: '活泼，可加成' },
   },
   c2h2: {
-    physics: { state: '气态', density: '1.177 g/L', meltingPoint: '-80.8°C', boilingPoint: '-84°C（升华）' },
+    physics: { state: '气态', density: '1.177 g/L', meltingPoint: '-80.8°C（1.27 atm 加压）', boilingPoint: '-84°C（常压直接升华）' },
     chemistry: { acidity: '弱酸性', solubility: '微溶', reactivity: '活泼，可燃烧' },
   },
   ch3oh: {
@@ -98,7 +98,7 @@ const MOLECULE_PROPERTIES = {
     chemistry: { acidity: '中性', solubility: '易溶', reactivity: '可燃烧' },
   },
   hcho: {
-    physics: { state: '气态', density: '0.815 g/L', meltingPoint: '-92°C', boilingPoint: '-19.5°C' },
+    physics: { state: '气态', density: '1.34 g/L', meltingPoint: '-92°C', boilingPoint: '-19.5°C' },
     chemistry: { acidity: '中性', solubility: '易溶', reactivity: '有毒，可燃烧' },
   },
   ch3cooh: {

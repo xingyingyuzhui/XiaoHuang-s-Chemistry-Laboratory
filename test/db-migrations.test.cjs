@@ -8,11 +8,12 @@ const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const initSqlJs = require(
-  require.resolve('sql.js/dist/sql-asm.js', {
-    paths: [path.join(__dirname, '../server')],
-  }),
-);
+const sqlWasmJsPath = require.resolve('sql.js/dist/sql-wasm.js', {
+  paths: [path.join(__dirname, '../server')],
+});
+const sqlWasmDir = path.dirname(sqlWasmJsPath);
+const rawInitSqlJs = require(sqlWasmJsPath);
+const initSqlJs = () => rawInitSqlJs({ locateFile: (file) => path.join(sqlWasmDir, file) });
 
 const {
   initDatabase,

@@ -1,0 +1,312 @@
+/* 规则弹窗 */
+.battle-help-mask {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--ink-lab) 48%, transparent);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  pointer-events: auto;
+}
+
+.battle-help-pop {
+  position: relative;
+  z-index: 1;
+  width: min(92%, 440px);
+  max-height: min(78vh, 560px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--b-r-lg, 18px);
+  background: var(--card-elevated);
+  border: var(--b-stroke-strong, 2px) solid var(--border-ink);
+  box-shadow: var(--b-shadow-float, var(--shadow-float));
+  animation: battle-end-in 0.35s var(--b-ease-spring, ease) both;
+  overflow: hidden;
+}
+
+.battle-help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+
+.battle-help-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ink-lab);
+}
+
+.battle-help-body {
+  padding: 0.75rem 1.05rem 1.1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.battle-help-body section {
+  margin-bottom: 0.85rem;
+}
+
+.battle-help-body section:last-child {
+  margin-bottom: 0;
+}
+
+.battle-help-body h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.82rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.battle-help-body p {
+  margin: 0.2rem 0;
+}
+
+.battle-help-body ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.15rem;
+}
+
+.battle-help-body li {
+  margin: 0.15rem 0;
+}
+
+.battle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--card-elevated) 88%, transparent);
+  border: 1.5px solid var(--border-soft);
+  flex-shrink: 0;
+  backdrop-filter: blur(6px);
+  transition:
+    border-color var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+
+.battle-row.is-active-side {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--card-elevated));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+    0 8px 28px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.battle-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border: 2px solid var(--border);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.battle-row.is-active-side .battle-avatar-pulse {
+  border-color: var(--accent);
+  animation: battle-avatar-ring 1.4s ease-in-out infinite;
+}
+
+@keyframes battle-avatar-ring {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+}
+
+.battle-row-meta {
+  min-width: 72px;
+}
+
+.battle-row-meta h3 {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-lab);
+}
+
+.battle-row-meta p {
+  margin: 0.05rem 0 0.25rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.battle-hp {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+  overflow: hidden;
+  width: 72px;
+}
+
+.battle-hp i {
+  display: block;
+  height: 100%;
+  width: var(--w, 50%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--note), color-mix(in srgb, var(--note) 60%, #fff));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.battle-hp.is-you i {
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 50%, #fff));
+}
+
+.battle-ai-backs {
+  display: flex;
+  flex: 1;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 52px;
+}
+
+.battle-card-back {
+  width: 34px;
+  height: 48px;
+  margin-left: -12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-ink);
+  background: linear-gradient(
+    145deg,
+    var(--accent) 0%,
+    color-mix(in srgb, var(--accent) 55%, var(--ink)) 100%
+  );
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transform: rotate(calc((var(--i, 0) - 4) * 2.5deg));
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.battle-row-ai.is-active-side .battle-card-back {
+  animation: battle-back-bob 1.1s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.05s);
+}
+
+@keyframes battle-back-bob {
+  50% {
+    transform: rotate(calc((var(--i, 0) - 4) * 2.5deg)) translateY(-4px);
+  }
+}
+
+.battle-card-back::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid color-mix(in srgb, #fff 35%, transparent);
+  border-radius: var(--radius-xs);
+  background: repeating-linear-gradient(
+    -22deg,
+    transparent,
+    transparent 3px,
+    color-mix(in srgb, #fff 14%, transparent) 3px,
+    color-mix(in srgb, #fff 14%, transparent) 4px
+  );
+}
+
+.battle-more {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.battle-toolbar {
+  margin-left: auto;
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.battle-toolbar .btn {
+  min-height: 2.25rem;
+  font-weight: 700;
+}
+
+.battle-flip-remain {
+  font-weight: 900;
+  margin-left: 0.2rem;
+}
+
+/* 仅 is-urgent 跳动；is-ready 只做静态可点态 */
+.battle-flip-cta.is-ready:not(:disabled) {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.battle-flip-cta.is-urgent:not(:disabled) {
+  animation: battle-flip-ready 1.4s ease-in-out infinite;
+}
+
+@keyframes battle-flip-ready {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--b-dim-current, var(--accent)) 28%, transparent);
+    transform: scale(1.02);
+  }
+}
+
+/* 提示模式切换 */
+.battle-hint-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border-radius: var(--b-r-pill);
+  border: var(--b-stroke) solid var(--border);
+  background: color-mix(in srgb, var(--paper) 80%, var(--card-elevated));
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.battle-hint-btn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 0.28rem 0.65rem;
+  font: inherit;
+  font-size: var(--b-fs-caption);
+  font-weight: 700;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.battle-hint-btn.is-on {
+  color: var(--ink-lab);
+  background: color-mix(in srgb, var(--accent-soft) 90%, var(--card-elevated));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.battle-hint-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.battle-sfx-btn {
+  min-width: 3.2rem;
+  font-weight: 700;
+}
+
+.battle-sfx-btn.is-muted {
+  opacity: 0.72;
+  color: var(--text-muted);
+}
+
+/* 普通模式：关闭可出高亮/脉冲 */
+.battle-play[data-hint='normal'] .battle-hand .bc.is-playable,
+.battle-play[data-hint='normal'] .battle-hand .bc.is-glow {
+  animation: none;
+  box-shadow: var(--b-shadow-raise), inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent);
+}
+
+.battle-play[data-hint='normal'] .battle-hand .bc.is-playable::after {
+  display: none;
+}

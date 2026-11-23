@@ -1,0 +1,293 @@
+/* 旧 arena 类名兼容（已迁到 battle-stage） */
+.battle-arena {
+  display: none;
+}
+
+.battle-status {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 9.5rem;
+  font-size: var(--b-fs-title);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  padding: 0.35rem 1rem;
+  border-radius: var(--b-r-pill);
+  background: var(--card-elevated);
+  border: var(--b-stroke) solid var(--border);
+  box-shadow: var(--b-shadow-rest);
+  box-sizing: border-box;
+}
+
+.battle-status-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.battle-status.is-yours {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.battle-status.is-yours .battle-status-pulse,
+.battle-status.is-thinking .battle-status-pulse {
+  animation: battle-dot 0.9s step-end infinite;
+}
+
+@keyframes battle-dot {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.battle-status.is-thinking {
+  color: var(--note);
+}
+
+.battle-status.is-end {
+  color: var(--flame);
+}
+
+.battle-table-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  width: min(100%, 640px);
+  position: relative;
+}
+
+/* 顶牌 + 底下散落弃牌 */
+.battle-top-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 148px;
+  min-height: 0;
+  z-index: 2;
+}
+
+.battle-top-zone .battle-top-slot {
+  position: relative;
+  z-index: 3;
+}
+
+/* 散落弃牌：完整牌面缩小后乱放，像打出去的扑克 */
+.battle-scatter-pile {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  width: 220px;
+  height: 160px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.battle-scatter-item {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 88px;
+  height: 118px;
+  margin: -59px 0 0 -44px;
+  transform: translate(var(--x, 0), var(--y, 0)) rotate(var(--r, 0deg));
+  z-index: calc(var(--z, 0) + 1);
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--ink) 18%, transparent));
+  opacity: 0.94;
+}
+
+.battle-scatter-item .bc.is-scatter {
+  width: 88px !important;
+  height: 118px !important;
+  min-height: 118px !important;
+  max-height: 118px !important;
+  max-width: none !important;
+  padding: 0.28rem 0.22rem 0.3rem;
+  border-width: 2px;
+  border-radius: var(--b-r-md, 12px);
+  overflow: hidden;
+  box-shadow:
+    var(--b-shadow-raise, var(--shadow-md)),
+    inset 0 1px 0 color-mix(in srgb, #fff 50%, transparent);
+}
+
+.battle-scatter-item .bc.is-scatter .bc-symbol {
+  font-size: 1.35rem;
+  margin-top: 0.12rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-name {
+  font-size: 0.62rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-z {
+  font-size: 0.52rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-meters {
+  margin: 0.12rem 0 0.06rem;
+  gap: 2px;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-meters i {
+  height: 3px;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-stats {
+  font-size: 0.52rem;
+  gap: 0.2rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-power {
+  margin-top: 0.05rem;
+  padding-bottom: 0;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-power em {
+  font-size: 0.48rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-power b {
+  font-size: 0.82rem;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-orbit {
+  width: 48px;
+  height: 48px;
+  margin-left: -24px;
+  top: 12%;
+  opacity: 0.55;
+  animation: none; /* 桌上弃牌不转，减噪 */
+}
+
+.battle-scatter-item .bc.is-scatter .bc-hint {
+  display: none;
+}
+
+.battle-scatter-item .bc.is-scatter .bc-block {
+  top: calc(12% + 2px);
+  font-size: 0.48rem;
+  padding: 0.04rem 0.22rem;
+}
+
+.battle-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 64px;
+}
+
+.battle-pile-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.battle-deck-visual {
+  width: 54px;
+  height: 74px;
+  margin-left: 0;
+  transform: none;
+  border-radius: var(--radius-sm);
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+.battle-discard-stack {
+  width: 54px;
+  height: 74px;
+  border-radius: var(--radius-sm);
+  border: 2px dashed var(--border-ink);
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  background: color-mix(in srgb, var(--card-bg) 45%, transparent);
+}
+
+.battle-top-slot {
+  position: relative;
+  min-height: 210px;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-top-halo {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 40%, transparent),
+    transparent 68%
+  );
+  animation: battle-halo 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.battle-top-slot .bc.is-large {
+  animation: battle-top-float 3.2s ease-in-out infinite;
+}
+
+@keyframes battle-top-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes battle-halo {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.7;
+  }
+}
+
+.battle-top-slot .bc {
+  position: relative;
+  z-index: 1;
+}
+
+.battle-compare-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  padding: 0.28rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--card-elevated);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+
+.battle-compare-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: battle-dot 1s step-end infinite;
+}
+
+.battle-compare-chip b {
+  color: var(--accent);
+}

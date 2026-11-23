@@ -1,0 +1,326 @@
+/* ========== 对局：三栏 + 底手牌 ========== */
+.battle-play {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 0.4rem 0.7rem 0.4rem;
+  gap: 0.35rem;
+  /* 锁死整页高度，中栏才能吃满 flex；手牌悬停用负 margin 探出 */
+  overflow: hidden;
+  contain: layout;
+}
+
+/* 三栏：高度只吃 flex 分到的空间；z-index 低于手牌，悬停牌可盖住桌沿 */
+.battle-board {
+  position: relative;
+  z-index: 1;
+  /* height:0 + flex-grow：经典锁高，避免内容 min-size 把板面撑高 */
+  flex: 1 1 0%;
+  height: 0;
+  min-height: 0;
+  max-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(200px, 0.9fr) minmax(0, 2.4fr) minmax(230px, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: stretch;
+  overflow: hidden;
+  contain: layout;
+}
+
+.battle-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 0;
+  min-width: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.battle-col-center {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.battle-col-left,
+.battle-col-right {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* 左栏：对手固定块 + 战报吃剩余；战报增高只进滚动，不改行高 */
+.battle-col-left {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  align-content: stretch;
+}
+
+.battle-col-right {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.4rem;
+  height: 100%;
+  max-height: 100%;
+}
+
+.battle-side-card {
+  background: color-mix(in srgb, var(--card-elevated) 94%, transparent);
+  border: var(--b-stroke) solid var(--border);
+  border-radius: var(--b-r-md);
+  padding: 0.55rem 0.65rem;
+  box-shadow: var(--b-shadow-rest);
+  backdrop-filter: blur(6px);
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+
+/* 对手区：牌墙高度锁死，避免少一张牌就挤战报 */
+.battle-ai-panel {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.battle-you-panel {
+  flex: 0 0 auto;
+}
+
+.battle-tip-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 牌墙：固定两行高度，多牌时内部滚动，不挤战报 */
+.battle-ai-wall {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.5rem;
+  align-content: start;
+  justify-items: center;
+  /* ~2 行卡背：不因 0/4/8 张上下跳 */
+  height: 7.6rem;
+  min-height: 7.6rem;
+  max-height: 7.6rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 70%
+    );
+  border-radius: var(--b-r-sm);
+  border: 1px solid color-mix(in srgb, var(--border-ink) 40%, transparent);
+}
+
+.battle-card-back-lg {
+  width: 100% !important;
+  max-width: 48px;
+  height: auto !important;
+  aspect-ratio: 42 / 58;
+  margin-left: 0 !important;
+  transform: rotate(calc((var(--i, 0) % 4 - 1.5) * 3deg)) !important;
+}
+
+/* 维度键：横排三等分，r 永不被裁 */
+.battle-dim-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  margin-bottom: 0.35rem;
+}
+
+.battle-dim-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--b-r-sm);
+  border: var(--b-stroke) solid var(--border);
+  background: var(--paper);
+  text-align: center;
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  min-height: 4.2rem;
+}
+
+.battle-dim-key.is-on {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+    0 6px 16px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.battle-dim-key-ico {
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: var(--accent);
+  text-align: center;
+  grid-row: auto;
+}
+
+.battle-dim-key-name {
+  font-weight: 800;
+  font-size: 0.78rem;
+  color: var(--ink-lab);
+}
+
+.battle-dim-key-desc {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.battle-pile-lg .battle-deck-visual,
+.battle-pile-lg .battle-discard-stack {
+  width: 72px;
+  height: 98px;
+}
+
+.battle-pile-lg {
+  width: 72px;
+}
+
+.battle-side-card.is-active-side {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 8px 24px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.battle-side-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+.battle-side-count {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+.battle-log-card {
+  /* 占满左栏第二行：外框高度=格子高度，与日志条数无关 */
+  min-height: 0 !important;
+  height: auto;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--card-elevated) 100%, transparent) 0%,
+      color-mix(in srgb, var(--paper) 40%, var(--card-elevated)) 100%
+    );
+}
+
+.battle-log-card h4,
+.battle-tip-card h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink-lab);
+  letter-spacing: 0.04em;
+  flex: 0 0 auto;
+}
+
+/* 战报列表：唯一可滚动区域；新增一行只在这里滚 */
+.battle-log-card .battle-log {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  height: 0 !important; /* 同 board：高度只来自 flex，不来自内容 */
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  text-align: left;
+  width: 100%;
+}
+
+.battle-log-card .battle-log p {
+  margin: 0;
+  padding: 0.28rem 0 0.28rem 0.45rem;
+  border-bottom: 1px solid var(--border-soft);
+  border-left: 2px solid transparent;
+  font-size: var(--b-fs-caption);
+  line-height: 1.35;
+  height: 1.9rem;
+  max-height: 1.9rem;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.battle-log-card .battle-log p:first-child {
+  border-left-color: var(--b-dim-current, var(--accent));
+  color: var(--ink-lab);
+  font-weight: 700;
+  animation: battle-log-in 0.22s var(--b-ease) both;
+}
+
+@keyframes battle-log-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+.battle-tip-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.battle-tip-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  flex-shrink: 0;
+}
+
+.battle-tip-fill .battle-dim-keys {
+  overflow: auto;
+  min-height: 0;
+}
+
+.battle-toolbar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-left: 0;
+  width: 100%;
+}
+
+.battle-toolbar-stack .btn {
+  width: 100%;
+  justify-content: center;
+}

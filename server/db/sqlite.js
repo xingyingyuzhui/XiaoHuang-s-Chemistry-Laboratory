@@ -115,12 +115,16 @@ function installExitHooks() {
 installExitHooks();
 
 /**
- * 使用 sql-asm（纯 JS）而非 wasm，pkg 打包更稳
+ * 使用 sql-wasm（体积更小、更快且无 asm.js 弃用告警），显式定位同目录 sql-wasm.wasm
  */
 async function loadSqlJs() {
   // eslint-disable-next-line import/no-unresolved
-  const initSqlJs = require('sql.js/dist/sql-asm.js');
-  return initSqlJs();
+  const wasmJsPath = require.resolve('sql.js/dist/sql-wasm.js');
+  const wasmDir = path.dirname(wasmJsPath);
+  const initSqlJs = require(wasmJsPath);
+  return initSqlJs({
+    locateFile: (file) => path.join(wasmDir, file),
+  });
 }
 
 /**

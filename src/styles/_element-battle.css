@@ -1,6 +1,10 @@
 /* Element Battle styles — barrel; selectors unchanged. Partials under _element-battle/ */
 @import './_element-battle/base.css' layer(components);
 @import './_element-battle/hub.css' layer(components);
-@import './_element-battle/board.css' layer(components);
+@import './_element-battle/board-layout.css' layer(components);
+@import './_element-battle/board-stage.css' layer(components);
+@import './_element-battle/board-hud.css' layer(components);
+@import './_element-battle/board-table.css' layer(components);
+@import './_element-battle/board-flip.css' layer(components);
 @import './_element-battle/hand.css' layer(components);
 @import './_element-battle/fx.css' layer(components);

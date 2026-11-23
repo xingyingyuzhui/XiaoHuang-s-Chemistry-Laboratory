@@ -1,7 +1,7 @@
 /**
  * 为 Electron 打包准备精简版 server 目录（.electron-stage/server）
  * - 只装 production 依赖（不含 pkg）
- * - sql.js 只保留 sql-asm.js（我们实际加载的那一个）
+ * - sql.js 只保留 sql-wasm.js 与 sql-wasm.wasm（我们实际加载的那一对）
  */
 import { cpSync, mkdirSync, rmSync, readdirSync, statSync, existsSync, writeFileSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -75,14 +75,15 @@ execSync('npm install --omit=dev --no-audit --no-fund', {
   stdio: 'inherit',
 });
 
-// 砍掉 sql.js 无用产物
+// 砍掉 sql.js 无用产物（仅保留 sql-wasm.js + sql-wasm.wasm）
 const sqlDist = join(stageServer, 'node_modules', 'sql.js', 'dist');
 if (existsSync(sqlDist)) {
+  const KEEP_SQL_FILES = new Set(['sql-wasm.js', 'sql-wasm.wasm']);
   for (const name of readdirSync(sqlDist)) {
-    if (name === 'sql-asm.js') continue;
+    if (KEEP_SQL_FILES.has(name)) continue;
     rimraf(join(sqlDist, name));
   }
-  console.log('sql.js dist kept: sql-asm.js only');
+  console.log('sql.js dist kept: sql-wasm.js + sql-wasm.wasm only');
 }
 
 // 去掉常见文档/测试（二次保险）
